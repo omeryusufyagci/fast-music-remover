@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Removal Tool</title>
+    <script>
+        function submitForm() {
+            const url = document.getElementById("url").value;
+            fetch("/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `url=${encodeURIComponent(url)}`,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "completed") {
+                    document.getElementById("videoPlayer").src = data.video_url;
+                    document.getElementById("status").textContent = "Processing completed!";
+                } else {
+                    document.getElementById("status").textContent = "An error occurred!";
+                }
+            })
+            .catch(error => {
+                document.getElementById("status").textContent = "An error occurred!";
+            });
+
+            document.getElementById("status").textContent = "Processing...";
+        }
+    </script>
+</head>
+<body>
+    <h1>Music Removal Tool</h1>
+    <form onsubmit="event.preventDefault(); submitForm();">
+        <label for="url">Enter YouTube URL:</label>
+        <input type="text" id="url" name="url" placeholder="Enter YouTube URL">
+        <button type="submit">Process Video</button>
+    </form>
+    <p id="status"></p>
+    <video id="videoPlayer" controls style="display: block; width: 100%; max-width: 800px;">
+        Your browser does not support the video tag.
+    </video>
+</body>
+</html>
