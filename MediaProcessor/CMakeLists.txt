@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 project(VideoSpeechProcessing)
 
 set(CMAKE_CXX_STANDARD 17)  # c++17 or above required
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
 
-include_directories(include)
+include_directories(include /usr/include)
 
 add_executable(VideoSpeechProcessing src/main.cpp src/SpeechIsolation.cpp src/VideoProcessing.cpp src/Utils.cpp)
 
