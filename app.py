@@ -2,6 +2,7 @@ import os
 import subprocess
 from flask import Flask, request, jsonify, url_for, send_from_directory, render_template
 import yt_dlp
+import json
 import logging
 
 """
@@ -13,7 +14,7 @@ The aim is to rapidly filter out music (and noise) from internet media.
 
 What currently works:
 1) Download any YouTube video via `yt-dlp`
-2) Send a processing request to the `media_processor` C++ binary, which uses DeepFilterNet for fast filtering
+2) Send a processing request to the `MediaProcessor` C++ binary, which uses DeepFilterNet for fast filtering
 3) Serve the processed video on the frontend
 
 Where I want to go:
@@ -27,11 +28,21 @@ Refactor app.py for clarity and encapsulate subcomponents
 """
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'downloads'
 
-# set the DeepFilterNet path env variable
-os.environ['DEEPFILTERNET_PATH'] = '/home/oyagci/Documents/ws_fast_music_remover/media_processor/res/deep-filter-0.5.6-x86_64-unknown-linux-musl'
+# Load config and set paths
+with open('config.json') as config_file:
+    config = json.load(config_file)
 
+DEEPFILTERNET_PATH = config['deep_filter_path']
+DOWNLOADS_DIR = config['downloads_dir']
+FFMPEG_PATH = config['ffmpeg_path']
+UPLOAD_FOLDER = config.get('upload_folder', 'uploads')  # defaults to uploads/
+
+# Set env var for DeepFilterNet path
+os.environ['DEEPFILTERNET_PATH'] = DEEPFILTERNET_PATH
+
+# Set the uploads/ for serving media; mkdir if not found
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
@@ -84,7 +95,7 @@ def process_video_with_cpp(video_path):
         logging.info(f"Processing video at path: {video_path}")
 
         result = subprocess.run([
-            './media_processor/build/VideoSpeechProcessing', video_path
+            './MediaProcessor/build/VideoSpeechProcessing', video_path
         ], capture_output=True, text=True)
 
         if result.returncode != 0:
