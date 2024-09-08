@@ -4,27 +4,20 @@ from flask import Flask, request, jsonify, url_for, send_from_directory, render_
 import yt_dlp
 import json
 import logging
+import re
 
 """
 This is the backend of the Fast Music Remover tool.
-
-Current state: Initial Test/PoC
-
-The aim is to rapidly filter out music (and noise) from internet media. 
 
 What currently works:
 1) Download any YouTube video via `yt-dlp`
 2) Send a processing request to the `MediaProcessor` C++ binary, which uses DeepFilterNet for fast filtering
 3) Serve the processed video on the frontend
 
-Where I want to go:
-Perform soft-realtime processing on any media with a few seconds of initial delay.
-The rest should be managed by sliding chunks, only offsetting the original video by the initial delay.
-
 TODO: 
-Remove the hardcoded abs paths
 Add chunking and parallel processing support for the backend
 Refactor app.py for clarity and encapsulate subcomponents
+Document briefly the functions
 """
 
 app = Flask(__name__)
@@ -58,37 +51,35 @@ def cleanup_old_files(base_filename):
             logging.info(f"Removing old file: {path}")
             os.remove(path)
 
+def sanitize_filename(filename):
+    # Replace non-alphanumerics apart from periods and underscores, with underscores
+    return re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
+
 def download_youtube_video(url):
-    ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',
-        'outtmpl': os.path.join(app.config['UPLOAD_FOLDER'], '%(title)s.%(ext)s'),
-        'noplaylist': True,
-        'keepvideo': True  # Source files needed for merging back the media
-    }
-
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=True)
-
+        # Extract media info first to sanitize title (avoid issues w/filenames containing special chars, spaces, etc.)
+        with yt_dlp.YoutubeDL() as ydl:
+            info_dict = ydl.extract_info(url, download=False)
             base_title = info_dict['title']
-            original_video_file = os.path.join(app.config['UPLOAD_FOLDER'], base_title + ".webm")
+            sanitized_title = sanitize_filename(base_title)
 
-            # Don't allow spaces as it tends to cause many issues
-            renamed_video_file = os.path.join(app.config['UPLOAD_FOLDER'], base_title.replace(' ', '_') + ".webm")
+        ydl_opts = {
+            'format': 'bestvideo+bestaudio/best',
+            'outtmpl': os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + '.%(ext)s'),
+            'noplaylist': True,
+            'keepvideo': True  # Keep source files for merging
+        }
 
-            logging.info(f"Checking if merged file exists: {original_video_file}")
-            
-            if os.path.exists(original_video_file):
-                logging.info(f"Renaming merged video: {original_video_file} -> {renamed_video_file}")
-                os.rename(original_video_file, renamed_video_file)
-            else:
-                logging.error(f"Error: Final merged video {original_video_file} not found!")
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.extract_info(url, download=True)
 
-            return os.path.abspath(renamed_video_file)
+        # Return the sanitized video file path for further processing
+        video_file = os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + ".webm")
+        return os.path.abspath(video_file)
+
     except Exception as e:
         logging.error(f"Error downloading video: {e}")
         return None
-
 
 def process_video_with_cpp(video_path):
     try:
