@@ -11,12 +11,8 @@ int main(int argc, char *argv[]) {
      *   2) Filter out music and noise with DeepFilterNet to generate an isolated_audio
      *   3) Merge the original video with the isolatedAudio again with ffmpeg, to produce the processed_video
      * 
-     * Current state: Initial Test/PoC
-     * 
      * General TODOs: 
-     *  - Absolute paths everywhere
      *  - ffmpeg commands are hardcoded
-     *  - Quite fragile overall and not ready at all for distribution
      *  - Overall refactor including cleanup of main
      */
 
@@ -34,7 +30,7 @@ int main(int argc, char *argv[]) {
     // Prepare output file paths
     std::string outputDir = videoFilePath.parent_path().string();
     std::string isolatedAudioPath = outputDir + "/" + baseFilename + "_isolated_audio.wav"; // speech, i.e. without noise or music
-    std::string finalVideoPath = outputDir + "/" + baseFilename + "_processed_video.mp4"; // merged media (isolatedAudio + video) 
+    std::string finalVideoPath = outputDir + "/" + baseFilename + "_processed_video.mp4"; // merged media (isolated_audio + video) 
 
     if (!SpeechIsolation::isolateSpeech(videoPath, isolatedAudioPath)) {
         std::cerr << "Failed to isolate speech." << std::endl;
