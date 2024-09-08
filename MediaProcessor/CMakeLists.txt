@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)  # c++17 or above required
 
 include_directories(include)
 
-add_executable(VideoSpeechProcessing src/main.cpp src/SpeechIsolation.cpp src/VideoProcessing.cpp)
+add_executable(VideoSpeechProcessing src/main.cpp src/SpeechIsolation.cpp src/VideoProcessing.cpp src/Utils.cpp)
 
 find_package(PkgConfig REQUIRED) # uses pkg-config to link ffmpeg libs
 pkg_check_modules(FFMPEG REQUIRED libavcodec libavformat libavfilter)
