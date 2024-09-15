@@ -27,9 +27,8 @@ RUN mkdir -p MediaProcessor/build && \
 # Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port:5000 for the backend and set env vars
-EXPOSE 5000
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=development
 
-CMD ["flask", "run", "--host=0.0.0.0"]
+EXPOSE 8080
+CMD ["flask", "run", "--host=0.0.0.0", "--port=8080"]
