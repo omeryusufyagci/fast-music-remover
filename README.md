@@ -19,7 +19,7 @@ sudo docker-compose up --build
 > **Note**: If Docker doesn't require `sudo` on your system, you can omit it.
 
 
-Once it's up, open `http://localhost:5000` in your browser, and you can test the service right away by submitting a YouTube URL.
+Once it's up, open `http://localhost:8080` in your browser, and you can test the service right away by submitting a YouTube URL.
 
 This will spin up a containerized version of the app with everything set up: the Flask backend, the C++ MediaProcessor, and the frontend. Once processing is done, you'll see the processed video in the media player.
 
@@ -65,7 +65,7 @@ After setting up the dependencies and compiling the C++ project, go back to the 
 python3 app.py 
 ```
 
-This will start a development server at `http://127.0.0.1:5000`. Go to this address on your browser, enter a YouTube video URL, and follow the logs on your terminal. 
+This will start a development server at `http://127.0.0.1:8080`. Go to this address on your browser, enter a YouTube video URL, and follow the logs on your terminal. 
 
 Once processing is completed, the processed version of the video will be available for playback. You can find the `isolated_audio` and `processed_media` files in the downloads directory under the project root.
 
