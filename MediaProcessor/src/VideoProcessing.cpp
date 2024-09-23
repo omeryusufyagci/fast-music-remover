@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <string>
 
-bool VideoProcessing::mergeAudioVideo(const std::string &videoPath, const std::string &audioPath, const std::string &outputPath) {
+bool VideoProcessing::mergeMedia(const std::string &videoPath, const std::string &audioPath, const std::string &outputPath) {
     
     json config = Utils::loadConfig("config.json");
     if (config.is_null()) {
@@ -23,10 +23,9 @@ bool VideoProcessing::mergeAudioVideo(const std::string &videoPath, const std::s
     std::cout << "Merging video and audio..." << std::endl;
 
     // Prepare ffmpeg command (-y flag to overwrite the file)
-    std::string ffmpegCommand = ffmpegPath + " -y -i \"" + absoluteVideoPath \
-                                + "\" -i \"" + absoluteAudioPath + \
-                                "\" -c:v copy -map 0:v:0 -map 1:a:0 -shortest \"" 
-                                + absoluteOutputPath + "\"";
+    std::string ffmpegCommand = ffmpegPath + " -y -i \"" + absoluteVideoPath + "\" -i \"" + absoluteAudioPath +
+        "\" -c:v copy -c:a aac -strict experimental -map 0:v:0 -map 1:a:0 -shortest \"" + absoluteOutputPath + "\"";
+
 
     std::cout << "Running FFmpeg command: " << ffmpegCommand << std::endl;
     bool success = Utils::runCommand(ffmpegCommand);

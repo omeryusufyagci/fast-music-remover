@@ -5,7 +5,8 @@
 
 class SpeechIsolation {
 public:
-    static bool isolateSpeech(const std::string &inputVideoFile, const std::string &outputAudioFile);
+    static bool isolateSpeech(const std::string &inputVideoFile, std::string &outputAudioFile);
+
 };
 
 #endif // SPEECHISOLATION_H

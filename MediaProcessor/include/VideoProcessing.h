@@ -5,7 +5,7 @@
 
 class VideoProcessing {
 public:
-    static bool mergeAudioVideo(const std::string &videoPath, const std::string &audioPath, const std::string &outputPath);
+    static bool mergeMedia(const std::string &videoPath, const std::string &audioPath, const std::string &outputPath);
 };
 
 #endif // VIDEO_PROCESSING_H

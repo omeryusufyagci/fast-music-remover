@@ -8,12 +8,13 @@ int main(int argc, char *argv[]) {
     /*
      * Receive a filepath to:
      *   1) Extract the audio with ffmpeg
-     *   2) Filter out music and noise with DeepFilterNet to generate an isolated_audio
+     *   2) Chunk the audio into parts and parallel process them with DeepFilterNet
      *   3) Merge the original video with the isolatedAudio again with ffmpeg, to produce the processed_video
      * 
      * General TODOs: 
-     *  - ffmpeg commands are hardcoded
-     *  - Overall refactor including cleanup of main
+     *  - A lot of hardcoded commands
+     *  - Badly needed overall refactor; functions are not sufficient anymore
+     *      o AudioExtractor, AudioConcatenator, ChunkProcessor, SpeechIsolator, ConfigManager
      */
 
     if (argc != 2) {
@@ -37,7 +38,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (!VideoProcessing::mergeAudioVideo(videoPath, isolatedAudioPath, finalVideoPath)) {
+    if (!VideoProcessing::mergeMedia(videoPath, isolatedAudioPath, finalVideoPath)) {
         std::cerr << "Failed to merge audio and video." << std::endl;
         return 1;
     }

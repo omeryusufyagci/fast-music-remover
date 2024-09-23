@@ -1,5 +1,7 @@
 # Fast Music Remover
 
+> **Note**: This branch is currently used for testing parallel processing. Early results show around 300% improvement compared with `main`, but overall stability isn't as thoroughly tested.
+
 `Fast Music Remover` aims to provide a lightweight tool to remove music and noise from any internet media. Currently it's in PoC stage, showing some promise for soft realtime use. 
 
 The project currently consists of a simple HTML frontend, a barebone Flask backend and the `MediaProcessor`, a C++ binary that processes the media file. 
