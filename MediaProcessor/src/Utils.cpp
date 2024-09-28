@@ -1,27 +1,61 @@
 #include "Utils.h"
-#include <iostream>
+
+#include <array>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
-#include <cstdlib>
+#include <iostream>
+#include <sstream>
 
-json Utils::loadConfig(const std::string &configFilePath) {
-    json config;
-    std::ifstream config_file(configFilePath);
-    if (!config_file.is_open()) {
-        std::cerr << "Error: Could not open " << configFilePath << std::endl;
-        return nullptr;
+namespace MediaProcessor::Utils {
+
+bool runCommand(const std::string &command) {
+    /*
+     * Executes a system command, captures its output, and returns true if successful.
+     */
+
+    std::array<char, 128> buffer;
+    std::string result;
+    std::string fullCommand = command + " 2>&1";  // Redirect stderr to stdout
+    FILE *pipe = popen(fullCommand.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Error: Failed to run command: " << command << std::endl;
+        return false;
     }
-    config_file >> config;
-    return config;
+
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+        result += buffer.data();
+    }
+
+    int returnCode = pclose(pipe);
+    if (returnCode != 0) {
+        std::cerr << "Command failed with return code " << returnCode << ":" << std::endl;
+        std::cerr << result << std::endl;
+        return false;
+    }
+    return true;
 }
 
-bool Utils::runCommand(const std::string &command) {
-    std::cout << "Running command: " << command << std::endl;
-    int result = system(command.c_str());
-    return result == 0;
+std::pair<std::string, std::string> prepareOutputPaths(const std::string &videoPath) {
+    /*
+     * Prepares and returns the output paths for the vocals and processed video files.
+     */
+
+    std::filesystem::path videoFilePath(videoPath);
+    std::string baseFilename = videoFilePath.stem().string();
+    std::string outputDir = videoFilePath.parent_path().string();
+
+    std::string vocalsPath = outputDir + "/" + baseFilename + "_isolated_audio.wav";
+    std::string processedVideoPath = outputDir + "/" + baseFilename + "_processed_video.mp4";
+
+    return {vocalsPath, processedVideoPath};
 }
 
-bool Utils::ensureDirectoryExists(const std::string &path) {
+bool ensureDirectoryExists(const std::string &path) {
+    /*
+     * Ensures the specified directory exists by making the directory if necessary
+     */
+
     if (!std::filesystem::exists(path)) {
         std::cout << "Output directory does not exist, creating it: " << path << std::endl;
         std::filesystem::create_directories(path);
@@ -30,7 +64,7 @@ bool Utils::ensureDirectoryExists(const std::string &path) {
     return false;
 }
 
-bool Utils::removeFileIfExists(const std::string &filePath) {
+bool removeFileIfExists(const std::string &filePath) {
     if (std::filesystem::exists(filePath)) {
         std::cout << "File already exists, removing it: " << filePath << std::endl;
         std::filesystem::remove(filePath);
@@ -38,3 +72,34 @@ bool Utils::removeFileIfExists(const std::string &filePath) {
     }
     return false;
 }
+
+double getAudioDuration(const std::string &audioPath) {
+    /*
+     * TODO: ffprobe command to be used via the to-be-made FFMpegUtils class...
+     */
+
+    std::string command =
+        "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"" +
+        audioPath + "\"";
+    FILE *pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Error: Failed to run ffprobe to get audio duration." << std::endl;
+        return -1;
+    }
+
+    char buffer[128];
+    std::string result = "";
+    while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+        result += buffer;
+    }
+    pclose(pipe);
+
+    try {
+        return std::stod(result);
+    } catch (std::exception &e) {
+        std::cerr << "Error: Could not parse audio duration." << std::endl;
+        return -1;
+    }
+}
+
+}  // namespace MediaProcessor::Utils
