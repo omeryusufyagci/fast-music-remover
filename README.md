@@ -1,42 +1,55 @@
 # Fast Music Remover
 
-> **Note**: This branch is currently used for testing parallel processing. Early results show around 300% improvement compared with `main`, but overall stability isn't as thoroughly tested.
+`Fast Music Remover` aims to provide a lightweight tool to remove music, sound effects, and noise from any internet media. Even at its early stages, it shows promise for near-realtime usage, with processing times around just 8% of the original media length —meaning it can process a 30-minute video in less than 3 minutes! While only offline analysis is currently supported, the project has a clear aim to eventually work with live feeds as well. Please consider contributing if this interests you!
 
-`Fast Music Remover` aims to provide a lightweight tool to remove music and noise from any internet media. Currently it's in PoC stage, showing some promise for soft realtime use. 
+The project currently consists of:
+* A simple **HTML frontend** for playback of the processed media
+* A basic **Flask backend** for serving requests
+* A **C++ MediaProcessor** that chunks the media and processes it in parallel, utilizing [`DeepFilterNet`](https://github.com/Rikorose/DeepFilterNet).
 
-The project currently consists of a simple HTML frontend, a barebone Flask backend and the `MediaProcessor`, a C++ binary that processes the media file. 
+### Background
 
-My initial attempt at this was a `demucs`-based python implementation which had a time cost that was greater than the source media length. This is due to the fact that `demucs` has capabilities that far exceed the requirements for this application, such as identifying individual instruments, which are thrown away here. You can find more about that project [here](https://github.com/omeryusufyagci/music-remover).
+This project builds on an initial attempt using a `demucs`-based Python implementation, which had a filtering time cost greater than the source media length. This is due to `demucs`'s advanced capabilities, such as identifying individual instruments, which are features beyond the scope of this project. That initial version can still be found [here](https://github.com/omeryusufyagci/music-remover).
 
-The current `DeepFilterNet` based C++ implementation, without any optimizations, runs at ~20% of the source media length (linearity not tested yet), already bringing huge performance gains. This is without any chunking and parallel processing, which will be the next steps moving forward.
+### Use Cases
 
-The processed audio quality doesn't have a degradation that is audible, but I will eventually benchmark all relevant aspects, including audio quality. 
+`Fast Music Remover` can serve a wide range of needs, such as:
 
-## Demo with Docker
+* **Interview Editing**: Extract clear voice tracks for professional editing of interviews, especially field reports, removing ambient noise without distorting speech.
+* **Education & Lectures**: Remove background noise and improve the overall audio quality of recorded lectures, making them clearer and easier for students to understand.
+* **Streaming & Social Media**: Clean up your media before posting it on your preferred platform, avoiding copyright issues by removing background music or sound effects.
+* **Home Recording Enthusiasts**: Enhance the quality of home-recorded content by removing unnecessary noise or isolating specific audio tracks for better post-production.
+* **Regular Media Consumers**: Remove distractions from your favorite podcast or video, allowing you to focus on the content without the sound effects.
 
-If you have Docker installed, you can quickly test `Fast Music Remover` by running the following command:
+### Benchmarks
+
+The processed audio quality shows no audible degradation so far. A formal benchmarking process for performance and quality is planned.
+
+## Batteries Included!
+
+If you have Docker installed, you can quickly try `Fast Music Remover` by running the following command:
 ```sh
-sudo docker-compose up --build
+docker-compose up --build
 ```
-> **Note**: If Docker doesn't require `sudo` on your system, you can omit it.
+> **Note**: You may need `sudo` to run this command, depending on your system.
 
 
 Once it's up, open `http://localhost:8080` in your browser, and you can test the service right away by submitting a YouTube URL.
 
-This will spin up a containerized version of the app with everything set up: the Flask backend, the C++ MediaProcessor, and the frontend. Once processing is done, you'll see the processed video in the media player.
+This will spin up a containerized version of the app with everything set up: the Flask backend, the C++ MediaProcessor, and the frontend. Once processing is done, you'll be able to watch the filtered video in the media player.
 
-## How it works
+### How it works
 
-1) The frontend expects a YouTube URL to be entered.
-2) The Flask backend downloads the media with `yt-dlp`, and calls the `MediaProcessor` (C++ binary) with the downloaded file path.
-3) The `MediaProcessor` extracts the audio with `FFmpeg`, applies the `DeepFilterNet` to remove music and noise, and generates 2 files: `<media_name>.processed_video.mp4` and `<media_name>.isolated_audio.wav`.
-4) The backend then serves the processed media in the frontend player for playback. 
+1. Enter the URL of the video you'd like to filter.
+2. The Flask backend will download the media with `yt-dlp`, and call the `MediaProcessor` (C++ binary) with the downloaded file path.
+3. The `MediaProcessor` will extract the audio with `FFmpeg`, apply the `DeepFilterNet` to remove music and noise, and generate two files: `<media_name>_processed_video.mp4` and `<media_name>_isolated_audio.wav`.
+4. The backend will then serve the processed media in the frontend player for playback.
 
 ## Installation
 
 ### FFmpeg
 
-FFmpeg is required as it's the primary tool used to extract and process audio from media files. 
+FFmpeg is required as it's the primary tool used to extract, probe, and process audio from media files. 
 
 **On Ubuntu/Debian:**
 ```sh
@@ -74,4 +87,4 @@ Once processing is completed, the processed version of the video will be availab
 
 ## License
 
-`Fast Music Remover` is released under the MIT license. Since it uses DeepFilterNet, which is dual-licensed under MIT and Apache License v2.0, the license can be found in the [LICENSE](LICENSE) file.
+`Fast Music Remover` is released under the MIT license. The license can be found in the [LICENSE](LICENSE) file.
