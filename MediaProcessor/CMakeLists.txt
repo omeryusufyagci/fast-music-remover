@@ -1,15 +1,31 @@
 cmake_minimum_required(VERSION 3.10)
-project(VideoSpeechProcessing)
+project(MediaProcessor)
 
-set(CMAKE_CXX_STANDARD 17)  # c++17 or above required
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+# C++17 or above is required
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-include_directories(include /usr/include)
+# Release build by default
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
-add_executable(VideoSpeechProcessing src/main.cpp src/SpeechIsolation.cpp src/VideoProcessing.cpp src/Utils.cpp)
+include_directories(include)
 
-find_package(PkgConfig REQUIRED) # uses pkg-config to link ffmpeg libs
-pkg_check_modules(FFMPEG REQUIRED libavcodec libavformat libavfilter)
+add_executable(MediaProcessor
+    src/main.cpp
+    src/ConfigManager.cpp
+    src/VocalProcessor.cpp
+    src/VideoProcessor.cpp
+    src/Utils.cpp
+)
 
-target_include_directories(VideoSpeechProcessing PRIVATE ${FFMPEG_INCLUDE_DIRS})
-target_link_libraries(VideoSpeechProcessing PRIVATE ${FFMPEG_LIBRARIES})
+# Find & link json lib
+find_package(nlohmann_json 3.2.0 REQUIRED)
+target_link_libraries(MediaProcessor PRIVATE nlohmann_json::nlohmann_json)
+
+# Threads is required
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
+
