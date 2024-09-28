@@ -1,21 +1,24 @@
-#include "SpeechIsolation.h"
-#include "VideoProcessing.h"
+#include <filesystem>
 #include <iostream>
 #include <string>
-#include <filesystem>
+
+#include "SpeechIsolation.h"
+#include "VideoProcessing.h"
 
 int main(int argc, char *argv[]) {
     /*
-     * Receive a filepath to:
-     *   1) Extract the audio with ffmpeg
-     *   2) Chunk the audio into parts and parallel process them with DeepFilterNet
-     *   3) Merge the original video with the isolatedAudio again with ffmpeg, to produce the processed_video
-     * 
-     * General TODOs: 
-     *  - A lot of hardcoded commands
-     *  - Badly needed overall refactor; functions are not sufficient anymore
-     *      o AudioExtractor, AudioConcatenator, ChunkProcessor, SpeechIsolator, ConfigManager
-     */
+         * Receive a filepath to:
+         *   1) Extract the audio with ffmpeg
+         *   2) Chunk the audio into parts and parallel process them with
+         * DeepFilterNet 3) Merge the original video with the isolatedAudio again with
+         * ffmpeg, to produce the processed_video
+         *
+         * General TODOs:
+         *  - A lot of hardcoded commands
+         *  - Badly needed overall refactor; functions are not sufficient anymore
+         *      o AudioExtractor, AudioConcatenator, ChunkProcessor, SpeechIsolator,
+         * ConfigManager
+         */
 
     if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " <video_file_path>" << std::endl;
@@ -30,8 +33,10 @@ int main(int argc, char *argv[]) {
 
     // Prepare output file paths
     std::string outputDir = videoFilePath.parent_path().string();
-    std::string isolatedAudioPath = outputDir + "/" + baseFilename + "_isolated_audio.wav"; // speech, i.e. without noise or music
-    std::string finalVideoPath = outputDir + "/" + baseFilename + "_processed_video.mp4"; // merged media (isolated_audio + video) 
+    std::string isolatedAudioPath = outputDir + "/" + baseFilename +
+                                    "_isolated_audio.wav";  // speech, i.e. without noise or music
+    std::string finalVideoPath = outputDir + "/" + baseFilename +
+                                 "_processed_video.mp4";  // merged media (isolated_audio + video)
 
     if (!SpeechIsolation::isolateSpeech(videoPath, isolatedAudioPath)) {
         std::cerr << "Failed to isolate speech." << std::endl;

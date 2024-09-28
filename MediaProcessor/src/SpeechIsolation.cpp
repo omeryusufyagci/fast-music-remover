@@ -1,14 +1,17 @@
 #include "SpeechIsolation.h"
-#include "Utils.h"
-#include <iostream>
+
 #include <filesystem>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
-#include <iomanip>
-#include <sstream>
 
-bool SpeechIsolation::isolateSpeech(const std::string &inputVideoPath, std::string &outputAudioPath) {
+#include "Utils.h"
+
+bool SpeechIsolation::isolateSpeech(const std::string &inputVideoPath,
+                                    std::string &outputAudioPath) {
     /*
      * TODO: this turned into a monster while fixing issue after issue related to chunking
      * everything needs to be refactored and it's time SpeecProcessing gets a class
@@ -34,7 +37,8 @@ bool SpeechIsolation::isolateSpeech(const std::string &inputVideoPath, std::stri
     std::cout << "Output audio path: " << outputAudioPath << std::endl;
 
     // Extract the audio with FFmpeg (to be put in AudioExtractor)
-    std::string ffmpegCommand = ffmpegPath + " -y -i \"" + inputVideoPath + "\" -ar 48000 -ac 1 -c:a pcm_s16le \"" + outputAudioPath + "\"";
+    std::string ffmpegCommand = ffmpegPath + " -y -i \"" + inputVideoPath +
+                                "\" -ar 48000 -ac 1 -c:a pcm_s16le \"" + outputAudioPath + "\"";
     if (!Utils::runCommand(ffmpegCommand)) {
         std::cerr << "Error: Failed to extract and convert audio using FFmpeg." << std::endl;
         return false;
@@ -49,8 +53,9 @@ bool SpeechIsolation::isolateSpeech(const std::string &inputVideoPath, std::stri
     }
 
     // to be put in ChunkProcessor
-    int numChunks = 6; // Number of threads/chunks
-    double overlapDuration = 0.5; // in seconds  // TODO: had issues when playing with this, tbc again now that it works
+    int numChunks = 6;  // Number of threads/chunks
+    double overlapDuration =
+        0.5;  // in seconds  // TODO: had issues when playing with this, tbc again now that it works
 
     // Calculate chunk durations and start times
     std::vector<double> startTimes;
@@ -88,8 +93,9 @@ bool SpeechIsolation::isolateSpeech(const std::string &inputVideoPath, std::stri
         ssStartTime << std::fixed << std::setprecision(6) << startTimes[i];
         ssDuration << std::fixed << std::setprecision(6) << durations[i];
 
-        std::string ffmpegSplitCommand = ffmpegPath + " -y -ss " + ssStartTime.str() + " -t " + ssDuration.str() +
-            " -i \"" + outputAudioPath + "\" -ar 48000 -ac 1 -c:a pcm_s16le \"" + chunkPath + "\"";
+        std::string ffmpegSplitCommand = ffmpegPath + " -y -ss " + ssStartTime.str() + " -t " +
+                                         ssDuration.str() + " -i \"" + outputAudioPath +
+                                         "\" -ar 48000 -ac 1 -c:a pcm_s16le \"" + chunkPath + "\"";
 
         if (!Utils::runCommand(ffmpegSplitCommand)) {
             std::cerr << "Error: Failed to split audio into chunks." << std::endl;
@@ -105,9 +111,11 @@ bool SpeechIsolation::isolateSpeech(const std::string &inputVideoPath, std::stri
             std::string chunkPath = chunkPaths[i];
 
             // `-D` flag is super important! uses built in compensation to avoid sync issues
-            std::string deepFilterCommand = deepFilterPath + " -D -o \"" + processedChunksDir + "\" \"" + chunkPath + "\"";
+            std::string deepFilterCommand =
+                deepFilterPath + " -D -o \"" + processedChunksDir + "\" \"" + chunkPath + "\"";
             if (!Utils::runCommand(deepFilterCommand)) {
-                std::cerr << "Error: Failed to process chunk with DeepFilterNet: " << chunkPath << std::endl;
+                std::cerr << "Error: Failed to process chunk with DeepFilterNet: " << chunkPath
+                          << std::endl;
             }
         });
     }
@@ -121,12 +129,14 @@ bool SpeechIsolation::isolateSpeech(const std::string &inputVideoPath, std::stri
     std::vector<std::string> processedChunkPaths;
     for (int i = 0; i < numChunks; ++i) {
         std::filesystem::path chunkPath(chunkPaths[i]);
-        std::string processedChunkPath = processedChunksDir + "/" + chunkPath.filename().string(); // DeepFilter overwrites the given file by default
+        std::string processedChunkPath =
+            processedChunksDir + "/" +
+            chunkPath.filename().string();  // DeepFilter overwrites the given file by default
         processedChunkPaths.push_back(processedChunkPath);
     }
 
     // Merge processed chunks with `crossfading`
-    // this was crucial to fix sync issues, otherwise trimmed audio len 
+    // this was crucial to fix sync issues, otherwise trimmed audio len
     // is less than raw audio causing sync issues (as processed audio leads video)
     std::string ffmpegConcatCommand = ffmpegPath + " -y ";
     for (int i = 0; i < processedChunkPaths.size(); ++i) {
@@ -138,18 +148,19 @@ bool SpeechIsolation::isolateSpeech(const std::string &inputVideoPath, std::stri
     std::string filterComplex = "";  // set of instructions for ffmpeg (called filter graph)
     int filterIndex = 0;
     for (int i = 0; i < processedChunkPaths.size() - 1; ++i) {
-        
         if (i == 0) {
-            // generate a crossfade for the first chunk pair (0 and 1) 
-            filterComplex += "[" + std::to_string(i) + ":a][" + std::to_string(i + 1) + ":a]acrossfade=d=" +
-                            std::to_string(overlapDuration) + ":c1=tri:c2=tri[a" + std::to_string(filterIndex) + "]; ";
+            // generate a crossfade for the first chunk pair (0 and 1)
+            filterComplex += "[" + std::to_string(i) + ":a][" + std::to_string(i + 1) +
+                             ":a]acrossfade=d=" + std::to_string(overlapDuration) +
+                             ":c1=tri:c2=tri[a" + std::to_string(filterIndex) + "]; ";
         } else {
-            // For the rest, use the result of the previous crossfade (a<filterIndex-1>) 
+            // For the rest, use the result of the previous crossfade (a<filterIndex-1>)
             // and apply a new crossfade with the next chunk (chunk i+1)
-            filterComplex += "[a" + std::to_string(filterIndex - 1) + "][" + std::to_string(i + 1) + ":a]acrossfade=d=" +
-                            std::to_string(overlapDuration) + ":c1=tri:c2=tri[a" + std::to_string(filterIndex) + "]; ";
+            filterComplex += "[a" + std::to_string(filterIndex - 1) + "][" + std::to_string(i + 1) +
+                             ":a]acrossfade=d=" + std::to_string(overlapDuration) +
+                             ":c1=tri:c2=tri[a" + std::to_string(filterIndex) + "]; ";
         }
-        
+
         filterIndex++;
     }
 
@@ -161,10 +172,13 @@ bool SpeechIsolation::isolateSpeech(const std::string &inputVideoPath, std::stri
      */
     filterComplex += "[a" + std::to_string(filterIndex - 1) + "]amerge=inputs=1[outa]";
 
-    ffmpegConcatCommand += "-filter_complex \"" + filterComplex + "\" -map \"[outa]\" -c:a pcm_s16le -ar 48000 \"" + outputAudioPath + "\"";
+    ffmpegConcatCommand += "-filter_complex \"" + filterComplex +
+                           "\" -map \"[outa]\" -c:a pcm_s16le -ar 48000 \"" + outputAudioPath +
+                           "\"";
 
     if (!Utils::runCommand(ffmpegConcatCommand)) {
-        std::cerr << "Error: Failed to concatenate processed audio chunks with crossfading." << std::endl;
+        std::cerr << "Error: Failed to concatenate processed audio chunks with crossfading."
+                  << std::endl;
         return false;
     }
 

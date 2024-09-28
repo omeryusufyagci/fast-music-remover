@@ -4,8 +4,9 @@
 #include <string>
 
 class VideoProcessing {
-public:
-    static bool mergeMedia(const std::string &videoPath, const std::string &audioPath, const std::string &outputPath);
+   public:
+    static bool mergeMedia(const std::string &videoPath, const std::string &audioPath,
+                           const std::string &outputPath);
 };
 
-#endif // VIDEO_PROCESSING_H
+#endif  // VIDEO_PROCESSING_H
