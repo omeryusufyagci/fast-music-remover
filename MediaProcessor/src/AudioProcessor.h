@@ -1,5 +1,5 @@
-#ifndef VOCALPROCESSOR_H
-#define VOCALPROCESSOR_H
+#ifndef AUDIOPROCESSOR_H
+#define AUDIOPROCESSOR_H
 
 #include <string>
 #include <vector>
@@ -9,9 +9,9 @@ namespace MediaProcessor {
 constexpr int DEFAULT_NUM_CHUNKS = 6;
 constexpr double DEFAULT_OVERLAP_DURATION = 0.5;
 
-class VocalProcessor {
+class AudioProcessor {
    public:
-    VocalProcessor(const std::string &inputVideoPath, const std::string &outputAudioPath);
+    AudioProcessor(const std::string &inputVideoPath, const std::string &outputAudioPath);
 
     bool extractVocals();
 
@@ -39,4 +39,4 @@ class VocalProcessor {
 
 }  // namespace MediaProcessor
 
-#endif  // VOCALPROCESSOR_H
+#endif  // AUDIOPROCESSOR_H

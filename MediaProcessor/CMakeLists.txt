@@ -15,7 +15,7 @@ include_directories(include)
 add_executable(MediaProcessor
     src/main.cpp
     src/ConfigManager.cpp
-    src/VocalProcessor.cpp
+    src/AudioProcessor.cpp
     src/VideoProcessor.cpp
     src/Utils.cpp
 )

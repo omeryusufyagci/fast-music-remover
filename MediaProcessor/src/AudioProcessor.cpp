@@ -1,4 +1,4 @@
-#include "VocalProcessor.h"
+#include "AudioProcessor.h"
 
 #include <filesystem>
 #include <iomanip>
@@ -11,7 +11,7 @@
 
 namespace MediaProcessor {
 
-VocalProcessor::VocalProcessor(const std::string &inputVideoPath,
+AudioProcessor::AudioProcessor(const std::string &inputVideoPath,
                                const std::string &outputAudioPath)
     : m_inputVideoPath(inputVideoPath),
       m_outputAudioPath(outputAudioPath),
@@ -28,7 +28,7 @@ VocalProcessor::VocalProcessor(const std::string &inputVideoPath,
      */
 }
 
-bool VocalProcessor::extractVocals() {
+bool AudioProcessor::extractVocals() {
     /*
      * Extracts vocals from a video by chunking, parallel processing, and merging the audio.
      */
@@ -71,7 +71,7 @@ bool VocalProcessor::extractVocals() {
     return true;
 }
 
-bool VocalProcessor::extractAudio() {
+bool AudioProcessor::extractAudio() {
     ConfigManager &configManager = ConfigManager::getInstance();
     std::string ffmpegPath = configManager.getFFmpegPath();
 
@@ -87,7 +87,7 @@ bool VocalProcessor::extractAudio() {
     return true;
 }
 
-bool VocalProcessor::chunkAudio() {
+bool AudioProcessor::chunkAudio() {
     Utils::ensureDirectoryExists(m_chunksDir);
 
     // Calculate chunk durations and start times
@@ -131,7 +131,7 @@ bool VocalProcessor::chunkAudio() {
     return true;
 }
 
-bool VocalProcessor::processChunks() {
+bool AudioProcessor::processChunks() {
     Utils::ensureDirectoryExists(m_processedChunksDir);
 
     ConfigManager &configManager = ConfigManager::getInstance();
@@ -171,7 +171,7 @@ bool VocalProcessor::processChunks() {
     return true;
 }
 
-bool VocalProcessor::mergeChunks() {
+bool AudioProcessor::mergeChunks() {
     ConfigManager &configManager = ConfigManager::getInstance();
     std::string ffmpegPath = configManager.getFFmpegPath();
 

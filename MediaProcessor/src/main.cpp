@@ -2,10 +2,10 @@
 #include <iostream>
 #include <string>
 
+#include "AudioProcessor.h"
 #include "ConfigManager.h"
 #include "Utils.h"
 #include "VideoProcessor.h"
-#include "VocalProcessor.h"
 
 using namespace MediaProcessor;
 
@@ -37,8 +37,8 @@ int main(int argc, char *argv[]) {
 
     auto [extractedVocalsPath, processedMediaPath] = Utils::prepareOutputPaths(inputMediaPath);
 
-    VocalProcessor vocalProcessor(inputMediaPath, extractedVocalsPath);
-    if (!vocalProcessor.extractVocals()) {
+    AudioProcessor audioProcessor(inputMediaPath, extractedVocalsPath);
+    if (!audioProcessor.extractVocals()) {
         std::cerr << "Failed to extract vocals." << std::endl;
         return 1;
     }
