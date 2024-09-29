@@ -9,15 +9,11 @@ import re
 """
 This is the backend of the Fast Music Remover tool.
 
-What currently works:
+How it works:
 1) Download any YouTube video via `yt-dlp`
 2) Send a processing request to the `MediaProcessor` C++ binary, which uses DeepFilterNet for fast filtering
 3) Serve the processed video on the frontend
 
-TODO: 
-Add chunking and parallel processing support for the backend
-Refactor app.py for clarity and encapsulate subcomponents
-Document briefly the functions
 """
 
 app = Flask(__name__)
@@ -67,7 +63,8 @@ def download_youtube_video(url):
             'format': 'bestvideo+bestaudio/best',
             'outtmpl': os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + '.%(ext)s'),
             'noplaylist': True,
-            'keepvideo': True  # Keep source files for merging
+            'keepvideo': True,  # Keep source files for merging
+            'n_threads': 6
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
