@@ -25,6 +25,15 @@ This project builds on an initial attempt using a `demucs`-based Python implemen
 
 The processed audio quality shows no audible degradation so far. A formal benchmarking process for performance and quality is planned.
 
+### Contributing
+Contributions are always welcome! If you're interested in helping improve `Fast Music Remover`, there are several ways to get involved:
+
+* **Report Bugs or Suggest Features**: Open an issue to report a bug or suggest new features you'd like to see.
+* **Improve the Code**: Check the open issues and contribute with a pull request.
+* **Enhance Documentation**: Documentation improvements are highly appreciated, whether it's the README, tutorials, or code comments.
+
+Please see the [CONTRIBUTING.md](CONTRIBUTING) for more details on how to get started.
+
 ## Batteries Included!
 
 If you have Docker installed, you can quickly try `Fast Music Remover` by running the following command:
