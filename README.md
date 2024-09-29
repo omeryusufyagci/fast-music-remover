@@ -1,11 +1,11 @@
 # Fast Music Remover
 
-`Fast Music Remover` aims to provide a lightweight tool to remove music, sound effects, and noise from any internet media. Even at its early stages, it shows promise for near-realtime usage, with processing times around just 8% of the original media length —meaning it can process a 30-minute video in less than 3 minutes! While only offline analysis is currently supported, the project has a clear aim to eventually work with live feeds as well. Please consider contributing if this interests you!
+`Fast Music Remover` aims to provide a lightweight and fast tool to remove music, sound effects, and noise from any internet media. Even at its early stages, it shows promise for near-realtime usage, with processing times around just 8% of the original media length —meaning it can process a 10-minute video in less than a minute! While only offline analysis is currently supported, the project has a clear aim to support live feeds as well. Please consider [contributing](CONTRIBUTING) if this interests you!
 
-The project currently consists of:
-* A simple **HTML frontend** for playback of the processed media
-* A basic **Flask backend** for serving requests
-* A **C++ MediaProcessor** that chunks the media and processes it in parallel, utilizing [`DeepFilterNet`](https://github.com/Rikorose/DeepFilterNet).
+### Project Structure
+* An **HTML frontend** for providing input media URL, and playback of the processed media
+* A **Flask backend** for serving requests
+* A **MediaProcessor** that chunks the media and processes it in parallel, utilizing [`DeepFilterNet`](https://github.com/Rikorose/DeepFilterNet).
 
 ### Background
 
@@ -82,7 +82,7 @@ cmake ..
 make
 ```
 
-## Usage
+### Usage
 
 After setting up the dependencies and compiling the C++ project, go back to the project root and start the backend server:
 ```sh
