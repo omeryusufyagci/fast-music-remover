@@ -32,7 +32,7 @@ Contributions are always welcome! If you're interested in helping improve `Fast 
 * **Improve the Code**: Check the open issues and contribute with a pull request.
 * **Enhance Documentation**: Documentation improvements are highly appreciated, whether it's the README, tutorials, or code comments.
 
-Please see the [CONTRIBUTING.md](CONTRIBUTING) for more details on how to get started.
+Please see the [contributing](CONTRIBUTING.md) for more details on how to get started.
 
 ## Batteries Included!
 
