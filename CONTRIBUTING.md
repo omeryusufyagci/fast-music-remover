@@ -1,12 +1,16 @@
 # Contributing to Fast Music Remover
 
-Thank you for considering contributing to this project! Your contributions are invaluable in providing a free and open tool that can help a wide set of use cases.
+Thank you for considering contributing to this project! Your contributions are invaluable in providing a free and open tool that aims to address a wide set of use cases.
 
 ## How You Can Contribute
 
 ### 1. Issues:
-* **Report Bugs**: If you encounter a bug, crash, etc. please open an issue with the details to reproduce it, such as your system, environment and error messages.
-* **Feature Requests**: This project is being built for you! If you see something that is missing, please open an issue describing your use case.
+You can quickly report most issues with the [issue templates](https://github.com/omeryusufyagci/fast-music-remover/issues/new/choose) for the following types:
+* **Bug Report**: If you encounter unintended behavior, please report a bug to help us improve!
+* **Feature Request**: This project is being built for you! If you see something that is missing, suggest a new feature!
+* **Improvement Request**: Something can be improved? Written better, run faster? Suggest an improvement!
+
+If these do not cover your specific case, you're welcome to open a custom issue.
 
 ### 2. Code Contributions:
 * **Check the Open Issues**: Have a look at the [issues](https://github.com/omeryusufyagci/fast-music-remover/issues), especially those tagged `good first issue`, which are easier to get started with and help you understand the general workflow. 
