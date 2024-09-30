@@ -53,7 +53,7 @@ def sanitize_filename(filename):
 
 def download_youtube_video(url):
     try:
-        # Extract media info first to sanitize title (avoid issues w/filenames containing special chars, spaces, etc.)
+        # Extract media info first to sanitize title
         with yt_dlp.YoutubeDL() as ydl:
             info_dict = ydl.extract_info(url, download=False)
             base_title = info_dict['title']
@@ -68,10 +68,19 @@ def download_youtube_video(url):
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.extract_info(url, download=True)
+            result = ydl.extract_info(url, download=True)
 
-        # Return the sanitized video file path for further processing
-        video_file = os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + ".webm")
+            # Post-download file-ext gymnastics
+            if 'requested_formats' in result:
+
+                # If separate video and audio were downloaded and merged 
+                merged_ext = result['ext']
+            else:
+                # If a single file was downloaded; fallback to mp4 (which probably isn't the best idea)
+                merged_ext = result.get('ext', 'mp4')
+
+        # Return the sanitized file path with for processing
+        video_file = os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + "." + merged_ext)
         return os.path.abspath(video_file)
 
     except Exception as e:
