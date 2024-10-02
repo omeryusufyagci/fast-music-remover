@@ -14,6 +14,7 @@ How it works:
 2) Send a processing request to the `MediaProcessor` C++ binary, which uses DeepFilterNet for fast filtering
 3) Serve the processed video on the frontend
 
+Refactored to improve maintainability and readability.
 """
 
 app = Flask(__name__)
@@ -35,91 +36,105 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-def cleanup_old_files(base_filename):
-    """Removes any existing files with the same base name"""
-    file_paths = [
-        os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '.webm'),
-        os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '_isolated_audio.wav'),
-        os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '_processed_video.mp4')
-    ]
-    for path in file_paths:
-        if os.path.exists(path):
-            logging.info(f"Removing old file: {path}")
-            os.remove(path)
 
-def sanitize_filename(filename):
-    # Replace non-alphanumerics apart from periods and underscores, with underscores
-    return re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
+class Utils:
+    """Utility class for common operations like file cleanup and sanitization."""
 
-def download_youtube_video(url):
-    try:
-        # Extract media info first to sanitize title
-        with yt_dlp.YoutubeDL() as ydl:
-            info_dict = ydl.extract_info(url, download=False)
-            base_title = info_dict['title']
-            sanitized_title = sanitize_filename(base_title)
+    @staticmethod
+    def cleanup_old_files(base_filename):
+        """Removes any existing files with the same base name."""
+        file_paths = [
+            os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '.webm'),
+            os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '_isolated_audio.wav'),
+            os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '_processed_video.mp4')
+        ]
+        for path in file_paths:
+            if os.path.exists(path):
+                logging.info(f"Removing old file: {path}")
+                os.remove(path)
 
-        ydl_opts = {
-            'format': 'bestvideo+bestaudio/best',
-            'outtmpl': os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + '.%(ext)s'),
-            'noplaylist': True,
-            'keepvideo': True,  # Keep source files for merging
-            'n_threads': 6
-        }
+    @staticmethod
+    def sanitize_filename(filename):
+        """Replace non-alphanumerics (except periods and underscores) with underscores."""
+        return re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(url, download=True)
 
-            # Post-download file-ext gymnastics
-            if 'requested_formats' in result:
+class VideoProcessor:
+    """Class to handle video download and processing logic."""
 
-                # If separate video and audio were downloaded and merged 
-                merged_ext = result['ext']
-            else:
-                # If a single file was downloaded; fallback to mp4 (which probably isn't the best idea)
-                merged_ext = result.get('ext', 'mp4')
+    @staticmethod
+    def download_media(url):
+        try:
+            # Extract media info first to sanitize title
+            with yt_dlp.YoutubeDL() as ydl:
+                info_dict = ydl.extract_info(url, download=False)
+                base_title = info_dict['title']
+                sanitized_title = Utils.sanitize_filename(base_title)
 
-        # Return the sanitized file path with for processing
-        video_file = os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + "." + merged_ext)
-        return os.path.abspath(video_file)
+            ydl_opts = {
+                'format': 'bestvideo+bestaudio/best',
+                'outtmpl': os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + '.%(ext)s'),
+                'noplaylist': True,
+                'keepvideo': True,  # Keep source files for merging
+                'n_threads': 6
+            }
 
-    except Exception as e:
-        logging.error(f"Error downloading video: {e}")
-        return None
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                result = ydl.extract_info(url, download=True)
 
-def process_video_with_cpp(video_path):
-    try:
-        logging.info(f"Processing video at path: {video_path}")
+                # Post-download file-ext gymnastics
+                if 'requested_formats' in result:
+                    # If separate video and audio were downloaded and merged
+                    merged_ext = result['ext']
+                else:
+                    # If a single file was downloaded; fallback to mp4 (which probably isn't the best idea)
+                    merged_ext = result.get('ext', 'mp4')
 
-        result = subprocess.run([
-            './MediaProcessor/build/MediaProcessor', video_path
-        ], capture_output=True, text=True)
+            # Return the sanitized file path for processing
+            video_file = os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + "." + merged_ext)
+            return os.path.abspath(video_file)
 
-        if result.returncode != 0:
-            logging.error(f"Error processing video: {result.stderr}")
+        except Exception as e:
+            logging.error(f"Error downloading video: {e}")
             return None
 
-        for line in result.stdout.splitlines():
-            if "Video processed successfully" in line:
-                processed_video_path = line.split(": ")[1].strip()
-                return processed_video_path
+    @staticmethod
+    def process_media_with_cpp(video_path):
+        try:
+            logging.info(f"Processing video at path: {video_path}")
 
-        return None
-    except Exception as e:
-        logging.error(f"Error running C++ binary: {e}")
-        return None
+            result = subprocess.run([
+                './MediaProcessor/build/MediaProcessor', video_path
+            ], capture_output=True, text=True)
+
+            if result.returncode != 0:
+                logging.error(f"Error processing video: {result.stderr}")
+                return None
+
+            for line in result.stdout.splitlines():
+                if "Video processed successfully" in line:
+                    processed_video_path = line.split(": ")[1].strip()
+                    return processed_video_path
+
+            return None
+        except Exception as e:
+            logging.error(f"Error running C++ binary: {e}")
+            return None
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         url = request.form['url']
         if url:
-            video_path = download_youtube_video(url)
+            # Download video via VideoProcessor class
+            video_path = VideoProcessor.download_media(url)
             
             if not video_path:
                 return jsonify({"status": "error", "message": "Failed to download video."})
             
-            processed_video_path = process_video_with_cpp(video_path)
+            # Process video using VideoProcessor class
+            processed_video_path = VideoProcessor.process_media_with_cpp(video_path)
             
             if processed_video_path:
                 return jsonify({
@@ -131,9 +146,11 @@ def index():
     
     return render_template('index.html')
 
+
 @app.route('/video/<filename>')
 def serve_video(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 
 if __name__ == '__main__':
     app.run(port=8080, debug=True)
