@@ -25,3 +25,6 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
 
+# nlohmann-json is required
+find_package(nlohmann_json 3.2.0 REQUIRED)
+target_link_libraries(MediaProcessor PRIVATE nlohmann_json::nlohmann_json)
