@@ -5,7 +5,7 @@ import yt_dlp
 import json
 import logging
 import re
-
+from urllib.parse import urlparse
 """
 This is the backend of the Fast Music Remover tool.
 
@@ -14,7 +14,6 @@ How it works:
 2) Send a processing request to the `MediaProcessor` C++ binary, which uses DeepFilterNet for fast filtering
 3) Serve the processed video on the frontend
 
-Refactored to improve maintainability and readability.
 """
 
 app = Flask(__name__)
@@ -33,20 +32,22 @@ os.environ['DEEPFILTERNET_PATH'] = DEEPFILTERNET_PATH
 
 # Set the uploads/ for serving media; mkdir if not found
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
-
 
 class Utils:
     """Utility class for common operations like file cleanup and sanitization."""
+    @staticmethod
+    def ensure_dir_exists(directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
     @staticmethod
-    def cleanup_old_files(base_filename):
+    def remove_files_by_base(base_filename):
         """Removes any existing files with the same base name."""
+        base_path = os.path.join(app.config['UPLOAD_FOLDER'], base_filename)
         file_paths = [
-            os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '.webm'),
-            os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '_isolated_audio.wav'),
-            os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '_processed_video.mp4')
+            base_path + '.webm',
+            base_path + '_isolated_audio.wav',
+            base_path + '_processed_video.mp4'
         ]
         for path in file_paths:
             if os.path.exists(path):
@@ -57,9 +58,16 @@ class Utils:
     def sanitize_filename(filename):
         """Replace non-alphanumerics (except periods and underscores) with underscores."""
         return re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
+    
+    @staticmethod
+    def validate_url(url):
+        """Basic URL validation"""
+        parsed_url = urlparse(url)
+        return all([parsed_url.scheme, parsed_url.netloc])
 
+Utils.ensure_dir_exists(app.config['UPLOAD_FOLDER'])
 
-class VideoProcessor:
+class MediaHandler:
     """Class to handle video download and processing logic."""
 
     @staticmethod
@@ -99,7 +107,7 @@ class VideoProcessor:
             return None
 
     @staticmethod
-    def process_media_with_cpp(video_path):
+    def process_with_media_processor(video_path):
         try:
             logging.info(f"Processing video at path: {video_path}")
 
@@ -126,15 +134,19 @@ class VideoProcessor:
 def index():
     if request.method == 'POST':
         url = request.form['url']
+
+        if not Utils.validate_url(url):
+            return jsonify({"status": "error", "message": "Invalid URL provided."})
+        
         if url:
-            # Download video via VideoProcessor class
-            video_path = VideoProcessor.download_media(url)
+            # Download video via MediaHandler class
+            video_path = MediaHandler.download_media(url)
             
             if not video_path:
                 return jsonify({"status": "error", "message": "Failed to download video."})
             
-            # Process video using VideoProcessor class
-            processed_video_path = VideoProcessor.process_media_with_cpp(video_path)
+            # Process video using MediaHandler class
+            processed_video_path = MediaHandler.process_with_media_processor(video_path)
             
             if processed_video_path:
                 return jsonify({
