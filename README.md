@@ -38,6 +38,7 @@ To get started with `Fast Music Remover`, ensure that you have the following sof
 - **Python 3.9+**: Required for running the backend server.
 - **FFmpeg**: For extracting, probing, and processing audio files.
 - **CMake**: Needed to compile the C++ `MediaProcessor`.
+- **nlohmann-json**: A JSON library required for parsing configuration files in the `MediaProcessor`.
 - **Docker and Docker Compose** (optional but recommended for a quick setup):
 
 <details>
@@ -56,6 +57,12 @@ To get started with `Fast Music Remover`, ensure that you have the following sof
     brew install ffmpeg
     ```
 
+    After installing FFmpeg, ensure the correct path is set in the `config.json` file. By default, it is set to `/usr/bin/ffmpeg`. If you are using macOS and installed FFmpeg via Homebrew, update the path in `config.json` to:
+
+    ```json
+    "ffmpeg_path": "/opt/homebrew/bin/ffmpeg"
+    ```
+
   **CMake**:
   - **On Ubuntu/Debian**: 
     ```sh
@@ -65,6 +72,17 @@ To get started with `Fast Music Remover`, ensure that you have the following sof
   - **On macOS**:
     ```sh
     brew install cmake
+    ```
+
+  **nlohmann-json**:
+  - **On Ubuntu/Debian**: 
+    ```sh
+    sudo apt update
+    sudo apt install nlohmann-json3-dev
+    ```
+  - **On macOS**:
+    ```sh
+    brew install nlohmann-json
     ```
 
   **Docker and Docker Compose**:
