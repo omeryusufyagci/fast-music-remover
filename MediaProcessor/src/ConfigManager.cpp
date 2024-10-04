@@ -22,11 +22,29 @@ bool ConfigManager::loadConfig(const std::string &configFilePath) {
 }
 
 std::string ConfigManager::getDeepFilterPath() const {
-    return m_config["deep_filter_path"].get<std::string>();
+#ifdef _WIN32
+    return getConfigValue("deep_filter_path_windows");
+#else
+    return getConfigValue("deep_filter_path_unix");
+#endif
 }
 
 std::string ConfigManager::getFFmpegPath() const {
-    return m_config["ffmpeg_path"].get<std::string>();
+#ifdef _WIN32
+    return getConfigValue("ffmpeg_path_windows");
+#else
+    return getConfigValue("ffmpeg_path_unix");
+#endif
+}
+
+std::string ConfigManager::getConfigValue(const std::string &key) const {
+    auto it = m_config.find(key);
+    if (it != m_config.end()) {
+        return it->get<std::string>();
+    } else {
+        std::cerr << "Error: Config value not found for key: " << key << std::endl;
+        return "";
+    }
 }
 
 }  // namespace MediaProcessor

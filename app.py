@@ -5,6 +5,7 @@ import yt_dlp
 import json
 import logging
 import re
+import platform
 
 """
 This is the backend of the Fast Music Remover tool.
@@ -22,9 +23,15 @@ app = Flask(__name__)
 with open('config.json') as config_file:
     config = json.load(config_file)
 
-DEEPFILTERNET_PATH = config['deep_filter_path']
 DOWNLOADS_DIR = config['downloads_dir']
-FFMPEG_PATH = config['ffmpeg_path']
+if platform.system() == "Windows":
+    FFMPEG_PATH = config['ffmpeg_path_windows']  # for Windows
+    DEEPFILTERNET_PATH = config['deep_filter_path_windows']
+else:
+    FFMPEG_PATH = config['ffmpeg_path_unix']  # for Linux or other OS
+    DEEPFILTERNET_PATH = config['deep_filter_path_unix']
+
+
 UPLOAD_FOLDER = config.get('upload_folder', 'uploads')  # defaults to uploads/
 
 # Set env var for DeepFilterNet path
@@ -90,9 +97,10 @@ def download_youtube_video(url):
 def process_video_with_cpp(video_path):
     try:
         logging.info(f"Processing video at path: {video_path}")
-
+        logging.critical(f"xxxxxxxxxxxxxxxxxxxx{os.listdir("MediaProcessor\\build")}")
+        logging.critical(os.path.abspath('MediaProcessor\\build\\MediaProcessor.exe'))
         result = subprocess.run([
-            './MediaProcessor/build/MediaProcessor', video_path
+            os.path.abspath('MediaProcessor\\build\\MediaProcessor.exe'), video_path
         ], capture_output=True, text=True)
 
         if result.returncode != 0:

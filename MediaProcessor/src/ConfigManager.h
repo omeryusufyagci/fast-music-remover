@@ -16,6 +16,7 @@ class ConfigManager {
 
    private:
     ConfigManager() = default;
+    std::string getConfigValue(const std::string &key) const;
     nlohmann::json m_config;
 };
 

@@ -18,8 +18,8 @@ AudioProcessor::AudioProcessor(const std::string &inputVideoPath,
       m_numChunks(DEFAULT_NUM_CHUNKS),
       m_overlapDuration(DEFAULT_OVERLAP_DURATION) {
     m_outputDir = std::filesystem::path(outputAudioPath).parent_path().string();
-    m_chunksDir = m_outputDir + "/chunks";
-    m_processedChunksDir = m_outputDir + "/processed_chunks";
+    m_chunksDir = (std::filesystem::path(m_outputDir) / "chunks").string();
+    m_processedChunksDir = (std::filesystem::path(m_outputDir) / "processed_chunks").string();
 
     /*
      * TODO: 
@@ -141,7 +141,8 @@ bool AudioProcessor::processChunks() {
     std::vector<std::thread> threads;
     for (int i = 0; i < m_numChunks; ++i) {
         threads.emplace_back([&, i]() {
-            std::string chunkPath = m_chunkPaths[i];
+            std::string chunkPath =
+                std::filesystem::path(m_chunkPaths[i]).make_preferred().string();
 
             // `-D` flag is super important! uses built-in compensation to avoid sync issues
             // that happens as the processed audio becomes shorter than the org video length
@@ -162,10 +163,9 @@ bool AudioProcessor::processChunks() {
     // Prepare paths for processed chunks
     for (int i = 0; i < m_numChunks; ++i) {
         std::filesystem::path chunkPath(m_chunkPaths[i]);
-        std::string processedChunkPath =
-            m_processedChunksDir + "/" +
-            chunkPath.filename().string();  // DeepFilter overwrites the given file by default
-        m_processedChunkPaths.push_back(processedChunkPath);
+        std::filesystem::path processedChunkPath =
+            std::filesystem::path(m_processedChunksDir) / chunkPath.filename();
+        m_processedChunkPaths.push_back(processedChunkPath.string());
     }
 
     return true;
