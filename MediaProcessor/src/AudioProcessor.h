@@ -13,7 +13,7 @@ class AudioProcessor {
    public:
     AudioProcessor(const std::string &inputVideoPath, const std::string &outputAudioPath);
 
-    bool extractVocals();
+    bool isolateVocals();
 
    private:
     std::string m_inputVideoPath;
@@ -33,8 +33,11 @@ class AudioProcessor {
 
     bool extractAudio();
     bool chunkAudio();
-    bool processChunks();
+    bool filterChunks();
     bool mergeChunks();
+
+    // Moved from Utils, specific to audio processing
+    double getAudioDuration(const std::string &audioPath);
 };
 
 }  // namespace MediaProcessor
