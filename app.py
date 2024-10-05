@@ -96,8 +96,12 @@ def download_youtube_video(url):
 
 def process_video_with_cpp(video_path):
     try:
+        if platform.system() == 'Windows':
+            executable_path = os.path.join('MediaProcessor', 'build', 'MediaProcessor.exe')
+        else:
+            executable_path = os.path.join('MediaProcessor', 'build', 'MediaProcessor')
         result = subprocess.run([
-            'MediaProcessor/build/MediaProcessor', video_path
+            executable_path, video_path
         ], capture_output=True, text=True)
 
         if result.returncode != 0:
