@@ -102,4 +102,15 @@ double getAudioDuration(const std::string &audioPath) {
     }
 }
 
+bool containsWhitespace(const std::string &str) {
+    return str.find(' ') != std::string::npos;
+}
+
+std::string trimTrailingSpace(const std::string &str) {
+    if (str.empty() || str.back() != ' ') {
+        return str;
+    }
+    return str.substr(0, str.size() - 1);
+}
+
 }  // namespace MediaProcessor::Utils

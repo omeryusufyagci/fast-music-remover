@@ -20,6 +20,7 @@ add_executable(MediaProcessor
     src/AudioProcessor.cpp
     src/VideoProcessor.cpp
     src/Utils.cpp
+    src/CommandBuilder.cpp
 )
 
 # Threads is required
