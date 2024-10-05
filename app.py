@@ -96,11 +96,8 @@ def download_youtube_video(url):
 
 def process_video_with_cpp(video_path):
     try:
-        logging.info(f"Processing video at path: {video_path}")
-        logging.critical(f"xxxxxxxxxxxxxxxxxxxx{os.listdir("MediaProcessor\\build")}")
-        logging.critical(os.path.abspath('MediaProcessor\\build\\MediaProcessor.exe'))
         result = subprocess.run([
-            os.path.abspath('MediaProcessor\\build\\MediaProcessor.exe'), video_path
+            'MediaProcessor/build/MediaProcessor', video_path
         ], capture_output=True, text=True)
 
         if result.returncode != 0:
