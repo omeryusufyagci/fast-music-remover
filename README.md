@@ -23,6 +23,9 @@ https://github.com/user-attachments/assets/e46c161b-0178-4213-b468-245e9f829d5e
 
 </div>
 
+> The [original interview video](https://www.youtube.com/watch?v=aujFci9AuXE) is by Fisher College of Business, licensed under a [Creative Commons Attribution license (reuse allowed)](https://support.google.com/youtube/answer/2797468?hl=en).
+
+
 ## Background
 
 This project builds on an initial attempt using a `demucs`-based Python implementation, which had a filtering time cost greater than the source media length. This is due to `demucs`'s advanced capabilities, such as identifying individual instruments, which are features beyond the scope of this project. That initial version can still be found [here](https://github.com/omeryusufyagci/music-remover).
