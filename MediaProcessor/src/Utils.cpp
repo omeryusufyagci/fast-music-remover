@@ -73,35 +73,6 @@ bool removeFileIfExists(const std::string &filePath) {
     return false;
 }
 
-double getAudioDuration(const std::string &audioPath) {
-    /*
-     * TODO: ffprobe command to be used via the to-be-made FFMpegUtils class...
-     */
-
-    std::string command =
-        "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"" +
-        audioPath + "\"";
-    FILE *pipe = popen(command.c_str(), "r");
-    if (!pipe) {
-        std::cerr << "Error: Failed to run ffprobe to get audio duration." << std::endl;
-        return -1;
-    }
-
-    char buffer[128];
-    std::string result = "";
-    while (fgets(buffer, sizeof buffer, pipe) != NULL) {
-        result += buffer;
-    }
-    pclose(pipe);
-
-    try {
-        return std::stod(result);
-    } catch (std::exception &e) {
-        std::cerr << "Error: Could not parse audio duration." << std::endl;
-        return -1;
-    }
-}
-
 bool containsWhitespace(const std::string &str) {
     return str.find(' ') != std::string::npos;
 }

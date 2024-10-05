@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     auto [extractedVocalsPath, processedMediaPath] = Utils::prepareOutputPaths(inputMediaPath);
 
     AudioProcessor audioProcessor(inputMediaPath, extractedVocalsPath);
-    if (!audioProcessor.extractVocals()) {
+    if (!audioProcessor.isolateVocals()) {
         std::cerr << "Failed to extract vocals." << std::endl;
         return 1;
     }

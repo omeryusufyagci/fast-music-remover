@@ -28,7 +28,7 @@ AudioProcessor::AudioProcessor(const std::string &inputVideoPath,
      */
 }
 
-bool AudioProcessor::extractVocals() {
+bool AudioProcessor::isolateVocals() {
     /*
      * Extracts vocals from a video by chunking, parallel processing, and merging the audio.
      */
@@ -46,7 +46,7 @@ bool AudioProcessor::extractVocals() {
         return false;
     }
 
-    m_totalDuration = Utils::getAudioDuration(m_outputAudioPath);
+    m_totalDuration = getAudioDuration(m_outputAudioPath);
     if (m_totalDuration <= 0) {
         std::cerr << "Error: Invalid audio duration." << std::endl;
         return false;
@@ -56,7 +56,7 @@ bool AudioProcessor::extractVocals() {
         return false;
     }
 
-    if (!processChunks()) {
+    if (!filterChunks()) {
         return false;
     }
 
@@ -131,7 +131,7 @@ bool AudioProcessor::chunkAudio() {
     return true;
 }
 
-bool AudioProcessor::processChunks() {
+bool AudioProcessor::filterChunks() {
     Utils::ensureDirectoryExists(m_processedChunksDir);
 
     ConfigManager &configManager = ConfigManager::getInstance();
@@ -214,6 +214,35 @@ bool AudioProcessor::mergeChunks() {
     }
 
     return true;
+}
+
+double getAudioDuration(const std::string &audioPath) {
+    /*
+     * TODO: ffprobe command to be used via the to-be-made FFMpegUtils class...
+     */
+
+    std::string command =
+        "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"" +
+        audioPath + "\"";
+    FILE *pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Error: Failed to run ffprobe to get audio duration." << std::endl;
+        return -1;
+    }
+
+    char buffer[128];
+    std::string result = "";
+    while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+        result += buffer;
+    }
+    pclose(pipe);
+
+    try {
+        return std::stod(result);
+    } catch (std::exception &e) {
+        std::cerr << "Error: Could not parse audio duration." << std::endl;
+        return -1;
+    }
 }
 
 }  // namespace MediaProcessor
