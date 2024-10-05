@@ -5,7 +5,7 @@ import yt_dlp
 import json
 import logging
 import re
-
+from urllib.parse import urlparse
 """
 This is the backend of the Fast Music Remover tool.
 
@@ -32,94 +32,121 @@ os.environ['DEEPFILTERNET_PATH'] = DEEPFILTERNET_PATH
 
 # Set the uploads/ for serving media; mkdir if not found
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
 
-def cleanup_old_files(base_filename):
-    """Removes any existing files with the same base name"""
-    file_paths = [
-        os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '.webm'),
-        os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '_isolated_audio.wav'),
-        os.path.join(app.config['UPLOAD_FOLDER'], base_filename + '_processed_video.mp4')
-    ]
-    for path in file_paths:
-        if os.path.exists(path):
-            logging.info(f"Removing old file: {path}")
-            os.remove(path)
+class Utils:
+    """Utility class for common operations like file cleanup and sanitization."""
+    @staticmethod
+    def ensure_dir_exists(directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
-def sanitize_filename(filename):
-    # Replace non-alphanumerics apart from periods and underscores, with underscores
-    return re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
+    @staticmethod
+    def remove_files_by_base(base_filename):
+        """Removes any existing files with the same base name."""
+        base_path = os.path.join(app.config['UPLOAD_FOLDER'], base_filename)
+        file_paths = [
+            base_path + '.webm',
+            base_path + '_isolated_audio.wav',
+            base_path + '_processed_video.mp4'
+        ]
+        for path in file_paths:
+            if os.path.exists(path):
+                logging.info(f"Removing old file: {path}")
+                os.remove(path)
 
-def download_youtube_video(url):
-    try:
-        # Extract media info first to sanitize title
-        with yt_dlp.YoutubeDL() as ydl:
-            info_dict = ydl.extract_info(url, download=False)
-            base_title = info_dict['title']
-            sanitized_title = sanitize_filename(base_title)
+    @staticmethod
+    def sanitize_filename(filename):
+        """Replace non-alphanumerics (except periods and underscores) with underscores."""
+        return re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
+    
+    @staticmethod
+    def validate_url(url):
+        """Basic URL validation"""
+        parsed_url = urlparse(url)
+        return all([parsed_url.scheme, parsed_url.netloc])
 
-        ydl_opts = {
-            'format': 'bestvideo+bestaudio/best',
-            'outtmpl': os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + '.%(ext)s'),
-            'noplaylist': True,
-            'keepvideo': True,  # Keep source files for merging
-            'n_threads': 6
-        }
+Utils.ensure_dir_exists(app.config['UPLOAD_FOLDER'])
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(url, download=True)
+class MediaHandler:
+    """Class to handle video download and processing logic."""
 
-            # Post-download file-ext gymnastics
-            if 'requested_formats' in result:
+    @staticmethod
+    def download_media(url):
+        try:
+            # Extract media info first to sanitize title
+            with yt_dlp.YoutubeDL() as ydl:
+                info_dict = ydl.extract_info(url, download=False)
+                base_title = info_dict['title']
+                sanitized_title = Utils.sanitize_filename(base_title)
 
-                # If separate video and audio were downloaded and merged 
-                merged_ext = result['ext']
-            else:
-                # If a single file was downloaded; fallback to mp4 (which probably isn't the best idea)
-                merged_ext = result.get('ext', 'mp4')
+            ydl_opts = {
+                'format': 'bestvideo+bestaudio/best',
+                'outtmpl': os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + '.%(ext)s'),
+                'noplaylist': True,
+                'keepvideo': True,  # Keep source files for merging
+                'n_threads': 6
+            }
 
-        # Return the sanitized file path with for processing
-        video_file = os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + "." + merged_ext)
-        return os.path.abspath(video_file)
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                result = ydl.extract_info(url, download=True)
 
-    except Exception as e:
-        logging.error(f"Error downloading video: {e}")
-        return None
+                # Post-download file-ext gymnastics
+                if 'requested_formats' in result:
+                    # If separate video and audio were downloaded and merged
+                    merged_ext = result['ext']
+                else:
+                    # If a single file was downloaded; fallback to mp4 (which probably isn't the best idea)
+                    merged_ext = result.get('ext', 'mp4')
 
-def process_video_with_cpp(video_path):
-    try:
-        logging.info(f"Processing video at path: {video_path}")
+            # Return the sanitized file path for processing
+            video_file = os.path.join(app.config['UPLOAD_FOLDER'], sanitized_title + "." + merged_ext)
+            return os.path.abspath(video_file)
 
-        result = subprocess.run([
-            './MediaProcessor/build/MediaProcessor', video_path
-        ], capture_output=True, text=True)
-
-        if result.returncode != 0:
-            logging.error(f"Error processing video: {result.stderr}")
+        except Exception as e:
+            logging.error(f"Error downloading video: {e}")
             return None
 
-        for line in result.stdout.splitlines():
-            if "Video processed successfully" in line:
-                processed_video_path = line.split(": ")[1].strip()
-                return processed_video_path
+    @staticmethod
+    def process_with_media_processor(video_path):
+        try:
+            logging.info(f"Processing video at path: {video_path}")
 
-        return None
-    except Exception as e:
-        logging.error(f"Error running C++ binary: {e}")
-        return None
+            result = subprocess.run([
+                './MediaProcessor/build/MediaProcessor', video_path
+            ], capture_output=True, text=True)
+
+            if result.returncode != 0:
+                logging.error(f"Error processing video: {result.stderr}")
+                return None
+
+            for line in result.stdout.splitlines():
+                if "Video processed successfully" in line:
+                    processed_video_path = line.split(": ")[1].strip()
+                    return processed_video_path
+
+            return None
+        except Exception as e:
+            logging.error(f"Error running C++ binary: {e}")
+            return None
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         url = request.form['url']
+
+        if not Utils.validate_url(url):
+            return jsonify({"status": "error", "message": "Invalid URL provided."})
+        
         if url:
-            video_path = download_youtube_video(url)
+            # Download video via MediaHandler class
+            video_path = MediaHandler.download_media(url)
             
             if not video_path:
                 return jsonify({"status": "error", "message": "Failed to download video."})
             
-            processed_video_path = process_video_with_cpp(video_path)
+            # Process video using MediaHandler class
+            processed_video_path = MediaHandler.process_with_media_processor(video_path)
             
             if processed_video_path:
                 return jsonify({
@@ -131,9 +158,11 @@ def index():
     
     return render_template('index.html')
 
+
 @app.route('/video/<filename>')
 def serve_video(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 
 if __name__ == '__main__':
     app.run(port=8080, debug=True)
