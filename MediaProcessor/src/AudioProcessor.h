@@ -36,7 +36,6 @@ class AudioProcessor {
     bool filterChunks();
     bool mergeChunks();
 
-    // Moved from Utils, specific to audio processing
     double getAudioDuration(const std::string &audioPath);
 };
 

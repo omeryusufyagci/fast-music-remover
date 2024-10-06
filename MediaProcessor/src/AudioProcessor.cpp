@@ -20,12 +20,6 @@ AudioProcessor::AudioProcessor(const std::string &inputVideoPath,
     m_outputDir = std::filesystem::path(outputAudioPath).parent_path().string();
     m_chunksDir = m_outputDir + "/chunks";
     m_processedChunksDir = m_outputDir + "/processed_chunks";
-
-    /*
-     * TODO: 
-     * * numChunks (numThreads) should be configurable, as well as the overlap (which seems much less critical?)
-     * * Need an ffmpeg utils to establish an API for extaction and probing
-     */
 }
 
 bool AudioProcessor::isolateVocals() {
@@ -216,7 +210,7 @@ bool AudioProcessor::mergeChunks() {
     return true;
 }
 
-double getAudioDuration(const std::string &audioPath) {
+double AudioProcessor::getAudioDuration(const std::string &audioPath) {
     /*
      * TODO: ffprobe command to be used via the to-be-made FFMpegUtils class...
      */
