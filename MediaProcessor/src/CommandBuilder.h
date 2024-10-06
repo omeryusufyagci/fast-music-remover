@@ -1,7 +1,6 @@
 #ifndef COMMANDBUILDER_H
 #define COMMANDBUILDER_H
 
-#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -11,18 +10,15 @@ namespace MediaProcessor {
 
 class CommandBuilder : public ICommandBuilder {
    public:
-    virtual ~CommandBuilder() = default;
-
-    void addArgument(std::filesystem::path arg) override;
-    void addFlag(std::string flag) override;
-    void addFlag(std::string flag, std::string value) override;
-
+    void addArgument(const std::string& arg) override;
+    void addFlag(const std::string& flag) override;
+    void addFlag(const std::string& flag, const std::string& value) override;
     std::string build() const override;
 
-   protected:
-    std::string formatArgument(const std::string &arg) const;
-
+   private:
     std::vector<std::string> m_arguments;
+
+    std::string formatArgument(const std::string& arg) const;
 };
 
 }  // namespace MediaProcessor

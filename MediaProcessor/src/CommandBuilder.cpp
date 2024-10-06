@@ -1,3 +1,4 @@
+// CommandBuilder.cpp
 #include "CommandBuilder.h"
 
 #include <sstream>
@@ -6,30 +7,30 @@
 
 namespace MediaProcessor {
 
-void CommandBuilder::addArgument(std::filesystem::path arg) {
-    m_arguments.push_back(std::move(arg).string());
+void CommandBuilder::addArgument(const std::string& arg) {
+    m_arguments.push_back(arg);
 }
 
-void CommandBuilder::addFlag(std::string flag) {
-    m_arguments.push_back(std::move(flag));
+void CommandBuilder::addFlag(const std::string& flag) {
+    m_arguments.push_back(flag);
 }
 
-void CommandBuilder::addFlag(std::string flag, std::string value) {
-    m_arguments.push_back(std::move(flag));
-    m_arguments.push_back(std::move(value));
+void CommandBuilder::addFlag(const std::string& flag, const std::string& value) {
+    m_arguments.push_back(flag);
+    m_arguments.push_back(value);
 }
 
 std::string CommandBuilder::build() const {
-    using MediaProcessor::Utils::trimTrailingSpace;
-
     std::ostringstream command;
-    for (const auto &arg : m_arguments) {
-        command << formatArgument(arg) << " ";
+    for (const auto& arg : m_arguments) {
+        command << formatArgument(arg) << ' ';
     }
-    return trimTrailingSpace(command.str());
+    std::string commandStr = command.str();
+
+    return Utils::trimTrailingSpace(commandStr);
 }
 
-std::string CommandBuilder::formatArgument(const std::string &arg) const {
+std::string CommandBuilder::formatArgument(const std::string& arg) const {
     using MediaProcessor::Utils::containsWhitespace;
 
     if (containsWhitespace(arg)) {
