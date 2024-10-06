@@ -36,7 +36,6 @@ class AudioProcessor {
     std::string buildFilterComplex() const;
     bool mergeChunks();
 
-    // Moved from Utils, specific to audio processing
     double getAudioDuration(const std::string &audioPath);
 };
 

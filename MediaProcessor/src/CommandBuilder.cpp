@@ -14,11 +14,6 @@ void CommandBuilder::addFlag(std::string flag) {
     m_arguments.push_back(std::move(flag));
 }
 
-void CommandBuilder::addFlag(std::string flag, std::filesystem::path value) {
-    m_arguments.push_back(std::move(flag));
-    m_arguments.push_back(std::move(value).string());
-}
-
 void CommandBuilder::addFlag(std::string flag, std::string value) {
     m_arguments.push_back(std::move(flag));
     m_arguments.push_back(std::move(value));

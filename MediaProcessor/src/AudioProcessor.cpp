@@ -22,12 +22,6 @@ AudioProcessor::AudioProcessor(const std::string &inputVideoPath,
 
     m_numChunks = ConfigManager::getInstance().getOptimalThreadCount();
     std::cout << "INFO: using " << m_numChunks << " threads." << std::endl;
-
-    /*
-     * TODO: 
-     * * numChunks (numThreads) should be configurable, as well as the overlap (which seems much less critical?)
-     * * Need an ffmpeg utils to establish an API for extaction and probing
-     */
 }
 
 bool AudioProcessor::isolateVocals() {

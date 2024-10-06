@@ -17,7 +17,6 @@ class ICommandBuilder {
 
     virtual void addArgument(std::filesystem::path arg) = 0;
     virtual void addFlag(std::string flag) = 0;
-    virtual void addFlag(std::string flag, std::filesystem::path value) = 0;
     virtual void addFlag(std::string flag, std::string value) = 0;
 };
 
