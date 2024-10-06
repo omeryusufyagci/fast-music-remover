@@ -1,7 +1,6 @@
 #ifndef ICOMMANDBUILDER_H
 #define ICOMMANDBUILDER_H
 
-#include <filesystem>
 #include <string>
 
 namespace MediaProcessor {
@@ -15,9 +14,9 @@ class ICommandBuilder {
 
     virtual std::string build() const = 0;
 
-    virtual void addArgument(std::filesystem::path arg) = 0;
-    virtual void addFlag(std::string flag) = 0;
-    virtual void addFlag(std::string flag, std::string value) = 0;
+    virtual void addArgument(const std::string& arg) = 0;
+    virtual void addFlag(const std::string& flag) = 0;
+    virtual void addFlag(const std::string& flag, const std::string& value) = 0;
 };
 
 }  // namespace MediaProcessor

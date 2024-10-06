@@ -1,22 +1,24 @@
 #ifndef VIDEOPROCESSOR_H
 #define VIDEOPROCESSOR_H
 
-#include <string>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace MediaProcessor {
 
 class VideoProcessor {
    public:
-    VideoProcessor(const std::string &videoPath, const std::string &audioPath,
-                   const std::string &outputPath);
+    VideoProcessor(const fs::path &videoPath, const fs::path &audioPath,
+                   const fs::path &outputPath);
 
     bool mergeMedia();
 
    private:
-    std::string m_videoPath;
-    std::string m_audioPath;
-    std::string m_outputPath;
-    std::string m_ffmpegPath;
+    fs::path m_videoPath;
+    fs::path m_audioPath;
+    fs::path m_outputPath;
+    fs::path m_ffmpegPath;
 };
 
 }  // namespace MediaProcessor

@@ -1,24 +1,25 @@
 #include "AudioProcessor.h"
 
-#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <thread>
 
+#include "CommandBuilder.h"
 #include "ConfigManager.h"
 #include "Utils.h"
 
+namespace fs = std::filesystem;
+
 namespace MediaProcessor {
 
-AudioProcessor::AudioProcessor(const std::string &inputVideoPath,
-                               const std::string &outputAudioPath)
+AudioProcessor::AudioProcessor(const fs::path& inputVideoPath, const fs::path& outputAudioPath)
     : m_inputVideoPath(inputVideoPath),
       m_outputAudioPath(outputAudioPath),
       m_overlapDuration(DEFAULT_OVERLAP_DURATION) {
-    m_outputDir = std::filesystem::path(outputAudioPath).parent_path().string();
-    m_chunksDir = m_outputDir + "/chunks";
-    m_processedChunksDir = m_outputDir + "/processed_chunks";
+    m_outputDir = m_outputAudioPath.parent_path();
+    m_chunksDir = m_outputDir / "chunks";
+    m_processedChunksDir = m_outputDir / "processed_chunks";
 
     m_numChunks = ConfigManager::getInstance().getOptimalThreadCount();
     std::cout << "INFO: using " << m_numChunks << " threads." << std::endl;
@@ -29,7 +30,7 @@ bool AudioProcessor::isolateVocals() {
      * Extracts vocals from a video by chunking, parallel processing, and merging the audio.
      */
 
-    ConfigManager &configManager = ConfigManager::getInstance();
+    ConfigManager& configManager = ConfigManager::getInstance();
 
     // Ensure output directory exists and remove output file if it exists
     Utils::ensureDirectoryExists(m_outputDir);
@@ -61,20 +62,27 @@ bool AudioProcessor::isolateVocals() {
     }
 
     // The intermediary files can be useful for debugging, but for release we'll delete them
-    std::filesystem::remove_all(m_chunksDir);
-    std::filesystem::remove_all(m_processedChunksDir);
+    fs::remove_all(m_chunksDir);
+    fs::remove_all(m_processedChunksDir);
 
     return true;
 }
 
 bool AudioProcessor::extractAudio() {
-    ConfigManager &configManager = ConfigManager::getInstance();
-    std::string ffmpegPath = configManager.getFFmpegPath();
+    ConfigManager& configManager = ConfigManager::getInstance();
+    fs::path ffmpegPath = configManager.getFFmpegPath();
 
     // Extract the audio with FFmpeg
-    std::string ffmpegCommand = ffmpegPath + " -y -i \"" + m_inputVideoPath +
-                                "\" -ar 48000 -ac 1 -c:a pcm_s16le \"" + m_outputAudioPath + "\"";
-    if (!Utils::runCommand(ffmpegCommand)) {
+    CommandBuilder cmd;
+    cmd.addArgument(ffmpegPath.string());
+    cmd.addFlag("-y");
+    cmd.addFlag("-i", m_inputVideoPath.string());
+    cmd.addFlag("-ar", "48000");
+    cmd.addFlag("-ac", "1");
+    cmd.addFlag("-c:a", "pcm_s16le");
+    cmd.addArgument(m_outputAudioPath.string());
+
+    if (!Utils::runCommand(cmd.build())) {
         std::cerr << "Error: Failed to extract and convert audio using FFmpeg." << std::endl;
         return false;
     }
@@ -101,23 +109,30 @@ bool AudioProcessor::chunkAudio() {
         m_durations.push_back(duration);
     }
 
-    ConfigManager &configManager = ConfigManager::getInstance();
-    std::string ffmpegPath = configManager.getFFmpegPath();
+    ConfigManager& configManager = ConfigManager::getInstance();
+    fs::path ffmpegPath = configManager.getFFmpegPath();
 
     // Chunk the audio
     for (int i = 0; i < m_numChunks; ++i) {
-        std::string chunkPath = m_chunksDir + "/chunk_" + std::to_string(i) + ".wav";
+        fs::path chunkPath = m_chunksDir / ("chunk_" + std::to_string(i) + ".wav");
 
         // Set higher precision for chunk boundaries
         std::ostringstream ssStartTime, ssDuration;
         ssStartTime << std::fixed << std::setprecision(6) << m_startTimes[i];
         ssDuration << std::fixed << std::setprecision(6) << m_durations[i];
 
-        std::string ffmpegSplitCommand = ffmpegPath + " -y -ss " + ssStartTime.str() + " -t " +
-                                         ssDuration.str() + " -i \"" + m_outputAudioPath +
-                                         "\" -ar 48000 -ac 1 -c:a pcm_s16le \"" + chunkPath + "\"";
+        CommandBuilder cmd;
+        cmd.addArgument(ffmpegPath.string());
+        cmd.addFlag("-y");
+        cmd.addFlag("-ss", ssStartTime.str());
+        cmd.addFlag("-t", ssDuration.str());
+        cmd.addFlag("-i", m_outputAudioPath.string());
+        cmd.addFlag("-ar", "48000");
+        cmd.addFlag("-ac", "1");
+        cmd.addFlag("-c:a", "pcm_s16le");
+        cmd.addArgument(chunkPath.string());
 
-        if (!Utils::runCommand(ffmpegSplitCommand)) {
+        if (!Utils::runCommand(cmd.build())) {
             std::cerr << "Error: Failed to split audio into chunks." << std::endl;
             return false;
         }
@@ -130,20 +145,24 @@ bool AudioProcessor::chunkAudio() {
 bool AudioProcessor::filterChunks() {
     Utils::ensureDirectoryExists(m_processedChunksDir);
 
-    ConfigManager &configManager = ConfigManager::getInstance();
-    std::string deepFilterPath = configManager.getDeepFilterPath();
+    ConfigManager& configManager = ConfigManager::getInstance();
+    fs::path deepFilterPath = configManager.getDeepFilterPath();
 
     // Parallel process chunks with the filter
     std::vector<std::thread> threads;
     for (int i = 0; i < m_numChunks; ++i) {
         threads.emplace_back([&, i]() {
-            std::string chunkPath = m_chunkPaths[i];
+            fs::path chunkPath = m_chunkPaths[i];
 
             // `-D` flag is super important! uses built-in compensation to avoid sync issues
             // that happens as the processed audio becomes shorter than the org video length
-            std::string deepFilterCommand =
-                deepFilterPath + " -D -o \"" + m_processedChunksDir + "\" \"" + chunkPath + "\"";
-            if (!Utils::runCommand(deepFilterCommand)) {
+            CommandBuilder cmd;
+            cmd.addArgument(deepFilterPath.string());
+            cmd.addFlag("-D");
+            cmd.addFlag("-o", m_processedChunksDir.string());
+            cmd.addArgument(chunkPath.string());
+
+            if (!Utils::runCommand(cmd.build())) {
                 std::cerr << "Error: Failed to process chunk with DeepFilterNet: " << chunkPath
                           << std::endl;
             }
@@ -151,16 +170,14 @@ bool AudioProcessor::filterChunks() {
     }
 
     // Block until all threads are done
-    for (auto &t : threads) {
+    for (auto& t : threads) {
         t.join();
     }
 
     // Prepare paths for processed chunks
     for (int i = 0; i < m_numChunks; ++i) {
-        std::filesystem::path chunkPath(m_chunkPaths[i]);
-        std::string processedChunkPath =
-            m_processedChunksDir + "/" +
-            chunkPath.filename().string();  // DeepFilter overwrites the given file by default
+        fs::path chunkPath = m_chunkPaths[i];
+        fs::path processedChunkPath = m_processedChunksDir / chunkPath.filename();
         m_processedChunkPaths.push_back(processedChunkPath);
     }
 
@@ -176,7 +193,7 @@ std::string AudioProcessor::buildFilterComplex() const {
         return filterComplex;  // Return empty string if not enough chunks
     }
 
-    for (int i = 0; i < m_processedChunkPaths.size() - 1; ++i) {
+    for (int i = 0; i < static_cast<int>(m_processedChunkPaths.size()) - 1; ++i) {
         if (i == 0) {
             // Generate a `crossfade` for the first chunk pair (0 and 1)
             filterComplex += "[" + std::to_string(i) + ":a][" + std::to_string(i + 1) +
@@ -194,32 +211,32 @@ std::string AudioProcessor::buildFilterComplex() const {
 
     // Merge the output of the last crossfade into a final output audio stream
     filterComplex += "[a" + std::to_string(filterIndex - 1) + "]amerge=inputs=1[outa]";
-
     return filterComplex;
 }
 
 bool AudioProcessor::mergeChunks() {
-    ConfigManager &configManager = ConfigManager::getInstance();
-    std::string ffmpegPath = configManager.getFFmpegPath();
+    ConfigManager& configManager = ConfigManager::getInstance();
+    fs::path ffmpegPath = configManager.getFFmpegPath();
 
-    std::string ffmpegMergeCommand = ffmpegPath + " -y ";
-
-    // If there's only one processed chunk, no filter complex
-    if (m_processedChunkPaths.size() == 1) {
-        ffmpegMergeCommand += "-i \"" + m_processedChunkPaths[0] +
-                              "\" -c:a pcm_s16le -ar 48000 \"" + m_outputAudioPath + "\"";
-    } else {
-        // Merge processed chunks with `crossfade`
-        for (int i = 0; i < m_processedChunkPaths.size(); ++i) {
-            ffmpegMergeCommand += "-i \"" + m_processedChunkPaths[i] + "\" ";
-        }
-
-        ffmpegMergeCommand += "-filter_complex \"" + buildFilterComplex() +
-                              "\" -map \"[outa]\" -c:a pcm_s16le -ar 48000 \"" + m_outputAudioPath +
-                              "\"";
+    // Merge processed chunks with `crossfade` using CommandBuilder
+    CommandBuilder cmd;
+    cmd.addArgument(ffmpegPath.string());
+    cmd.addFlag("-y");
+    for (const auto& chunkPath : m_processedChunkPaths) {
+        cmd.addFlag("-i", chunkPath.string());
     }
+  
+    // If there's more then one processed chunk
+    if (static_cast<int>(m_processedChunkPaths.size()) >= 2) {
+        cmd.addFlag("-filter_complex", buildFilterComplex());
+        cmd.addFlag("-map", "[outa]");
+    }
+    
+    cmd.addFlag("-c:a", "pcm_s16le");
+    cmd.addFlag("-ar", "48000");
+    cmd.addArgument(m_outputAudioPath.string());
 
-    if (!Utils::runCommand(ffmpegMergeCommand)) {
+    if (!Utils::runCommand(cmd.build())) {
         std::cerr << "Error: Failed to merge back processed audio chunks with crossfading."
                   << std::endl;
         return false;
@@ -228,30 +245,34 @@ bool AudioProcessor::mergeChunks() {
     return true;
 }
 
-double AudioProcessor::getAudioDuration(const std::string &audioPath) {
+double AudioProcessor::getAudioDuration(const fs::path& audioPath) {
     /*
      * TODO: ffprobe command to be used via the to-be-made FFMpegUtils class...
      */
 
-    std::string command =
-        "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"" +
-        audioPath + "\"";
-    FILE *pipe = popen(command.c_str(), "r");
+    CommandBuilder cmd;
+    cmd.addArgument("ffprobe");
+    cmd.addFlag("-v", "error");
+    cmd.addFlag("-show_entries", "format=duration");
+    cmd.addFlag("-of", "default=noprint_wrappers=1:nokey=1");
+    cmd.addArgument(audioPath.string());
+
+    FILE* pipe = popen(cmd.build().c_str(), "r");
     if (!pipe) {
         std::cerr << "Error: Failed to run ffprobe to get audio duration." << std::endl;
         return -1;
     }
 
     char buffer[128];
-    std::string result = "";
-    while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+    std::string result;
+    while (fgets(buffer, sizeof buffer, pipe) != nullptr) {
         result += buffer;
     }
     pclose(pipe);
 
     try {
         return std::stod(result);
-    } catch (std::exception &e) {
+    } catch (std::exception& e) {
         std::cerr << "Error: Could not parse audio duration." << std::endl;
         return -1;
     }

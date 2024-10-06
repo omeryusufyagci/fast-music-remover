@@ -1,8 +1,11 @@
 #ifndef AUDIOPROCESSOR_H
 #define AUDIOPROCESSOR_H
 
+#include <filesystem>
 #include <string>
 #include <vector>
+
+namespace fs = std::filesystem;
 
 namespace MediaProcessor {
 
@@ -10,22 +13,22 @@ constexpr double DEFAULT_OVERLAP_DURATION = 0.5;
 
 class AudioProcessor {
    public:
-    AudioProcessor(const std::string &inputVideoPath, const std::string &outputAudioPath);
+    AudioProcessor(const fs::path &inputVideoPath, const fs::path &outputAudioPath);
 
     bool isolateVocals();
 
    private:
-    std::string m_inputVideoPath;
-    std::string m_outputAudioPath;
+    fs::path m_inputVideoPath;
+    fs::path m_outputAudioPath;
 
     int m_numChunks;
     double m_overlapDuration;
 
-    std::string m_outputDir;
-    std::string m_chunksDir;
-    std::string m_processedChunksDir;
-    std::vector<std::string> m_chunkPaths;
-    std::vector<std::string> m_processedChunkPaths;
+    fs::path m_outputDir;
+    fs::path m_chunksDir;
+    fs::path m_processedChunksDir;
+    std::vector<fs::path> m_chunkPaths;
+    std::vector<fs::path> m_processedChunkPaths;
     std::vector<double> m_startTimes;
     std::vector<double> m_durations;
     double m_totalDuration;
@@ -36,7 +39,7 @@ class AudioProcessor {
     std::string buildFilterComplex() const;
     bool mergeChunks();
 
-    double getAudioDuration(const std::string &audioPath);
+    double getAudioDuration(const fs::path &audioPath);
 };
 
 }  // namespace MediaProcessor

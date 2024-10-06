@@ -7,12 +7,12 @@
 
 namespace MediaProcessor {
 
-ConfigManager &ConfigManager::getInstance() {
+ConfigManager& ConfigManager::getInstance() {
     static ConfigManager instance;
     return instance;
 }
 
-bool ConfigManager::loadConfig(const std::string &configFilePath) {
+bool ConfigManager::loadConfig(const fs::path& configFilePath) {
     std::ifstream config_file(configFilePath);
     if (!config_file.is_open()) {
         std::cerr << "Error: Could not open " << configFilePath << std::endl;
@@ -23,11 +23,11 @@ bool ConfigManager::loadConfig(const std::string &configFilePath) {
     return true;
 }
 
-std::string ConfigManager::getDeepFilterPath() const {
+fs::path ConfigManager::getDeepFilterPath() const {
     return m_config["deep_filter_path"].get<std::string>();
 }
 
-std::string ConfigManager::getFFmpegPath() const {
+fs::path ConfigManager::getFFmpegPath() const {
     return m_config["ffmpeg_path"].get<std::string>();
 }
 
