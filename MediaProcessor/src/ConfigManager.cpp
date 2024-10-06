@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "HardwareUtils.h"
+
 namespace MediaProcessor {
 
 ConfigManager &ConfigManager::getInstance() {
@@ -27,6 +29,25 @@ std::string ConfigManager::getDeepFilterPath() const {
 
 std::string ConfigManager::getFFmpegPath() const {
     return m_config["ffmpeg_path"].get<std::string>();
+}
+
+unsigned int ConfigManager::getOptimalThreadCount() {
+    unsigned int configNumThreads = getNumThreadsValue();
+    unsigned int hardwareNumThreads = HardwareUtils::getHardwareThreadCount();
+
+    return determineNumThreads(configNumThreads, hardwareNumThreads);
+}
+
+unsigned int ConfigManager::getNumThreadsValue() {
+    return (m_config["limit_thread"].get<bool>())
+               ? m_config["max_thread"].get<unsigned int>()
+               : 0;
+}
+
+unsigned int ConfigManager::determineNumThreads(unsigned int configNumThreads,
+                                                unsigned int hardwareNumThreads) {
+    return (configNumThreads >= 1 && configNumThreads <= hardwareNumThreads) ? configNumThreads
+                                                                             : hardwareNumThreads;
 }
 
 }  // namespace MediaProcessor

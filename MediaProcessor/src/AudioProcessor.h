@@ -6,7 +6,6 @@
 
 namespace MediaProcessor {
 
-constexpr int DEFAULT_NUM_CHUNKS = 6;
 constexpr double DEFAULT_OVERLAP_DURATION = 0.5;
 
 class AudioProcessor {
@@ -34,6 +33,7 @@ class AudioProcessor {
     bool extractAudio();
     bool chunkAudio();
     bool filterChunks();
+    std::string buildFilterComplex() const;
     bool mergeChunks();
 
     // Moved from Utils, specific to audio processing
