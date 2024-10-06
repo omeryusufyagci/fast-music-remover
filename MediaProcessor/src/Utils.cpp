@@ -36,22 +36,23 @@ bool runCommand(const std::string &command) {
     return true;
 }
 
-std::pair<std::string, std::string> prepareOutputPaths(const std::string &videoPath) {
+std::pair<std::filesystem::path, std::filesystem::path> prepareOutputPaths(
+    const std::filesystem::path &videoPath) {
     /*
      * Prepares and returns the output paths for the vocals and processed video files.
      */
 
-    std::filesystem::path videoFilePath(videoPath);
-    std::string baseFilename = videoFilePath.stem().string();
-    std::string outputDir = videoFilePath.parent_path().string();
+    std::string baseFilename = videoPath.stem().string();
 
-    std::string vocalsPath = outputDir + "/" + baseFilename + "_isolated_audio.wav";
-    std::string processedVideoPath = outputDir + "/" + baseFilename + "_processed_video.mp4";
+    std::filesystem::path outputDir = videoPath.parent_path();
+
+    std::filesystem::path vocalsPath = outputDir / (baseFilename + "_isolated_audio.wav");
+    std::filesystem::path processedVideoPath = outputDir / (baseFilename + "_processed_video.mp4");
 
     return {vocalsPath, processedVideoPath};
 }
 
-bool ensureDirectoryExists(const std::string &path) {
+bool ensureDirectoryExists(const std::filesystem::path &path) {
     /*
      * Ensures the specified directory exists by making the directory if necessary
      */
@@ -64,7 +65,7 @@ bool ensureDirectoryExists(const std::string &path) {
     return false;
 }
 
-bool removeFileIfExists(const std::string &filePath) {
+bool removeFileIfExists(const std::filesystem::path &filePath) {
     if (std::filesystem::exists(filePath)) {
         std::cout << "File already exists, removing it: " << filePath << std::endl;
         std::filesystem::remove(filePath);

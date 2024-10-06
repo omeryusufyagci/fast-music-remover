@@ -1,31 +1,42 @@
 #include "VideoProcessor.h"
 
-#include <filesystem>
 #include <iostream>
 
+#include "CommandBuilder.h"
 #include "ConfigManager.h"
 #include "Utils.h"
 
+namespace fs = std::filesystem;
+
 namespace MediaProcessor {
 
-VideoProcessor::VideoProcessor(const std::string &videoPath, const std::string &audioPath,
-                               const std::string &outputPath)
-    : m_videoPath(std::filesystem::absolute(videoPath).string()),
-      m_audioPath(std::filesystem::absolute(audioPath).string()),
-      m_outputPath(std::filesystem::absolute(outputPath).string()),
+VideoProcessor::VideoProcessor(const fs::path& videoPath, const fs::path& audioPath,
+                               const fs::path& outputPath)
+    : m_videoPath(fs::absolute(videoPath)),
+      m_audioPath(fs::absolute(audioPath)),
+      m_outputPath(fs::absolute(outputPath)),
       m_ffmpegPath(ConfigManager::getInstance().getFFmpegPath()) {}
 
 bool VideoProcessor::mergeMedia() {
-    // Remove the output file if it already exists to avoid interactive FFmpeg prompt
-    Utils::removeFileIfExists(m_outputPath);
+    Utils::removeFileIfExists(m_outputPath);  // to avoid interactive ffmpeg prompt
 
     std::cout << "Merging video and audio..." << std::endl;
 
-    // Prepare FFmpeg command (-y flag to overwrite the file)
-    std::string ffmpegCommand =
-        m_ffmpegPath + " -y -i \"" + m_videoPath + "\" -i \"" + m_audioPath +
-        "\" -c:v copy -c:a aac -strict experimental -map 0:v:0 -map 1:a:0 -shortest \"" +
-        m_outputPath + "\"";
+    // Prepare FFmpeg command
+    CommandBuilder cmd;
+    cmd.addArgument(m_ffmpegPath.string());
+    cmd.addFlag("-y");  // overwrite enabled
+    cmd.addFlag("-i", m_videoPath.string());
+    cmd.addFlag("-i", m_audioPath.string());
+    cmd.addFlag("-c:v", "copy");
+    cmd.addFlag("-c:a", "aac");
+    cmd.addFlag("-strict", "experimental");
+    cmd.addFlag("-map", "0:v:0");
+    cmd.addFlag("-map", "1:a:0");
+    cmd.addFlag("-shortest");
+    cmd.addArgument(m_outputPath.string());
+
+    std::string ffmpegCommand = cmd.build();
 
     std::cout << "Running FFmpeg command: " << ffmpegCommand << std::endl;
     bool success = Utils::runCommand(ffmpegCommand);
