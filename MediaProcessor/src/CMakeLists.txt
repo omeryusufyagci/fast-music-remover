@@ -19,3 +19,7 @@ target_include_directories(MediaProcessor PRIVATE
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
+
+set_target_properties(MediaProcessor PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
