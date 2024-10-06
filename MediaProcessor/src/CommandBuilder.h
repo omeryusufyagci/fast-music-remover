@@ -15,7 +15,6 @@ class CommandBuilder : public ICommandBuilder {
 
     void addArgument(std::filesystem::path arg) override;
     void addFlag(std::string flag) override;
-    void addFlag(std::string flag, std::filesystem::path value) override;
     void addFlag(std::string flag, std::string value) override;
 
     std::string build() const override;
