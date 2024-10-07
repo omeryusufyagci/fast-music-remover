@@ -225,13 +225,13 @@ bool AudioProcessor::mergeChunks() {
     for (const auto& chunkPath : m_processedChunkPaths) {
         cmd.addFlag("-i", chunkPath.string());
     }
-  
+
     // If there's more then one processed chunk
     if (static_cast<int>(m_processedChunkPaths.size()) >= 2) {
         cmd.addFlag("-filter_complex", buildFilterComplex());
         cmd.addFlag("-map", "[outa]");
     }
-    
+
     cmd.addFlag("-c:a", "pcm_s16le");
     cmd.addFlag("-ar", "48000");
     cmd.addArgument(m_outputAudioPath.string());

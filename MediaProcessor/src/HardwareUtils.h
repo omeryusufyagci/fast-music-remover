@@ -6,6 +6,6 @@ namespace MediaProcessor::HardwareUtils {
 constexpr unsigned int DEFAULT_NUM_THREADS = 6;
 unsigned int getHardwareThreadCount();
 
-}  // namespace MediaProcessor
+}  // namespace MediaProcessor::HardwareUtils
 
 #endif  // HARDWAREUTILS_H
