@@ -1,11 +1,30 @@
+<div align="center">
+
 # Fast Music Remover
 
+</div>
+
+<div align="center">
+
 [![GitHub license](https://img.shields.io/github/license/omeryusufyagci/fast-music-remover)](https://github.com/omeryusufyagci/fast-music-remover/blob/main/LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/omeryusufyagci/fast-music-remover?color=blue)](https://github.com/omeryusufyagci/fast-music-remover/issues)
+[![GitHub issues](https://img.shields.io/github/issues/omeryusufyagci/fast-music-remover?color=yellow)](https://github.com/omeryusufyagci/fast-music-remover/issues)
 [![GitHub stars](https://img.shields.io/github/stars/omeryusufyagci/fast-music-remover?style=social)](https://github.com/omeryusufyagci/fast-music-remover/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/omeryusufyagci/fast-music-remover?style=social)](https://github.com/omeryusufyagci/fast-music-remover/network/members)
 
+</div>
+
 `Fast Music Remover` aims to provide a lightweight and fast tool to remove music, sound effects, and noise from any internet media. Even at its early stages, it shows promise for near-realtime usage, with processing times around just 8% of the original media length —meaning it can process a 10-minute video in less than a minute! While only offline analysis is currently supported, the project has a clear aim to support live feeds as well. Please consider [contributing](CONTRIBUTING.md) if this interests you!
+
+---
+
+<div align="center">
+
+https://github.com/user-attachments/assets/e46c161b-0178-4213-b468-245e9f829d5e
+
+</div>
+
+> The [original interview video](https://www.youtube.com/watch?v=aujFci9AuXE) is by Fisher College of Business, licensed under a [Creative Commons Attribution license (reuse allowed)](https://support.google.com/youtube/answer/2797468?hl=en).
+
 
 ## Background
 

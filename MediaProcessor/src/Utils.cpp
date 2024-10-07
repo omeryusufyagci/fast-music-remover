@@ -36,22 +36,23 @@ bool runCommand(const std::string &command) {
     return true;
 }
 
-std::pair<std::string, std::string> prepareOutputPaths(const std::string &videoPath) {
+std::pair<std::filesystem::path, std::filesystem::path> prepareOutputPaths(
+    const std::filesystem::path &videoPath) {
     /*
      * Prepares and returns the output paths for the vocals and processed video files.
      */
 
-    std::filesystem::path videoFilePath(videoPath);
-    std::string baseFilename = videoFilePath.stem().string();
-    std::string outputDir = videoFilePath.parent_path().string();
+    std::string baseFilename = videoPath.stem().string();
 
-    std::string vocalsPath = outputDir + "/" + baseFilename + "_isolated_audio.wav";
-    std::string processedVideoPath = outputDir + "/" + baseFilename + "_processed_video.mp4";
+    std::filesystem::path outputDir = videoPath.parent_path();
+
+    std::filesystem::path vocalsPath = outputDir / (baseFilename + "_isolated_audio.wav");
+    std::filesystem::path processedVideoPath = outputDir / (baseFilename + "_processed_video.mp4");
 
     return {vocalsPath, processedVideoPath};
 }
 
-bool ensureDirectoryExists(const std::string &path) {
+bool ensureDirectoryExists(const std::filesystem::path &path) {
     /*
      * Ensures the specified directory exists by making the directory if necessary
      */
@@ -64,7 +65,7 @@ bool ensureDirectoryExists(const std::string &path) {
     return false;
 }
 
-bool removeFileIfExists(const std::string &filePath) {
+bool removeFileIfExists(const std::filesystem::path &filePath) {
     if (std::filesystem::exists(filePath)) {
         std::cout << "File already exists, removing it: " << filePath << std::endl;
         std::filesystem::remove(filePath);
@@ -73,33 +74,15 @@ bool removeFileIfExists(const std::string &filePath) {
     return false;
 }
 
-double getAudioDuration(const std::string &audioPath) {
-    /*
-     * TODO: ffprobe command to be used via the to-be-made FFMpegUtils class...
-     */
+bool containsWhitespace(const std::string &str) {
+    return str.find(' ') != std::string::npos;
+}
 
-    std::string command =
-        "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"" +
-        audioPath + "\"";
-    FILE *pipe = popen(command.c_str(), "r");
-    if (!pipe) {
-        std::cerr << "Error: Failed to run ffprobe to get audio duration." << std::endl;
-        return -1;
+std::string trimTrailingSpace(const std::string &str) {
+    if (str.empty() || str.back() != ' ') {
+        return str;
     }
-
-    char buffer[128];
-    std::string result = "";
-    while (fgets(buffer, sizeof buffer, pipe) != NULL) {
-        result += buffer;
-    }
-    pclose(pipe);
-
-    try {
-        return std::stod(result);
-    } catch (std::exception &e) {
-        std::cerr << "Error: Could not parse audio duration." << std::endl;
-        return -1;
-    }
+    return str.substr(0, str.size() - 1);
 }
 
 }  // namespace MediaProcessor::Utils

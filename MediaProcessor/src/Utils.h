@@ -1,15 +1,20 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <filesystem>
 #include <string>
+#include <utility>
+
+namespace fs = std::filesystem;
 
 namespace MediaProcessor::Utils {
 
 bool runCommand(const std::string &command);
-std::pair<std::string, std::string> prepareOutputPaths(const std::string &videoPath);
-bool ensureDirectoryExists(const std::string &path);
-bool removeFileIfExists(const std::string &filePath);
-double getAudioDuration(const std::string &audioPath);
+std::pair<fs::path, fs::path> prepareOutputPaths(const fs::path &videoPath);
+bool ensureDirectoryExists(const fs::path &path);
+bool removeFileIfExists(const fs::path &filePath);
+bool containsWhitespace(const std::string &str);
+std::string trimTrailingSpace(const std::string &str);
 
 }  // namespace MediaProcessor::Utils
 

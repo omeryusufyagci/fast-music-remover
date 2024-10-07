@@ -5,12 +5,12 @@
 
 namespace MediaProcessor {
 
-ConfigManager &ConfigManager::getInstance() {
+ConfigManager& ConfigManager::getInstance() {
     static ConfigManager instance;
     return instance;
 }
 
-bool ConfigManager::loadConfig(const std::string &configFilePath) {
+bool ConfigManager::loadConfig(const fs::path& configFilePath) {
     std::ifstream config_file(configFilePath);
     if (!config_file.is_open()) {
         std::cerr << "Error: Could not open " << configFilePath << std::endl;
@@ -21,23 +21,22 @@ bool ConfigManager::loadConfig(const std::string &configFilePath) {
     return true;
 }
 
-std::string ConfigManager::getDeepFilterPath() const {
+fs::path ConfigManager::getDeepFilterPath() const {
 #ifdef _WIN32
-    return getConfigValue("deep_filter_path_windows");
+    return fs::path(getConfigValue("deep_filter_path_windows"));
 #else
-    return getConfigValue("deep_filter_path_unix");
+    return fs::path(getConfigValue("deep_filter_path_unix"));
+#endif
+}
+fs::path ConfigManager::getFFmpegPath() const {
+#ifdef _WIN32
+    return fs::path(getConfigValue("ffmpeg_path_windows"));
+#else
+    return fs::path(getConfigValue("ffmpeg_path_unix"));
 #endif
 }
 
-std::string ConfigManager::getFFmpegPath() const {
-#ifdef _WIN32
-    return getConfigValue("ffmpeg_path_windows");
-#else
-    return getConfigValue("ffmpeg_path_unix");
-#endif
-}
-
-std::string ConfigManager::getConfigValue(const std::string &key) const {
+std::string ConfigManager::getConfigValue(const std::string& key) const {
     auto it = m_config.find(key);
     if (it != m_config.end()) {
         return it->get<std::string>();

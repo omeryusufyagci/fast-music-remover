@@ -7,19 +7,21 @@
 #include "Utils.h"
 #include "VideoProcessor.h"
 
+namespace fs = std::filesystem;
+
 using namespace MediaProcessor;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     /*
-     * Main function to process a video file by isolating vocals and merging them back with the original media.
-     * This process removes music, sound effects and noise from media, without distorting the vocals.
-     * 
-     * How it works:
-     *   1) Load the configuration from "config.json".
-     *   2) Extract the audio from the video and isolate vocals using DeepFilterNet.
-     *   3) Chunk the audio, process it in parallel, and generate an isolated audio (vocals) track.
-     *   4) Merge the isolated audio track back with the original video to produce a processed video.
-     * 
+     * Main function to process a video file by isolating vocals and merging them back with the original video.
+     * Removes music, sound effects, and noise while retaining clear vocals.
+     *
+     * Workflow:
+     *   1. Load configuration from "config.json".
+     *   2. Extract and isolate vocals using DeepFilterNet.
+     *   3. Process the audio in chunks with parallel processing.
+     *   4. Merge the isolated vocals back with the original video to create the output.
+     *
      * Usage: <executable> <video_file_path>
      */
 
@@ -27,9 +29,9 @@ int main(int argc, char *argv[]) {
         std::cerr << "Usage: " << argv[0] << " <video_file_path>" << std::endl;
         return 1;
     }
-    std::string inputMediaPath = argv[1];
+    fs::path inputMediaPath = fs::absolute(argv[1]);
 
-    ConfigManager &configManager = ConfigManager::getInstance();
+    ConfigManager& configManager = ConfigManager::getInstance();
     if (!configManager.loadConfig("config.json")) {
         std::cerr << "Error: Could not load configuration." << std::endl;
         return 1;
@@ -38,7 +40,7 @@ int main(int argc, char *argv[]) {
     auto [extractedVocalsPath, processedMediaPath] = Utils::prepareOutputPaths(inputMediaPath);
 
     AudioProcessor audioProcessor(inputMediaPath, extractedVocalsPath);
-    if (!audioProcessor.extractVocals()) {
+    if (!audioProcessor.isolateVocals()) {
         std::cerr << "Failed to extract vocals." << std::endl;
         return 1;
     }
