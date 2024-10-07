@@ -1,0 +1,34 @@
+name: Code Formatting Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  formatting-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install black and isort
+        run: |
+          pip install black isort
+
+      - name: Run isort Check
+        run: |
+          isort app.py --check-only --profile black
+
+      - name: Run black Check
+        run: |
+          black app.py --check --line-length 120

@@ -46,8 +46,22 @@ You can use Docker for a quick setup or install the prerequisites manually to ru
 ```sh
 pip install -r requirements.txt
 ```
+#### Step 3: Set Up Pre-Commit Hooks
 
-#### Step 3: Make Your Changes
+To ensure code quality and maintain consistency across the project, set up pre-commit hooks. This will automatically format and lint your code before each commit.
+
+1. Install `pre-commit`:
+```sh
+pip install pre-commit
+```
+2. Install the hooks:
+```sh
+pre-commit install
+```
+
+> **Note**: These hooks will automatically run `black` for the backend code in Python and clang-format for the `MediaProcessor/src/`, before every commit.
+
+#### Step 4: Make Your Changes
 Open a new branch for your changes and commit them:
 ```sh
 git checkout -b feature/your-feature
@@ -56,7 +70,7 @@ git push origin feature/your-feature
 ```
 > **Note**: If your pull request is going to address an open issue, please use the `Generate Branch` option on the issue page to open your branch. This helps maintain traceability between issues and branches.
 
-#### Step 4: Submit a Pull Request
+#### Step 5: Submit a Pull Request
 
 Submit a pull request explaining the nature of the changes. 
 
@@ -66,8 +80,9 @@ Submit a pull request explaining the nature of the changes.
 * **Reference Issues**: If your pull request addresses an open issue, link to it in the pull request description using `Closes #issue-number`.
 
 ### Style Guidelines:
-* Please follow the existing style throughout the project (refer to the .clang-format for C++).
-* Keep changes modular, focusing on singular units of work instead of larger pull requests, to allow easier and faster progression.
+- **Python**: Please use black for formatting Python code. This is automatically done if you have set up the pre-commit hooks.
+- **C++**: Please follow the existing style for C++ files (refer to the .clang-format file). The pre-commit hooks will automatically run clang-format on `MediaProcessor/src`.
+- **Keep Changes Modular**: Focus on singular units of work instead of larger pull requests, allowing for easier and faster progression.
 
 ### Got Questions?
 Got questions, feedback or a feature request? Don't miss the [discussion](https://github.com/omeryusufyagci/fast-music-remover/discussions) to get in touch!
