@@ -19,7 +19,8 @@ class ConfigManager {
 
    private:
     unsigned int getNumThreadsValue();
-    unsigned int determineNumThreads(unsigned int configNumThreads, unsigned int hardwareNumThreads);
+    unsigned int determineNumThreads(unsigned int configNumThreads,
+                                     unsigned int hardwareNumThreads);
 
     ConfigManager() = default;
     nlohmann::json m_config;

@@ -3,6 +3,6 @@
     "downloads_dir": "downloads",
     "ffmpeg_path": "/usr/bin/ffmpeg",
     "upload_folder": "uploads",
-    "limit_thread": false,
-    "max_thread": 6
+    "use_thread_cap": false,
+    "max_threads_if_capped": 6
 }

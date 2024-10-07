@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "HardwareUtils.h"
+#include "Utils.h"
 
 namespace MediaProcessor {
 
@@ -39,15 +40,14 @@ unsigned int ConfigManager::getOptimalThreadCount() {
 }
 
 unsigned int ConfigManager::getNumThreadsValue() {
-    return (m_config["limit_thread"].get<bool>())
-               ? m_config["max_thread"].get<unsigned int>()
+    return (m_config["use_thread_cap"].get<bool>())
+               ? m_config["max_threads_if_capped"].get<unsigned int>()
                : 0;
 }
 
 unsigned int ConfigManager::determineNumThreads(unsigned int configNumThreads,
                                                 unsigned int hardwareNumThreads) {
-    return (configNumThreads >= 1 && configNumThreads <= hardwareNumThreads) ? configNumThreads
-                                                                             : hardwareNumThreads;
+    return Utils::isWithinRange(configNumThreads, 1, hardwareNumThreads) ? configNumThreads
+                                                                         : hardwareNumThreads;
 }
-
 }  // namespace MediaProcessor
