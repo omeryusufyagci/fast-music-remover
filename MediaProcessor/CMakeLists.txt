@@ -21,6 +21,7 @@ add_executable(MediaProcessor
     src/VideoProcessor.cpp
     src/Utils.cpp
     src/CommandBuilder.cpp
+    src/HardwareUtils.cpp
 )
 
 # Threads is required

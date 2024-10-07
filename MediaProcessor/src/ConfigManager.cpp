@@ -3,6 +3,9 @@
 #include <fstream>
 #include <iostream>
 
+#include "HardwareUtils.h"
+#include "Utils.h"
+
 namespace MediaProcessor {
 
 ConfigManager& ConfigManager::getInstance() {
@@ -29,4 +32,22 @@ fs::path ConfigManager::getFFmpegPath() const {
     return m_config["ffmpeg_path"].get<std::string>();
 }
 
+unsigned int ConfigManager::getOptimalThreadCount() {
+    unsigned int configNumThreads = getNumThreadsValue();
+    unsigned int hardwareNumThreads = HardwareUtils::getHardwareThreadCount();
+
+    return determineNumThreads(configNumThreads, hardwareNumThreads);
+}
+
+unsigned int ConfigManager::getNumThreadsValue() {
+    return (m_config["use_thread_cap"].get<bool>())
+               ? m_config["max_threads_if_capped"].get<unsigned int>()
+               : 0;
+}
+
+unsigned int ConfigManager::determineNumThreads(unsigned int configNumThreads,
+                                                unsigned int hardwareNumThreads) {
+    return Utils::isWithinRange(configNumThreads, 1, hardwareNumThreads) ? configNumThreads
+                                                                         : hardwareNumThreads;
+}
 }  // namespace MediaProcessor

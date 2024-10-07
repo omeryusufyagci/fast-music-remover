@@ -15,8 +15,13 @@ class ConfigManager {
     bool loadConfig(const fs::path& configFilePath);
     fs::path getDeepFilterPath() const;
     fs::path getFFmpegPath() const;
+    unsigned int getOptimalThreadCount();
 
    private:
+    unsigned int getNumThreadsValue();
+    unsigned int determineNumThreads(unsigned int configNumThreads,
+                                     unsigned int hardwareNumThreads);
+
     ConfigManager() = default;
     nlohmann::json m_config;
 };
