@@ -3,6 +3,6 @@
     "deep_filter_path_windows": "MediaProcessor\\res\\deep-filter-0.5.6-x86_64-pc-windows-msvc.exe",
     "downloads_dir": "downloads",
     "ffmpeg_path_unix": "/usr/bin/ffmpeg",
-    "ffmpeg_path_windows": "C:\\ffmpeg\\bin\\ffmpeg",
+    "ffmpeg_path_windows": "ffmpeg",
     "upload_folder": "uploads"
 }

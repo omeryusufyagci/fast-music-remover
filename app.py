@@ -31,10 +31,10 @@ DOWNLOADS_DIR = os.path.abspath(config['downloads_dir'])
 UPLOAD_FOLDER = os.path.abspath(config.get('upload_folder', os.path.join(BASE_DIR, 'uploads')))  # Defaults to uploads/
 if platform.system() == "Windows":
     FFMPEG_PATH = config['ffmpeg_path_windows']  # for Windows
-    DEEPFILTERNET_PATH = config['deep_filter_path_windows']
+    DEEPFILTERNET_PATH = os.path.abspath(config['deep_filter_path_windows'])
 else:
-    FFMPEG_PATH = config['ffmpeg_path_unix']  # for Linux or other OS
-    DEEPFILTERNET_PATH = config['deep_filter_path_unix']
+    FFMPEG_PATH = os.path.abspath(config['ffmpeg_path_unix'])  # for Linux or other OS
+    DEEPFILTERNET_PATH = os.path.abspath(config['deep_filter_path_unix'])
 
 os.environ['DEEPFILTERNET_PATH'] = DEEPFILTERNET_PATH
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
