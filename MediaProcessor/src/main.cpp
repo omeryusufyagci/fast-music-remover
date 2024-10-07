@@ -13,8 +13,8 @@ using namespace MediaProcessor;
 
 int main(int argc, char* argv[]) {
     /*
-     * Main function to process a video file by isolating vocals and merging them back with the original video.
-     * Removes music, sound effects, and noise while retaining clear vocals.
+     * Main function to process a video file by isolating vocals and merging them back with the
+     * original video. Removes music, sound effects, and noise while retaining clear vocals.
      *
      * Workflow:
      *   1. Load configuration from "config.json".
