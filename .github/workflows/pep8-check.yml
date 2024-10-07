@@ -25,10 +25,10 @@ jobs:
         run: |
           pip install black isort
 
+      - name: Run isort Check
+        run: |
+          isort app.py --check-only --profile black
+
       - name: Run black Check
         run: |
           black app.py --check --line-length 120
-
-      - name: Run isort Check
-        run: |
-          isort app.py --check-only
