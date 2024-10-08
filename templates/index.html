@@ -4,9 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fast Music Remover</title>
+    <style>
+        #loader {
+            display: none;
+            font-size: 1.2em;
+            color: #007BFF;
+        }
+    </style>
     <script>
         function submitForm() {
             const url = document.getElementById("url").value;
+            const urlPattern = /^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$/;
+
+            // Validate YouTube URL
+            if (!urlPattern.test(url)) {
+                document.getElementById("status").textContent = "Please enter a valid YouTube URL.";
+                return;
+            }
+
+            document.getElementById("status").textContent = "Processing...";
+            document.getElementById("loader").style.display = "block";
+            document.getElementById("videoPlayer").style.display = "none";
+
             fetch("/", {
                 method: "POST",
                 headers: {
@@ -16,30 +35,34 @@
             })
             .then(response => response.json())
             .then(data => {
+                document.getElementById("loader").style.display = "none";
                 if (data.status === "completed") {
                     document.getElementById("videoPlayer").src = data.video_url;
+                    document.getElementById("videoPlayer").style.display = "block";
                     document.getElementById("status").textContent = "Processing completed!";
                 } else {
                     document.getElementById("status").textContent = "An error occurred!";
                 }
             })
             .catch(error => {
-                document.getElementById("status").textContent = "An error occurred!";
+                document.getElementById("loader").style.display = "none";
+                document.getElementById("status").textContent = `An error occurred: ${error.message}`;
             });
-
-            document.getElementById("status").textContent = "Processing...";
         }
     </script>
 </head>
 <body>
     <h1>Fast Music Remover</h1>
     <form onsubmit="event.preventDefault(); submitForm();">
-        <label for="url">Enter YouTube URL:</label>
+        <label for="url" aria-label="YouTube URL Input">Enter YouTube URL:</label>
         <input type="text" id="url" name="url" placeholder="Enter YouTube URL">
         <button type="submit">Process Video</button>
     </form>
+
     <p id="status"></p>
-    <video id="videoPlayer" controls style="display: block; width: 100%; max-width: 800px;">
+    <div id="loader">Processing your request...</div>
+
+    <video id="videoPlayer" controls style="display: none; width: 100%; max-width: 800px;">
         Your browser does not support the video tag.
     </video>
 </body>
