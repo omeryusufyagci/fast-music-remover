@@ -14,14 +14,15 @@ class ConfigManagerTest : public ::testing::Test {
 
 TEST_F(ConfigManagerTest, LoadValidConfigFile) {
     // Create a temporary config file with valid JSON content
-    TempConfigFile tempConfigFile(
-        "tempConfig.json",
-        {{"deep_filter_path", "\"MediaProcessor/res/deep-filter-0.5.6-x86_64-unknown-linux-musl\""},
-         {"downloads_dir", "\"downloads\""},
-         {"ffmpeg_path", "\"/usr/bin/ffmpeg\""},
-         {"upload_folder", "\"uploads\""},
-         {"use_thread_cap", "true"},
-         {"max_threads_if_capped", "1"}});
+    nlohmann::json jsonContent = {
+        {"deep_filter_path", "MediaProcessor/res/deep-filter-0.5.6-x86_64-unknown-linux-musl"},
+        {"downloads_dir", "downloads"},
+        {"ffmpeg_path", "/usr/bin/ffmpeg"},
+        {"upload_folder", "uploads"},
+        {"use_thread_cap", true},
+        {"max_threads_if_capped", 1}};
+
+    TempConfigFile tempConfigFile("tempConfig.json", jsonContent);
 
     // Load the config
     ConfigManager &configManager = ConfigManager::getInstance();
