@@ -78,6 +78,10 @@ bool containsWhitespace(const std::string &str) {
     return str.find(' ') != std::string::npos;
 }
 
+bool isWithinRange(unsigned int value, unsigned int lowerBound, unsigned int upperBound) {
+    return value >= lowerBound && value <= upperBound;
+}
+
 std::string trimTrailingSpace(const std::string &str) {
     if (str.empty() || str.back() != ' ') {
         return str;

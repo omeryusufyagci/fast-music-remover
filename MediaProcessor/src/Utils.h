@@ -14,6 +14,7 @@ std::pair<fs::path, fs::path> prepareOutputPaths(const fs::path &videoPath);
 bool ensureDirectoryExists(const fs::path &path);
 bool removeFileIfExists(const fs::path &filePath);
 bool containsWhitespace(const std::string &str);
+bool isWithinRange(unsigned int value, unsigned int lowerBound, unsigned int upperBound);
 std::string trimTrailingSpace(const std::string &str);
 
 }  // namespace MediaProcessor::Utils

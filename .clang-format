@@ -11,5 +11,5 @@ IndentCaseLabels: true
 SpaceBeforeParens: ControlStatements
 SpacesInParentheses: false
 SpacesInConditionalStatement: false
-ReflowComments: false
+ReflowComments: true
 ...

@@ -1,0 +1,13 @@
+repos:
+- repo: https://github.com/psf/black
+  rev: 24.10.0
+  hooks:
+    - id: black
+      args: ["--line-length", "120"]
+
+- repo: https://github.com/pre-commit/mirrors-clang-format
+  rev: v15.0.7
+  hooks:
+    - id: clang-format
+      args: [--style=file]  # Use .clang-format file of the repo
+      files: ^MediaProcessor/src/.*\.(cpp|h)$

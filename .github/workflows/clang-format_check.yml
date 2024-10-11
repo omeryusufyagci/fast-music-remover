@@ -1,0 +1,28 @@
+name: Clang Format Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  clang-format-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install clang-format
+        run: sudo apt update && sudo apt install -y clang-format
+
+      - name: Run clang-format Check on MediaProcessor
+        run: |
+          find MediaProcessor/src -regex '.*\.\(cpp\|h\)' -exec clang-format --dry-run --Werror {} +
+
+      - name: Display Message if Formatting Fails
+        if: failure()
+        run: echo "Code formatting issues found in MediaProcessor. Please run clang-format to fix them."
