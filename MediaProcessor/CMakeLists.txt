@@ -29,4 +29,6 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
 
+# Link the DeepFilterNet shared library
+set(DEEPFILTER_LIB_PATH "${CMAKE_SOURCE_DIR}/res")
 target_link_libraries(MediaProcessor PRIVATE ${DEEPFILTER_LIB_PATH}/libdf.so)
