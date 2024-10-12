@@ -28,3 +28,5 @@ add_executable(MediaProcessor
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
+
+target_link_libraries(MediaProcessor PRIVATE ${DEEPFILTER_LIB_PATH}/libdf.so)
