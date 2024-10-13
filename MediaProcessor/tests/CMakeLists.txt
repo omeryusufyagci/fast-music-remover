@@ -61,4 +61,13 @@ if(BUILD_TESTING)
     target_link_libraries(VideoProcessorTester gtest_main)
     add_test(NAME VideoProcessorTesting COMMAND VideoProcessorTester)
 
+    # CommandBuilderTester
+    add_executable(CommandBuilderTester
+        CommandBuilderTester.cpp
+        "../src/CommandBuilder.cpp"
+        "../src/Utils.cpp"
+    )
+    target_link_libraries(CommandBuilderTester gtest_main)
+    add_test(NAME CommandBuilderTesting COMMAND CommandBuilderTester)
+
 endif()
