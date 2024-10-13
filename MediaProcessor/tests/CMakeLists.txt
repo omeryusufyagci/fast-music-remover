@@ -1,4 +1,17 @@
 if(BUILD_TESTING)
+    include(FetchContent)
+    cmake_policy(SET CMP0135 NEW)  # Set policy for FetchContent
+
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    # ConfigManagerTester
     add_executable(ConfigManagerTester 
         ConfigManagerTester.cpp 
         "../src/ConfigManager.cpp" 
@@ -9,10 +22,10 @@ if(BUILD_TESTING)
     target_link_libraries(ConfigManagerTester gtest_main)
     add_test(NAME ConfigManagerTesting COMMAND ConfigManagerTester)
 
+    # UtilsTester
     add_executable(UtilsTester 
         UtilsTester.cpp
         "../src/Utils.cpp"
-        "ConfigFileCreator.cpp"
     )
     target_link_libraries(UtilsTester gtest_main)
     add_test(NAME UtilsTesting COMMAND UtilsTester)
