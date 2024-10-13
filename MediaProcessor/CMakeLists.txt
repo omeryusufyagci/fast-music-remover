@@ -10,21 +10,9 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-include_directories(include)
-include_directories(${CMAKE_SOURCE_DIR}/third_party/nlohmann)
-
-
-add_executable(MediaProcessor
-    src/main.cpp
-    src/ConfigManager.cpp
-    src/AudioProcessor.cpp
-    src/VideoProcessor.cpp
-    src/Utils.cpp
-    src/CommandBuilder.cpp
-    src/HardwareUtils.cpp
-)
-
-# Threads is required
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
+# Testing build are off by default. can be turned on using cmake -DBUILD_TESTING=ON
+option(BUILD_TESTING "Build the tests" OFF)
+include(CTest)
+# Add subdirectories for source and tests
+add_subdirectory(src)
+add_subdirectory(tests)
