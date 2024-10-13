@@ -9,9 +9,7 @@ namespace MediaProcessor::UnitTesting {
 // fixture
 class UtilsTester : public ::testing::Test {
    protected:
-    void SetUp() override {
-        // check for test directory
-    }
+    void SetUp() override {}
     void TearDown() override {}
 };
 
