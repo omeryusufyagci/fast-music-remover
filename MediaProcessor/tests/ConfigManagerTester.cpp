@@ -22,11 +22,11 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile) {
         {"use_thread_cap", true},
         {"max_threads_if_capped", 1}};
 
-    TestConfigFile tempConfigFile("tempConfig.json", jsonContent);
+    TestConfigFile testConfigFile("testConfig.json", jsonContent);
 
     // Load the config
     ConfigManager &configManager = ConfigManager::getInstance();
-    bool loadSuccess = configManager.loadConfig(tempConfigFile.getFilePath());
+    bool loadSuccess = configManager.loadConfig(testConfigFile.getFilePath());
 
     // tests
     EXPECT_TRUE(loadSuccess);
