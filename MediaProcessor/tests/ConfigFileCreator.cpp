@@ -2,9 +2,9 @@
 
 #include <fstream>
 
-namespace MediaProcessor {
+namespace MediaProcessor::UnitTesting {
 
-void TempConfigFile::writeJsonToFile(const nlohmann::json& jsonContent) {
+void TestConfigFile::writeJsonToFile(const nlohmann::json& jsonContent) {
     std::ofstream file(m_filePath);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open file for writing");
@@ -12,4 +12,12 @@ void TempConfigFile::writeJsonToFile(const nlohmann::json& jsonContent) {
     file << jsonContent.dump(4);
     file.close();
 }
-}  // namespace MediaProcessor
+bool TestConfigFile::delete_config_file() {
+    if (std::filesystem::exists(m_filePath)) {
+        std::filesystem::remove(m_filePath);
+        return true;
+    }
+    return false;
+}
+
+}  // namespace MediaProcessor::UnitTesting

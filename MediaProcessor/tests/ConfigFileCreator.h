@@ -1,20 +1,32 @@
 #ifndef CONFIGFILECREATOR_H
 #define CONFIGFILECREATOR_H
 
-#include <fstream>
+#include <filesystem>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 
-namespace MediaProcessor {
-/// @brief Create a temporary configuration file from a JSON object.
-class TempConfigFile {
+namespace MediaProcessor::UnitTesting {
+class TestConfigFile {
+    /*
+    Create a test configuration file from a JSON object.
+    */
    public:
-    TempConfigFile(const std::string path, const nlohmann::json& jsonContent) : m_filePath(path) {
+    TestConfigFile() {}
+    TestConfigFile(const std::filesystem::path& path, const nlohmann::json& jsonContent)
+        : m_filePath(path) {
         writeJsonToFile(jsonContent);
     }
 
-    ~TempConfigFile() {
-        remove(m_filePath.c_str());
+    bool createTestConfigFile(const std::filesystem::path& path,
+                              const nlohmann::json& jsonContent) {
+        delete_config_file();
+        m_filePath = path;
+        writeJsonToFile(jsonContent);
+        return true;
+    }
+
+    ~TestConfigFile() {
+        delete_config_file();
     }
 
     std::string getFilePath() const {
@@ -22,10 +34,11 @@ class TempConfigFile {
     }
 
    private:
-    std::string m_filePath;
+    std::filesystem::path m_filePath;
 
     void writeJsonToFile(const nlohmann::json& jsonContent);
+    bool delete_config_file();
 };
-}  // namespace MediaProcessor
+}  // namespace MediaProcessor::UnitTesting
 
 #endif  // CONFIGFILECREATOR_H
