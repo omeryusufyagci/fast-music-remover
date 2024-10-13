@@ -47,4 +47,18 @@ if(BUILD_TESTING)
     target_link_libraries(AudioProcessorTester gtest_main)
     add_test(NAME AudioProcessorTesting COMMAND AudioProcessorTester)
 
+    # VideoProcessorTester
+    add_executable(VideoProcessorTester
+        VideoProcessorTester.cpp
+        "../src/VideoProcessor.cpp"
+        "../src/CommandBuilder.cpp"
+        "../src/Utils.cpp"
+        "../src/ConfigManager.cpp"
+        "../src/HardwareUtils.cpp"
+        "ConfigFileCreator.cpp"
+    )
+    target_compile_definitions(VideoProcessorTester PRIVATE TEST_MEDIA_DIR="${TEST_MEDIA_DIR}")
+    target_link_libraries(VideoProcessorTester gtest_main)
+    add_test(NAME VideoProcessorTesing COMMAND VideoProcessorTester)
+
 endif()

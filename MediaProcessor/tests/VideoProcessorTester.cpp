@@ -3,8 +3,8 @@
 #include <filesystem>
 #include <nlohmann/json.hpp>
 
-#include "../src/AudioProcessor.h"
 #include "../src/ConfigManager.h"
+#include "../src/VideoProcessor.h"
 #include "ConfigFileCreator.h"
 
 namespace MediaProcessor::UnitTesting {
@@ -15,16 +15,20 @@ std::filesystem::path testMediaPath = TEST_MEDIA_DIR;
 class AudioProcessorTester : public ::testing::Test {
    protected:
     std::filesystem::path testVideoPath;
+    std::filesystem::path testAudioPath;
     std::filesystem::path testOutputDir;
     TestConfigFile testConfigFile;
 
     void SetUp() override {
         std::filesystem::path currentPath = std::filesystem::current_path();
         testVideoPath = testMediaPath / "test_video.mkv";
+        testAudioPath = testMediaPath / "test_audio.wav";
 
-        // Check if the file exists
+        // Check if the files exists
         ASSERT_TRUE(std::filesystem::exists(testVideoPath))
             << testVideoPath.string() << " not found at " + testVideoPath.string();
+        ASSERT_TRUE(std::filesystem::exists(testAudioPath))
+            << testAudioPath.string() << " not found at " + testAudioPath.string();
 
         // Make a directory for test output
         testOutputDir = currentPath / "test_output";
@@ -55,14 +59,14 @@ TEST_F(AudioProcessorTester, isolateVocalsFromTestVideo) {
     ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
         << "Unable to Load TestConfigFile";
 
-    std::filesystem::path testAudioPath = testOutputDir / "test_output_audio.wav";
-    AudioProcessor audioProcessor(testVideoPath, testAudioPath);
+    std::filesystem::path testOutputVideoPath = testOutputDir / "test_output_video.mp4";
+    VideoProcessor videoProcessor(testVideoPath, testAudioPath, testOutputVideoPath);
 
     // Test the isolateVocals function
-    EXPECT_EQ(audioProcessor.isolateVocals(), true);
+    EXPECT_EQ(videoProcessor.mergeMedia(), true);
 
     // Check if the output file was created
-    EXPECT_TRUE(std::filesystem::exists(testAudioPath));
+    EXPECT_TRUE(std::filesystem::exists(testOutputVideoPath));
 }
 
 }  // namespace MediaProcessor::UnitTesting
