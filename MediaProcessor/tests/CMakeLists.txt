@@ -59,6 +59,6 @@ if(BUILD_TESTING)
     )
     target_compile_definitions(VideoProcessorTester PRIVATE TEST_MEDIA_DIR="${TEST_MEDIA_DIR}")
     target_link_libraries(VideoProcessorTester gtest_main)
-    add_test(NAME VideoProcessorTesing COMMAND VideoProcessorTester)
+    add_test(NAME VideoProcessorTesting COMMAND VideoProcessorTester)
 
 endif()
