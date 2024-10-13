@@ -62,7 +62,7 @@ TEST_F(AudioProcessorTester, isolateVocalsFromTestVideo) {
     std::filesystem::path testOutputVideoPath = testOutputDir / "test_output_video.mp4";
     VideoProcessor videoProcessor(testVideoPath, testAudioPath, testOutputVideoPath);
 
-    // Test the isolateVocals function
+    // Test the mergeMedia function
     EXPECT_EQ(videoProcessor.mergeMedia(), true);
 
     // Check if the output file was created
