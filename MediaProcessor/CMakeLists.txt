@@ -22,6 +22,7 @@ add_executable(MediaProcessor
     src/Utils.cpp
     src/CommandBuilder.cpp
     src/HardwareUtils.cpp
+    src/DeepFilterCommandBuilder.cpp
 )
 
 # Threads is required
