@@ -16,11 +16,13 @@ namespace MediaProcessor {
 AudioProcessor::AudioProcessor(const fs::path& inputVideoPath, const fs::path& outputAudioPath)
     : m_inputVideoPath(inputVideoPath),
       m_outputAudioPath(outputAudioPath),
-      m_numChunks(DEFAULT_NUM_CHUNKS),
       m_overlapDuration(DEFAULT_OVERLAP_DURATION) {
     m_outputDir = m_outputAudioPath.parent_path();
     m_chunksDir = m_outputDir / "chunks";
     m_processedChunksDir = m_outputDir / "processed_chunks";
+
+    m_numChunks = ConfigManager::getInstance().getOptimalThreadCount();
+    std::cout << "INFO: using " << m_numChunks << " threads." << std::endl;
 }
 
 bool AudioProcessor::isolateVocals() {
@@ -182,21 +184,15 @@ bool AudioProcessor::filterChunks() {
     return true;
 }
 
-bool AudioProcessor::mergeChunks() {
-    ConfigManager& configManager = ConfigManager::getInstance();
-    fs::path ffmpegPath = configManager.getFFmpegPath();
+std::string AudioProcessor::buildFilterComplex() const {
+    // Build filter complex, i.e. a set of instructions for FFmpeg (called filter graph)
+    std::string filterComplex = "";
+    int filterIndex = 0;
 
-    // Merge processed chunks with `crossfade` using CommandBuilder
-    CommandBuilder cmd;
-    cmd.addArgument(ffmpegPath.string());
-    cmd.addFlag("-y");
-    for (const auto& chunkPath : m_processedChunkPaths) {
-        cmd.addFlag("-i", chunkPath.string());
+    if (m_processedChunkPaths.size() < 2) {
+        return filterComplex;  // Return empty string if not enough chunks
     }
 
-    // Build filter complex, i.e., a set of instructions for FFmpeg (called filter graph)
-    std::string filterComplex;
-    int filterIndex = 0;
     for (int i = 0; i < static_cast<int>(m_processedChunkPaths.size()) - 1; ++i) {
         if (i == 0) {
             // Generate a `crossfade` for the first chunk pair (0 and 1)
@@ -215,9 +211,27 @@ bool AudioProcessor::mergeChunks() {
 
     // Merge the output of the last crossfade into a final output audio stream
     filterComplex += "[a" + std::to_string(filterIndex - 1) + "]amerge=inputs=1[outa]";
+    return filterComplex;
+}
 
-    cmd.addFlag("-filter_complex", filterComplex);
-    cmd.addFlag("-map", "[outa]");
+bool AudioProcessor::mergeChunks() {
+    ConfigManager& configManager = ConfigManager::getInstance();
+    fs::path ffmpegPath = configManager.getFFmpegPath();
+
+    // Merge processed chunks with `crossfade` using CommandBuilder
+    CommandBuilder cmd;
+    cmd.addArgument(ffmpegPath.string());
+    cmd.addFlag("-y");
+    for (const auto& chunkPath : m_processedChunkPaths) {
+        cmd.addFlag("-i", chunkPath.string());
+    }
+
+    // If there's more then one processed chunk
+    if (static_cast<int>(m_processedChunkPaths.size()) >= 2) {
+        cmd.addFlag("-filter_complex", buildFilterComplex());
+        cmd.addFlag("-map", "[outa]");
+    }
+
     cmd.addFlag("-c:a", "pcm_s16le");
     cmd.addFlag("-ar", "48000");
     cmd.addArgument(m_outputAudioPath.string());

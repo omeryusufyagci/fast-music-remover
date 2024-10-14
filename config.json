@@ -4,5 +4,7 @@
     "downloads_dir": "downloads",
     "ffmpeg_path_unix": "/usr/bin/ffmpeg",
     "ffmpeg_path_windows": "ffmpeg",
-    "upload_folder": "uploads"
+    "upload_folder": "uploads",
+    "use_thread_cap": false,
+    "max_threads_if_capped": 6
 }
