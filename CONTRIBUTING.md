@@ -47,6 +47,44 @@ You can use Docker for a quick setup or install the prerequisites manually to ru
 pip install -r requirements.txt
 ```
 
+<details>
+  <summary>Click here for installation commands for Windows</summary>
+
+  ### Installation Commands
+  **MSYS2**
+  We use the MSYS2 as it's easier to setup the enviornment using it.
+  You can install it from [here](https://www.msys2.org/)
+
+  **GCC Toolchain**
+  Install the GCC Toolchain using the `MINGW64` terminal
+  ```sh
+  pacman -S mingw-w64-x86_64-toolchain base-devel
+  ```
+
+  **Cmake**
+  Install the Cmake using the `MINGW64` terminal
+  ```sh
+  pacman -S mingw-w64-x86_64-cmake
+  ```
+
+  **nlohmann json header**
+  Install the nolhmann/json header using the `MINGW64` terminal
+  ```sh
+  pacman -S mingw-w64-x86_64-nlohmann-json
+  ```
+
+  **FFmpeg**:
+  install the ffmpeg from [here](https://www.ffmpeg.org/download.html)
+  After installing FFmpeg, you HAVE to add the ffmpeg to the windows environment in the path variable for it to work properly.
+
+  **Compile the Media Processor**
+  - Run Cmake using the MSYS2 in the build directory using this command `cmake -G "MSYS Makefiles" ..`
+  - Run the make command in the build directory `make`
+
+  **Start the Backend Server**
+  Run the application using `python app.py`
+</details>
+
 #### Step 3: Make Your Changes
 Open a new branch for your changes and commit them:
 ```sh
