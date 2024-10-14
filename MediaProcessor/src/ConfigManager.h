@@ -23,6 +23,7 @@ class ConfigManager {
                                      unsigned int hardwareNumThreads);
 
     ConfigManager() = default;
+    std::string getConfigValue(const std::string &key) const;
     nlohmann::json m_config;
 };
 
