@@ -63,6 +63,7 @@ To get started with `Fast Music Remover`, ensure that you have the following sof
 - **FFmpeg**: For extracting, probing, and processing audio files.
 - **CMake**: Needed to compile the C++ `MediaProcessor`.
 - **nlohmann-json**: A JSON library required for parsing configuration files in the `MediaProcessor`.
+- **libsndfile**: Required for sampled audio file operations in the `MediaProcessor`.
 - **Docker and Docker Compose** (optional but recommended for a quick setup):
 
 <details>
@@ -107,6 +108,17 @@ To get started with `Fast Music Remover`, ensure that you have the following sof
   - **On macOS**:
     ```sh
     brew install nlohmann-json
+    ```
+
+  **libsndfile**:
+  - **On Ubuntu/Debian**: 
+    ```sh
+    sudo apt update
+    sudo apt install libsndfile1-dev
+    ```
+  - **On macOS**:
+    ```sh
+    brew install libsndfile
     ```
 
   **Docker and Docker Compose**:

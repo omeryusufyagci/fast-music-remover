@@ -36,8 +36,11 @@ class AudioProcessor {
     bool extractAudio();
     bool chunkAudio();
     bool filterChunks();
-    std::string buildFilterComplex() const;
     bool mergeChunks();
+    bool invokeDeepFilter(fs::path _chunkPath);
+    bool invokeDeepFilterFFI(fs::path _chunkPath);
+
+    std::string buildFilterComplex() const;
 
     double getAudioDuration(const fs::path &audioPath);
 };
