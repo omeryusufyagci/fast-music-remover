@@ -19,7 +19,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -y ffmpeg cmake nlohmann-json3-dev
+          sudo apt install -y ffmpeg cmake nlohmann-json3-dev libsndfile1-dev
 
       - name: Compile MediaProcessor
         run: |
