@@ -7,7 +7,7 @@
 #include "../src/ConfigManager.h"
 #include "ConfigFileCreator.h"
 
-namespace MediaProcessor::UnitTesting {
+namespace MediaProcessor::Tests {
 
 std::filesystem::path testMediaPath = TEST_MEDIA_DIR;
 
@@ -65,4 +65,4 @@ TEST_F(AudioProcessorTester, isolateVocalsFromTestVideo) {
     EXPECT_TRUE(std::filesystem::exists(testAudioPath));
 }
 
-}  // namespace MediaProcessor::UnitTesting
+}  // namespace MediaProcessor::Tests

@@ -4,7 +4,7 @@
 
 #include "../src/Utils.h"
 
-namespace MediaProcessor::UnitTesting {
+namespace MediaProcessor::Tests {
 
 // fixture
 class UtilsTester : public ::testing::Test {
@@ -23,4 +23,4 @@ TEST_F(UtilsTester, checkPreparedOutputPaths) {
     EXPECT_EQ(expectedProcessedVideoPath, outputProcessedVideoPath);
 }
 
-}  // namespace MediaProcessor::UnitTesting
+}  // namespace MediaProcessor::Tests

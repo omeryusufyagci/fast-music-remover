@@ -3,7 +3,7 @@
 #include "../src/ConfigManager.h"
 #include "ConfigFileCreator.h"
 
-namespace MediaProcessor::UnitTesting {
+namespace MediaProcessor::Tests {
 
 // fixture
 class ConfigManagerTest : public ::testing::Test {
@@ -36,4 +36,4 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile) {
     EXPECT_EQ(configManager.getOptimalThreadCount(), 1);
 }
 
-}  // namespace MediaProcessor::UnitTesting
+}  // namespace MediaProcessor::Tests

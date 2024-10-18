@@ -5,7 +5,7 @@
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 
-namespace MediaProcessor::UnitTesting {
+namespace MediaProcessor::Tests {
 class TestConfigFile {
     /*
     Create a test configuration file from a JSON object.
@@ -39,6 +39,6 @@ class TestConfigFile {
     void writeJsonToFile(const nlohmann::json& jsonContent);
     bool delete_config_file();
 };
-}  // namespace MediaProcessor::UnitTesting
+}  // namespace MediaProcessor::Tests
 
 #endif  // CONFIGFILECREATOR_H

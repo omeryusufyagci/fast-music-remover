@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-namespace MediaProcessor::UnitTesting {
+namespace MediaProcessor::Tests {
 
 void TestConfigFile::writeJsonToFile(const nlohmann::json& jsonContent) {
     std::ofstream file(m_filePath);
@@ -20,4 +20,4 @@ bool TestConfigFile::delete_config_file() {
     return false;
 }
 
-}  // namespace MediaProcessor::UnitTesting
+}  // namespace MediaProcessor::Tests
