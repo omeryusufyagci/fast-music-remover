@@ -19,17 +19,17 @@ class TestConfigFile {
 
     bool createTestConfigFile(const std::filesystem::path& path,
                               const nlohmann::json& jsonContent) {
-        delete_config_file();
+        deleteConfigFile();
         m_filePath = path;
         writeJsonToFile(jsonContent);
         return true;
     }
 
     ~TestConfigFile() {
-        delete_config_file();
+        deleteConfigFile();
     }
 
-    std::string getFilePath() const {
+    std::filesystem::path getFilePath() const {
         return m_filePath;
     }
 
@@ -37,7 +37,7 @@ class TestConfigFile {
     std::filesystem::path m_filePath;
 
     void writeJsonToFile(const nlohmann::json& jsonContent);
-    bool delete_config_file();
+    bool deleteConfigFile();
 };
 }  // namespace MediaProcessor::Tests
 
