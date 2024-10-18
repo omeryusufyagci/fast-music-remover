@@ -1,5 +1,8 @@
 #include "AudioProcessor.h"
 
+#include <sndfile.h>
+
+#include <future>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -7,6 +10,8 @@
 
 #include "CommandBuilder.h"
 #include "ConfigManager.h"
+#include "DeepFilterNetFFI.h"
+#include "ThreadPool.h"
 #include "Utils.h"
 
 namespace fs = std::filesystem;
@@ -142,36 +147,94 @@ bool AudioProcessor::chunkAudio() {
     return true;
 }
 
+bool AudioProcessor::invokeDeepFilter(fs::path _chunkPath) {
+    ConfigManager& configManager = ConfigManager::getInstance();
+    const fs::path deepFilterPath = configManager.getDeepFilterPath();
+    const fs::path deepFilterTarballPath = configManager.getDeepFilterTarballPath();
+
+    // `--compensate-delay` ensures the audio remains in sync after filtering
+    CommandBuilder cmd;
+    cmd.addArgument(deepFilterPath.string());
+    cmd.addFlag("--compensate-delay");
+    cmd.addFlag("--output-dir", m_processedChunksDir.string());
+    cmd.addArgument(_chunkPath.string());
+
+    if (!Utils::runCommand(cmd.build())) {
+        std::cerr << "Error: Failed to process chunk with DeepFilterNet: " << _chunkPath
+                  << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool AudioProcessor::invokeDeepFilterFFI(fs::path _chunkPath) {
+    // TODO: think about the method name
+
+    ConfigManager& configManager = ConfigManager::getInstance();
+    const fs::path deepFilterTarballPath = configManager.getDeepFilterTarballPath();
+
+    DFState* df_state = df_create(deepFilterTarballPath.c_str(), 100.0f, nullptr);
+    size_t frameLength = df_get_frame_length(df_state);
+
+    // Open the input file with SNDFILE
+    // TODO: extract into a utility
+    SF_INFO sfInfoIn;
+    SNDFILE* inputFile = sf_open(_chunkPath.c_str(), SFM_READ, &sfInfoIn);
+    if (!inputFile) {
+        std::cerr << "Error: Could not open input WAV file: " << _chunkPath << std::endl;
+        df_free(df_state);
+        return false;
+    }
+
+    // Prepare output file with SNDFILE
+    // TODO: extract into a utility
+    SF_INFO sfInfoOut = sfInfoIn;
+    fs::path processedChunkPath = m_processedChunksDir / _chunkPath.filename();
+    SNDFILE* outputFile = sf_open(processedChunkPath.c_str(), SFM_WRITE, &sfInfoOut);
+    if (!outputFile) {
+        std::cerr << "Error: Could not open output WAV file: " << processedChunkPath << std::endl;
+        sf_close(inputFile);
+        df_free(df_state);
+        return false;
+    }
+
+    std::vector<float> inputBuffer(frameLength);
+    std::vector<float> outputBuffer(frameLength);
+
+    // Process the audio as a stream
+    sf_count_t numFrames;
+    while ((numFrames = sf_readf_float(inputFile, inputBuffer.data(), frameLength)) > 0) {
+        df_process_frame(df_state, inputBuffer.data(), outputBuffer.data());
+        sf_writef_float(outputFile, outputBuffer.data(), numFrames);
+    }
+
+    sf_close(inputFile);
+    sf_close(outputFile);
+
+    df_free(df_state);
+
+    return true;
+}
+
 bool AudioProcessor::filterChunks() {
     Utils::ensureDirectoryExists(m_processedChunksDir);
 
-    ConfigManager& configManager = ConfigManager::getInstance();
-    fs::path deepFilterPath = configManager.getDeepFilterPath();
+    ThreadPool pool(m_numChunks);
 
-    // Parallel process chunks with the filter
-    std::vector<std::thread> threads;
+    std::vector<std::future<void>> results;
     for (int i = 0; i < m_numChunks; ++i) {
-        threads.emplace_back([&, i]() {
+        results.emplace_back(pool.enqueue([&, i]() {
             fs::path chunkPath = m_chunkPaths[i];
 
-            // `-D` flag is super important! uses built-in compensation to avoid sync issues
-            // that happens as the processed audio becomes shorter than the org video length
-            CommandBuilder cmd;
-            cmd.addArgument(deepFilterPath.string());
-            cmd.addFlag("-D");
-            cmd.addFlag("-o", m_processedChunksDir.string());
-            cmd.addArgument(chunkPath.string());
-
-            if (!Utils::runCommand(cmd.build())) {
-                std::cerr << "Error: Failed to process chunk with DeepFilterNet: " << chunkPath
-                          << std::endl;
-            }
-        });
+            invokeDeepFilter(chunkPath);
+            // invokeDeepFilterFFI(chunkPath);
+        }));
     }
 
     // Block until all threads are done
-    for (auto& t : threads) {
-        t.join();
+    for (auto& result : results) {
+        result.get();
     }
 
     // Prepare paths for processed chunks
@@ -193,6 +256,7 @@ std::string AudioProcessor::buildFilterComplex() const {
         return filterComplex;  // Return empty string if not enough chunks
     }
 
+    // TODO: extract this into an `applyCrossFade()` method.
     for (int i = 0; i < static_cast<int>(m_processedChunkPaths.size()) - 1; ++i) {
         if (i == 0) {
             // Generate a `crossfade` for the first chunk pair (0 and 1)
@@ -218,7 +282,7 @@ bool AudioProcessor::mergeChunks() {
     ConfigManager& configManager = ConfigManager::getInstance();
     fs::path ffmpegPath = configManager.getFFmpegPath();
 
-    // Merge processed chunks with `crossfade` using CommandBuilder
+    // Merge processed chunks with `crossfade`
     CommandBuilder cmd;
     cmd.addArgument(ffmpegPath.string());
     cmd.addFlag("-y");
@@ -226,7 +290,6 @@ bool AudioProcessor::mergeChunks() {
         cmd.addFlag("-i", chunkPath.string());
     }
 
-    // If there's more then one processed chunk
     if (static_cast<int>(m_processedChunkPaths.size()) >= 2) {
         cmd.addFlag("-filter_complex", buildFilterComplex());
         cmd.addFlag("-map", "[outa]");
@@ -247,7 +310,7 @@ bool AudioProcessor::mergeChunks() {
 
 double AudioProcessor::getAudioDuration(const fs::path& audioPath) {
     /*
-     * TODO: ffprobe command to be used via the to-be-made FFMpegUtils class...
+     * TODO: ffprobe command to be used via the to-be-made FFmpegController class
      */
 
     CommandBuilder cmd;

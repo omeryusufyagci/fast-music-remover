@@ -28,6 +28,18 @@ fs::path ConfigManager::getDeepFilterPath() const {
     return m_config["deep_filter_path"].get<std::string>();
 }
 
+fs::path ConfigManager::getDeepFilterTarballPath() const {
+    return m_config["deep_filter_tarball_path"].get<std::string>();
+}
+
+fs::path ConfigManager::getDeepFilterEncoderPath() const {
+    return m_config["deep_filter_encoder_path"].get<std::string>();
+}
+
+fs::path ConfigManager::getDeepFilterDecoderPath() const {
+    return m_config["deep_filter_decoder_path"].get<std::string>();
+}
+
 fs::path ConfigManager::getFFmpegPath() const {
     return m_config["ffmpeg_path"].get<std::string>();
 }
