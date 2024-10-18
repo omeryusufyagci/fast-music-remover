@@ -14,9 +14,9 @@ public:
     std::string build() const override;
 
 private:
-    std::string inputAudioPath;
-    std::string outputAudioPath;
-    double noiseReductionLevel = 0.5;  // Default noise reduction level.
+    std::string m_inputAudioPath;
+    std::string m_outputAudioPath;  
+    double m_noiseReductionLevel = 0.5;  // Default noise reduction level.
 };
 
 }  // namespace MediaProcessor
