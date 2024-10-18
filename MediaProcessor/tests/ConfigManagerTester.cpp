@@ -31,9 +31,10 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile) {
     // tests
     EXPECT_TRUE(loadSuccess);
     EXPECT_EQ(configManager.getDeepFilterPath(),
-              "MediaProcessor/res/deep-filter-0.5.6-x86_64-unknown-linux-musl");
-    EXPECT_EQ(configManager.getFFmpegPath(), "/usr/bin/ffmpeg");
-    EXPECT_EQ(configManager.getOptimalThreadCount(), 1);
+              jsonContent["deep_filter_path"].get<std::string>());
+    EXPECT_EQ(configManager.getFFmpegPath(), jsonContent["ffmpeg_path"].get<std::string>());
+    EXPECT_EQ(configManager.getOptimalThreadCount(),
+              jsonContent["max_threads_if_capped"].get<unsigned int>());
 }
 
 }  // namespace MediaProcessor::Tests
