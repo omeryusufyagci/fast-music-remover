@@ -13,8 +13,8 @@ void TestConfigFile::writeJsonToFile(const nlohmann::json& jsonContent) {
     file.close();
 }
 bool TestConfigFile::deleteConfigFile() {
-    if (std::filesystem::exists(m_filePath)) {
-        std::filesystem::remove(m_filePath);
+    if (fs::exists(m_filePath)) {
+        fs::remove(m_filePath);
         return true;
     }
     return false;

@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 
+namespace fs = std::filesystem;
 namespace MediaProcessor::Tests {
 class TestConfigFile {
     /*
@@ -12,13 +13,11 @@ class TestConfigFile {
     */
    public:
     TestConfigFile() {}
-    TestConfigFile(const std::filesystem::path& path, const nlohmann::json& jsonContent)
-        : m_filePath(path) {
+    TestConfigFile(const fs::path& path, const nlohmann::json& jsonContent) : m_filePath(path) {
         writeJsonToFile(jsonContent);
     }
 
-    bool createTestConfigFile(const std::filesystem::path& path,
-                              const nlohmann::json& jsonContent) {
+    bool createTestConfigFile(const fs::path& path, const nlohmann::json& jsonContent) {
         deleteConfigFile();
         m_filePath = path;
         writeJsonToFile(jsonContent);
@@ -29,12 +28,12 @@ class TestConfigFile {
         deleteConfigFile();
     }
 
-    std::filesystem::path getFilePath() const {
+    fs::path getFilePath() const {
         return m_filePath;
     }
 
    private:
-    std::filesystem::path m_filePath;
+    fs::path m_filePath;
 
     void writeJsonToFile(const nlohmann::json& jsonContent);
     bool deleteConfigFile();

@@ -1,15 +1,20 @@
 #include <gtest/gtest.h>
 
+#include <fstream>
+
 #include "../src/ConfigManager.h"
 #include "ConfigFileCreator.h"
 
+namespace fs = std::filesystem;
 namespace MediaProcessor::Tests {
 
-// fixture
+// Test fixture
 class ConfigManagerTest : public ::testing::Test {
    protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    ConfigManager& configManager;
+    TestConfigFile testConfigFile;
+
+    ConfigManagerTest() : configManager(ConfigManager::getInstance()) {}
 };
 
 TEST_F(ConfigManagerTest, LoadValidConfigFile) {
@@ -22,10 +27,9 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile) {
         {"use_thread_cap", true},
         {"max_threads_if_capped", 1}};
 
-    TestConfigFile testConfigFile("testConfig.json", jsonContent);
+    testConfigFile.createTestConfigFile("testConfig.json", jsonContent);
 
     // Load the config
-    ConfigManager &configManager = ConfigManager::getInstance();
     bool loadSuccess = configManager.loadConfig(testConfigFile.getFilePath());
 
     // tests
@@ -35,6 +39,16 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile) {
     EXPECT_EQ(configManager.getFFmpegPath(), jsonContent["ffmpeg_path"].get<std::string>());
     EXPECT_EQ(configManager.getOptimalThreadCount(),
               jsonContent["max_threads_if_capped"].get<unsigned int>());
+}
+
+TEST_F(ConfigManagerTest, LoadInvalidConfigFile) {
+    fs::path invalidConfigPath = "invalid_config.json";
+
+    // Create an invalid config file for testing
+    std::ofstream(invalidConfigPath) << "not a json";
+
+    // Load the config
+    EXPECT_THROW(configManager.loadConfig(invalidConfigPath), std::runtime_error);
 }
 
 }  // namespace MediaProcessor::Tests
