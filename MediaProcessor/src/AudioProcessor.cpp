@@ -54,7 +54,7 @@ bool AudioProcessor::isolateVocals() {
         return false;
     }
 
-    if (!chunkAudio()) {
+    if (!splitAudioIntoChunks()) {
         return false;
     }
 
@@ -96,58 +96,54 @@ bool AudioProcessor::extractAudio() {
     return true;
 }
 
-bool AudioProcessor::chunkAudio() {
-    Utils::ensureDirectoryExists(m_chunksDir);
-
-    // Calculate chunk durations and start times
-    double chunkDuration = m_totalDuration / m_numChunks;
-    for (int i = 0; i < m_numChunks; ++i) {
-        double startTime = i * chunkDuration;
-        double duration = chunkDuration + m_overlapDuration;
-
-        // Handle duration for the last chunk
-        if (startTime + duration > m_totalDuration) {
-            duration = m_totalDuration - startTime;
-        }
-
-        m_startTimes.push_back(startTime);
-        m_durations.push_back(duration);
-    }
-
+bool AudioProcessor::splitAudioIntoChunks() {
     ConfigManager& configManager = ConfigManager::getInstance();
     fs::path ffmpegPath = configManager.getFFmpegPath();
 
-    // Chunk the audio
+    Utils::ensureDirectoryExists(m_chunksDir);
+
+    std::vector<double> chunkStartTimes;
+    std::vector<double> chunkDurations;
+    populateChunkDurations(chunkStartTimes, chunkDurations);
+
     for (int i = 0; i < m_numChunks; ++i) {
-        fs::path chunkPath = m_chunksDir / ("chunk_" + std::to_string(i) + ".wav");
-
-        // Set higher precision for chunk boundaries
-        std::ostringstream ssStartTime, ssDuration;
-        ssStartTime << std::fixed << std::setprecision(6) << m_startTimes[i];
-        ssDuration << std::fixed << std::setprecision(6) << m_durations[i];
-
-        CommandBuilder cmd;
-        cmd.addArgument(ffmpegPath.string());
-        cmd.addFlag("-y");
-        cmd.addFlag("-ss", ssStartTime.str());
-        cmd.addFlag("-t", ssDuration.str());
-        cmd.addFlag("-i", m_outputAudioPath.string());
-        cmd.addFlag("-ar", "48000");
-        cmd.addFlag("-ac", "1");
-        cmd.addFlag("-c:a", "pcm_s16le");
-        cmd.addArgument(chunkPath.string());
-
-        if (!Utils::runCommand(cmd.build())) {
+        if (!generateChunkFile(i, chunkStartTimes[i], chunkDurations[i], ffmpegPath)) {
             std::cerr << "Error: Failed to split audio into chunks." << std::endl;
             return false;
         }
-        m_chunkPaths.push_back(chunkPath);
     }
-
     return true;
 }
 
-bool AudioProcessor::invokeDeepFilter(fs::path _chunkPath) {
+bool AudioProcessor::generateChunkFile(int index, const double startTime, const double duration,
+                                       const fs::path& ffmpegPath) {
+    fs::path chunkPath = m_chunksDir / ("chunk_" + std::to_string(index) + ".wav");
+
+    // Set higher precision for chunk boundaries
+    std::ostringstream ssStartTime, ssDuration;
+    ssStartTime << std::fixed << std::setprecision(6) << startTime;
+    ssDuration << std::fixed << std::setprecision(6) << duration;
+
+    CommandBuilder cmd;
+    cmd.addArgument(ffmpegPath.string());
+    cmd.addFlag("-y");
+    cmd.addFlag("-ss", ssStartTime.str());
+    cmd.addFlag("-t", ssDuration.str());
+    cmd.addFlag("-i", m_outputAudioPath.string());
+    cmd.addFlag("-ar", "48000");
+    cmd.addFlag("-ac", "1");
+    cmd.addFlag("-c:a", "pcm_s16le");
+    cmd.addArgument(chunkPath.string());
+
+    if (!Utils::runCommand(cmd.build())) {
+        return false;
+    }
+
+    m_chunkPaths.push_back(chunkPath);
+    return true;
+}
+
+bool AudioProcessor::invokeDeepFilter(fs::path chunkPath) {
     ConfigManager& configManager = ConfigManager::getInstance();
     const fs::path deepFilterPath = configManager.getDeepFilterPath();
     const fs::path deepFilterTarballPath = configManager.getDeepFilterTarballPath();
@@ -157,10 +153,10 @@ bool AudioProcessor::invokeDeepFilter(fs::path _chunkPath) {
     cmd.addArgument(deepFilterPath.string());
     cmd.addFlag("--compensate-delay");
     cmd.addFlag("--output-dir", m_processedChunksDir.string());
-    cmd.addArgument(_chunkPath.string());
+    cmd.addArgument(chunkPath.string());
 
     if (!Utils::runCommand(cmd.build())) {
-        std::cerr << "Error: Failed to process chunk with DeepFilterNet: " << _chunkPath
+        std::cerr << "Error: Failed to process chunk with DeepFilterNet: " << chunkPath
                   << std::endl;
         return false;
     }
@@ -168,7 +164,7 @@ bool AudioProcessor::invokeDeepFilter(fs::path _chunkPath) {
     return true;
 }
 
-bool AudioProcessor::invokeDeepFilterFFI(fs::path _chunkPath) {
+bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath) {
     // TODO: think about the method name
 
     ConfigManager& configManager = ConfigManager::getInstance();
@@ -180,9 +176,9 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path _chunkPath) {
     // Open the input file with SNDFILE
     // TODO: extract into a utility
     SF_INFO sfInfoIn;
-    SNDFILE* inputFile = sf_open(_chunkPath.c_str(), SFM_READ, &sfInfoIn);
+    SNDFILE* inputFile = sf_open(chunkPath.c_str(), SFM_READ, &sfInfoIn);
     if (!inputFile) {
-        std::cerr << "Error: Could not open input WAV file: " << _chunkPath << std::endl;
+        std::cerr << "Error: Could not open input WAV file: " << chunkPath << std::endl;
         df_free(df_state);
         return false;
     }
@@ -190,7 +186,7 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path _chunkPath) {
     // Prepare output file with SNDFILE
     // TODO: extract into a utility
     SF_INFO sfInfoOut = sfInfoIn;
-    fs::path processedChunkPath = m_processedChunksDir / _chunkPath.filename();
+    fs::path processedChunkPath = m_processedChunksDir / chunkPath.filename();
     SNDFILE* outputFile = sf_open(processedChunkPath.c_str(), SFM_WRITE, &sfInfoOut);
     if (!outputFile) {
         std::cerr << "Error: Could not open output WAV file: " << processedChunkPath << std::endl;
@@ -245,6 +241,23 @@ bool AudioProcessor::filterChunks() {
     }
 
     return true;
+}
+
+void AudioProcessor::populateChunkDurations(std::vector<double>& startTimes,
+                                            std::vector<double>& durations) const {
+    double chunkDuration = m_totalDuration / m_numChunks;
+    for (int i = 0; i < m_numChunks; ++i) {
+        double startTime = i * chunkDuration;
+        double duration = chunkDuration + m_overlapDuration;
+
+        // Handle duration for the last chunk
+        if (startTime + duration > m_totalDuration) {
+            duration = m_totalDuration - startTime;
+        }
+
+        startTimes.push_back(startTime);
+        durations.push_back(duration);
+    }
 }
 
 std::string AudioProcessor::buildFilterComplex() const {

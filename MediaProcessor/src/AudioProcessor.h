@@ -29,20 +29,23 @@ class AudioProcessor {
     fs::path m_processedChunksDir;
     std::vector<fs::path> m_chunkPaths;
     std::vector<fs::path> m_processedChunkPaths;
-    std::vector<double> m_startTimes;
-    std::vector<double> m_durations;
     double m_totalDuration;
 
     bool extractAudio();
-    bool chunkAudio();
+    bool splitAudioIntoChunks();
+    bool generateChunkFile(int index, const double startTime, const double duration,
+                           const fs::path &ffmpegPath);
     bool filterChunks();
     bool mergeChunks();
-    bool invokeDeepFilter(fs::path _chunkPath);
-    bool invokeDeepFilterFFI(fs::path _chunkPath);
+    bool invokeDeepFilter(fs::path chunkPath);
+    bool invokeDeepFilterFFI(fs::path chunkPath);
 
     std::string buildFilterComplex() const;
 
     double getAudioDuration(const fs::path &audioPath);
+
+    void populateChunkDurations(std::vector<double> &startTimes,
+                                std::vector<double> &durations) const;
 };
 
 }  // namespace MediaProcessor
