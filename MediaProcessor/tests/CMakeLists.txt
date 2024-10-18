@@ -2,15 +2,19 @@ if(BUILD_TESTING)
     include(FetchContent)
     cmake_policy(SET CMP0135 NEW)  # Set policy for FetchContent
 
-    FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    )
+    find_package(GTest QUIET)
+    if(NOT GTEST_FOUND)
+        # Fetch GTest
+        FetchContent_Declare(
+            googletest
+            URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
 
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
-
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable(googletest)
+    endif()
+    
     # setup test media directory
     set(TEST_MEDIA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/TestMedia" CACHE PATH "Path to test media files")
 
