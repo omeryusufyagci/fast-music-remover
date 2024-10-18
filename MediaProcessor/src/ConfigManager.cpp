@@ -28,7 +28,7 @@ bool ConfigManager::loadConfig(const fs::path& configFilePath) {
 }
 
 template <typename valueType>
-valueType ConfigManager::getValue(const std::string& optionName) const {
+valueType ConfigManager::getConfigValue(const std::string& optionName) const {
     if (!m_config.contains(optionName)) {
         throw std::runtime_error("Config option '" + optionName + "' not found");
     }
@@ -41,11 +41,11 @@ valueType ConfigManager::getValue(const std::string& optionName) const {
 }
 
 fs::path ConfigManager::getDeepFilterPath() const {
-    return getValue<std::string>("deep_filter_path");
+    return getConfigValue<std::string>("deep_filter_path");
 }
 
 fs::path ConfigManager::getFFmpegPath() const {
-    return getValue<std::string>("ffmpeg_path");
+    return getConfigValue<std::string>("ffmpeg_path");
 }
 
 unsigned int ConfigManager::getOptimalThreadCount() {
@@ -56,9 +56,9 @@ unsigned int ConfigManager::getOptimalThreadCount() {
 }
 
 unsigned int ConfigManager::getNumThreadsValue() {
-    bool useThreadCap = getValue<bool>("use_thread_cap");
+    bool useThreadCap = getConfigValue<bool>("use_thread_cap");
     if (useThreadCap) {
-        return getValue<unsigned int>("max_threads_if_capped");
+        return getConfigValue<unsigned int>("max_threads_if_capped");
     } else {
         return 0;
     }

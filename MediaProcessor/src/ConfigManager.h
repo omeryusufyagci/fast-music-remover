@@ -22,7 +22,7 @@ class ConfigManager {
     unsigned int determineNumThreads(unsigned int configNumThreads,
                                      unsigned int hardwareNumThreads);
     template <typename valueType>
-    valueType getValue(const std::string& optionName) const;
+    valueType getConfigValue(const std::string& optionName) const;
 
     ConfigManager() = default;
     nlohmann::json m_config;

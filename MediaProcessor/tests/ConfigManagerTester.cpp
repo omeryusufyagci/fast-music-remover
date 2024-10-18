@@ -51,4 +51,25 @@ TEST_F(ConfigManagerTest, LoadInvalidConfigFile) {
     EXPECT_THROW(configManager.loadConfig(invalidConfigPath), std::runtime_error);
 }
 
+TEST_F(ConfigManagerTest, LoadInvalidConfigOptions) {
+    // Create a temporary config file with valid JSON content but invalid options
+    nlohmann::json jsonContent = {{"deep_filter_path", false},
+                                  {"downloads_dir", "downloads"},
+                                  {"ffmpeg_path", 9.1},
+                                  {"upload_folder", "uploads"},
+                                  {"use_thread_cap", "False Value"},
+                                  {"max_threads_if_capped", -1}};
+
+    testConfigFile.createTestConfigFile("testConfig.json", jsonContent);
+
+    // Load the config
+    bool loadSuccess = configManager.loadConfig(testConfigFile.getFilePath());
+
+    // tests
+    EXPECT_TRUE(loadSuccess);
+    EXPECT_THROW(configManager.getDeepFilterPath(), std::runtime_error);
+    EXPECT_THROW(configManager.getFFmpegPath(), std::runtime_error);
+    EXPECT_THROW(configManager.getOptimalThreadCount(), std::runtime_error);
+}
+
 }  // namespace MediaProcessor::Tests
