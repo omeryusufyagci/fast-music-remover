@@ -107,7 +107,7 @@ class MediaHandler:
                     merged_ext = result.get("ext", "mp4")
 
             # Return the sanitized file path for processing
-            video_file = Path(app.config["UPLOAD_FOLDER"]) / f"{sanitized_title}.{merged_ext}"
+            video_file = Path(app.config["UPLOAD_FOLDER"])/f"{sanitized_title}.{merged_ext}"
             return str(Path(video_file).resolve())
 
         except Exception as e:
