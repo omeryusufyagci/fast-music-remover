@@ -75,7 +75,8 @@ class TestConfigFile {
 };
 
 bool compareFilesByteByByte(const fs::path& file1, const fs::path& file2);
-bool compareAudioFiles(const fs::path& file1, const fs::path& file2);
+bool compareAudioFiles(const fs::path& file1, const fs::path& file2,
+                       double tolerance = DEFAULT_TOLERANCE);
 template <typename Iter>
 bool compareBuffersWithTolerance(Iter begin1, Iter end1, Iter begin2, Iter end2, double tolerance);
 

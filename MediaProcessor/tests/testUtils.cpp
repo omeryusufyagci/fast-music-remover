@@ -54,8 +54,7 @@ bool compareFilesByteByByte(const fs::path& file1, const fs::path& file2) {
     return buffer1 == buffer2;
 }
 
-bool compareAudioFiles(const fs::path& file1, const fs::path& file2,
-                       double tolerance = DEFAULT_TOLERANCE) {
+bool compareAudioFiles(const fs::path& file1, const fs::path& file2, double tolerance) {
     SF_INFO sfInfo1, sfInfo2;
     SNDFILE* sndFile1 = sf_open(file1.c_str(), SFM_READ, &sfInfo1);
     SNDFILE* sndFile2 = sf_open(file2.c_str(), SFM_READ, &sfInfo2);
