@@ -34,10 +34,8 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile) {
 
     testConfigFile.createConfigFile("testConfig.json", jsonContent);
 
-    // Load the config
     bool loadSuccess = configManager.loadConfig(testConfigFile.getFilePath());
 
-    // tests
     EXPECT_TRUE(loadSuccess);
     EXPECT_EQ(configManager.getDeepFilterPath(),
               jsonContent["deep_filter_path"].get<std::string>());
@@ -58,7 +56,6 @@ TEST_F(ConfigManagerTest, LoadInvalidConfigFile) {
     // Create an invalid config file for testing
     std::ofstream(invalidConfigPath) << "not a json";
 
-    // Load the config
     EXPECT_THROW(configManager.loadConfig(invalidConfigPath), std::runtime_error);
 }
 
@@ -76,10 +73,8 @@ TEST_F(ConfigManagerTest, LoadInvalidConfigOptions) {
 
     testConfigFile.createConfigFile("testConfig.json", jsonContent);
 
-    // Load the config
     bool loadSuccess = configManager.loadConfig(testConfigFile.getFilePath());
 
-    // tests
     EXPECT_TRUE(loadSuccess);
     EXPECT_THROW(configManager.getDeepFilterPath(), std::runtime_error);
     EXPECT_THROW(configManager.getDeepFilterTarballPath(), std::runtime_error);

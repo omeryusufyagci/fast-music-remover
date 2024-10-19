@@ -30,11 +30,9 @@ class AudioProcessorTester : public ::testing::Test {
         testVideoPath = testMediaPath / "test_video.mkv";
         testAudioProcessedPath = testMediaPath / "test_audio_processed.wav";
 
-        // Check if the file exists
         assertFileExists(testVideoPath);
         assertFileExists(testAudioProcessedPath);
 
-        // Make a directory for test output
         testOutputDir = currentPath / "test_output";
         fs::create_directories(testOutputDir);
 
@@ -42,13 +40,11 @@ class AudioProcessorTester : public ::testing::Test {
     }
 
     void TearDown() override {
-        // Delete the testOutputDir
         fs::remove_all(testOutputDir);
     }
 };
 
 TEST_F(AudioProcessorTester, isolateVocalsFromTestVideoSuccessfully) {
-    // Load the config
     ConfigManager &configManager = ConfigManager::getInstance();
     ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
         << "Unable to Load TestConfigFile";

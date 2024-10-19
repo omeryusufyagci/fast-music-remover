@@ -30,26 +30,21 @@ class AudioProcessorTester : public ::testing::Test {
         testVideoPath = testMediaPath / "test_video.mkv";
         testAudioPath = testMediaPath / "test_audio.wav";
 
-        // Check if the files exists
         assertFileExists(testVideoPath);
         assertFileExists(testAudioPath);
 
-        // Make a directory for test output
         testOutputDir = currentPath / "test_output";
         fs::create_directories(testOutputDir);
 
-        // configure to use 1 Thread
         testConfigFile.changeConfigOptions("use_thread_cap", true, "max_threads_if_capped", 1);
     }
 
     void TearDown() override {
-        // Delete the testOutputDir
         fs::remove_all(testOutputDir);
     }
 };
 
 TEST_F(AudioProcessorTester, isolateVocalsFromTestVideo) {
-    // Load the config
     ConfigManager &configManager = ConfigManager::getInstance();
     ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
         << "Unable to Load TestConfigFile";

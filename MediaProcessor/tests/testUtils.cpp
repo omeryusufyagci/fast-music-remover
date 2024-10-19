@@ -73,19 +73,15 @@ bool compareAudioFiles(const fs::path& file1, const fs::path& file2, double tole
         return false;
     }
 
-    // Buffer to store samples
     std::vector<float> buffer1(sfInfo1.frames * sfInfo1.channels);
     std::vector<float> buffer2(sfInfo2.frames * sfInfo2.channels);
 
-    // Read audio data
     sf_readf_float(sndFile1, buffer1.data(), sfInfo1.frames);
     sf_readf_float(sndFile2, buffer2.data(), sfInfo2.frames);
 
-    // Close the files after reading
     sf_close(sndFile1);
     sf_close(sndFile2);
 
-    // Compare the the two buffers
     return compareBuffersWithTolerance(buffer1.begin(), buffer1.end(), buffer2.begin(),
                                        buffer2.end(), tolerance);
 }
