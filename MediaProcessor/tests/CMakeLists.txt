@@ -27,7 +27,7 @@ if(BUILD_TESTING)
         "testUtils.cpp"
     )
     target_compile_definitions(ConfigManagerTester PRIVATE TEST_MEDIA_DIR="${TEST_MEDIA_DIR}")
-    target_link_libraries(ConfigManagerTester gtest_main)
+    target_link_libraries(ConfigManagerTester gtest_main ${CMAKE_SOURCE_DIR}/lib/libdf.so ${SNDFILE_LIBRARIES})
     add_test(NAME ConfigManagerTesting COMMAND ConfigManagerTester)
 
     # UtilsTester
@@ -63,7 +63,7 @@ if(BUILD_TESTING)
         testUtils.cpp
     )
     target_compile_definitions(VideoProcessorTester PRIVATE TEST_MEDIA_DIR="${TEST_MEDIA_DIR}")
-    target_link_libraries(VideoProcessorTester gtest_main)
+    target_link_libraries(VideoProcessorTester gtest_main ${CMAKE_SOURCE_DIR}/lib/libdf.so ${SNDFILE_LIBRARIES})
     add_test(NAME VideoProcessorTesting COMMAND VideoProcessorTester)
 
     # CommandBuilderTester

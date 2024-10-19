@@ -9,6 +9,7 @@ namespace fs = std::filesystem;
 namespace MediaProcessor::testUtils {
 
 constexpr const char* DEFAULT_TEST_CONFIG_FILE_PATH = "testConfig.json";
+constexpr double DEFAULT_TOLERANCE = 0.01;
 
 class TestConfigFile {
     /*
@@ -73,7 +74,10 @@ class TestConfigFile {
         {"max_threads_if_capped", 6}};
 };
 
-bool areFilesIdentical(const fs::path& file1, const fs::path& file2);
+bool compareFilesByteByByte(const fs::path& file1, const fs::path& file2);
+bool compareAudioFiles(const fs::path& file1, const fs::path& file2);
+template <typename Iter>
+bool compareBuffersWithTolerance(Iter begin1, Iter end1, Iter begin2, Iter end2, double tolerance);
 
 }  // namespace MediaProcessor::testUtils
 
