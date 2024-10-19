@@ -13,8 +13,14 @@ class ConfigManager {
     static ConfigManager& getInstance();
 
     bool loadConfig(const fs::path& configFilePath);
+
     fs::path getDeepFilterPath() const;
+    fs::path getDeepFilterTarballPath() const;
+    fs::path getDeepFilterEncoderPath() const;
+    fs::path getDeepFilterDecoderPath() const;
+
     fs::path getFFmpegPath() const;
+
     unsigned int getOptimalThreadCount();
 
    private:

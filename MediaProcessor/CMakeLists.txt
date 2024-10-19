@@ -10,9 +10,24 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+
 # Testing build are off by default. can be turned on using cmake -DBUILD_TESTING=ON
 option(BUILD_TESTING "Build the tests" OFF)
+
 include(CTest)
-# Add subdirectories for source and tests
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
+# Threads is required
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+# SNDFILE: for read/write of sampled audio files
+# https://github.com/libsndfile/libsndfile
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SNDFILE REQUIRED sndfile)
+include_directories(${SNDFILE_INCLUDE_DIRS})
+
+# Add subdirectories for source files and gtest
 add_subdirectory(src)
 add_subdirectory(tests)
