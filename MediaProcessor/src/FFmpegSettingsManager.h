@@ -12,17 +12,19 @@ enum class AudioCodec { AAC, MP3, FLAC, OPUS, UNKNOWN };
 enum class VideoCodec { H264, H265, VP8, VP9, UNKNOWN };
 
 /**
- * @class FFmpegSettingsManager
- * @brief Manages FFmpeg-specific global, audio and video settings
+ * @brief Manages FFmpeg-specific global, audio, and video settings.
  *
  * The FFmpegSettingsManager is a singleton that provides interfaces to set
- * and get settings related to global, audio, and video settings.
+ * and get settings for global, audio, and video configurations.
  *
- * Note: This class does not manage configuration data directly.
- * Configurations should be retrieved via the `ConfigManager`.
+ * Note: This class does not manage configuration data directly. Configurations
+ * should be retrieved via the `ConfigManager`.
  */
 class FFmpegSettingsManager {
    public:
+    /**
+     * @brief Retrieves the singleton instance of FFmpegSettingsManager.
+     */
     static FFmpegSettingsManager& getInstance();
 
     // Global Setters
@@ -51,10 +53,23 @@ class FFmpegSettingsManager {
     // Video Getters
     VideoCodec getVideoCodec() const;
 
+    /**
+     * @brief Converts an enum value to its corresponding string representation.
+     *
+     * @tparam T Enum type.
+     * @param value The enum value.
+     * @param valueMap Map of enum values to their string representations.
+     * @return The string representation of the enum value.
+     */
     template <typename T>
     std::string enumToString(const T& value,
                              const std::unordered_map<T, std::string>& valueMap) const;
 
+    /**
+     * @brief Retrieves the path to the FFmpeg executable.
+     *
+     * @return The FFmpeg path as a string.
+     */
     std::string getFFmpegPath() const {
         return ConfigManager::getInstance().getFFmpegPath().string();
     }

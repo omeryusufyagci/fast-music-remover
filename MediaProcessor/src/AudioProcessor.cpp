@@ -66,7 +66,7 @@ bool AudioProcessor::isolateVocals() {
         return false;
     }
 
-    // The intermediary files can be useful for debugging, but for release we'll delete them
+    // Intermediary files
     fs::remove_all(m_chunksDir);
     fs::remove_all(m_processedChunksDir);
 
@@ -224,7 +224,7 @@ bool AudioProcessor::filterChunks() {
             fs::path chunkPath = m_chunkPaths[i];
 
             invokeDeepFilter(chunkPath);
-            // invokeDeepFilterFFI(chunkPath);
+            // invokeDeepFilterFFI(chunkPath);  // RT API still under validation
         }));
     }
 
@@ -322,10 +322,7 @@ bool AudioProcessor::mergeChunks() {
 }
 
 double AudioProcessor::getAudioDuration(const fs::path& audioPath) {
-    /*
-     * TODO: ffprobe command to be used via the to-be-made FFmpegController class
-     */
-
+    // Prepare ffprobe
     CommandBuilder cmd;
     cmd.addArgument("ffprobe");
     cmd.addFlag("-v", "error");
