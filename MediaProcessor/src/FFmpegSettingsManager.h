@@ -4,12 +4,6 @@
 #include <string>
 #include <unordered_map>
 
-/**
- * TODO:
- * Having input/output file operations in the settings manager is not nice.
- * These should be handled as the command is built, within the FFmpegCommandBuilder class.
- */
-
 namespace MediaProcessor {
 
 enum class AudioCodec { AAC, MP3, FLAC, OPUS, UNKNOWN };
@@ -27,13 +21,9 @@ class FFmpegSettingsManager {
 
     // Global Setters
     void setOverwrite(bool overwrite);
-    void setInputFile(const std::string& inputFile);
-    void setOutputFile(const std::string& outputFile);
 
     // Global Getters
     bool getOverwrite() const;
-    std::string getInputFile() const;
-    std::string getOutputFile() const;
 
     // Audio Setters
     void setAudioCodec(AudioCodec codec);
@@ -52,8 +42,8 @@ class FFmpegSettingsManager {
     VideoCodec getVideoCodec() const;
 
     // Value Map Getters
-    std::unordered_map<AudioCodec, std::string>& getAudioCodecToString();
-    std::unordered_map<VideoCodec, std::string>& getVideoCodecToString();
+    std::unordered_map<AudioCodec, std::string>& getAudioCodecAsString();
+    std::unordered_map<VideoCodec, std::string>& getVideoCodecAsString();
 
    private:
     std::unordered_map<AudioCodec, std::string> m_audioCodecToString;

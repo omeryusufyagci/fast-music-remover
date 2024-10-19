@@ -21,25 +21,9 @@ void FFmpegSettingsManager::setOverwrite(bool overwrite) {
     m_globalSettings.overwrite = overwrite;
 }
 
-void FFmpegSettingsManager::setInputFile(const std::string& inputFile) {
-    m_globalSettings.inputFile = inputFile;
-}
-
-void FFmpegSettingsManager::setOutputFile(const std::string& outputFile) {
-    m_globalSettings.outputFile = outputFile;
-}
-
 // Global Getters
 bool FFmpegSettingsManager::getOverwrite() const {
     return m_globalSettings.overwrite;
-}
-
-std::string FFmpegSettingsManager::getInputFile() const {
-    return m_globalSettings.inputFile;
-}
-
-std::string FFmpegSettingsManager::getOutputFile() const {
-    return m_globalSettings.outputFile;
 }
 
 // Audio Setters
@@ -78,11 +62,11 @@ VideoCodec FFmpegSettingsManager::getVideoCodec() const {
     return m_videoSettings.codec;
 }
 
-std::unordered_map<AudioCodec, std::string>& FFmpegSettingsManager::getAudioCodecToString() {
+std::unordered_map<AudioCodec, std::string>& FFmpegSettingsManager::getAudioCodecAsString() {
     return m_audioCodecToString;
 }
 
-std::unordered_map<VideoCodec, std::string>& FFmpegSettingsManager::getVideoCodecToString() {
+std::unordered_map<VideoCodec, std::string>& FFmpegSettingsManager::getVideoCodecAsString() {
     return m_videoCodecToString;
 }
 
