@@ -24,4 +24,27 @@ TEST_F(UtilsTester, checkPreparedOutputPaths) {
     EXPECT_EQ(expectedProcessedVideoPath, outputProcessedVideoPath);
 }
 
+TEST_F(UtilsTester, EnsureDirectoryExists) {
+    fs::path tempPath = "test_dir";
+    EXPECT_FALSE(fs::exists(tempPath));
+
+    // Call ensureDirectoryExists
+    bool result = Utils::ensureDirectoryExists(tempPath);
+
+    EXPECT_TRUE(fs::exists(tempPath));
+    EXPECT_TRUE(result);
+
+    EXPECT_FALSE(Utils::ensureDirectoryExists(tempPath));
+
+    fs::remove_all(tempPath);
+}
+
+TEST_F(UtilsTester, TrimTrailingSpaces) {
+    std::string inputWithTrailingSpace = "Hello, World! ";
+    std::string inputWithoutTrailingSpace = "Hello, World!";
+
+    EXPECT_EQ(inputWithoutTrailingSpace, Utils::trimTrailingSpace(inputWithTrailingSpace));
+    EXPECT_EQ(inputWithoutTrailingSpace, Utils::trimTrailingSpace(inputWithoutTrailingSpace));
+}
+
 }  // namespace MediaProcessor::Tests
