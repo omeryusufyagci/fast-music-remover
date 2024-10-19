@@ -5,51 +5,46 @@
 
 #include "../src/ConfigManager.h"
 #include "../src/VideoProcessor.h"
-#include "ConfigFileCreator.h"
+#include "testUtils.h"
 
-namespace MediaProcessor::UnitTesting {
+namespace fs = std::filesystem;
+namespace MediaProcessor::Tests {
 
-std::filesystem::path testMediaPath = TEST_MEDIA_DIR;
+fs::path testMediaPath = TEST_MEDIA_DIR;
 
 // fixture
 class AudioProcessorTester : public ::testing::Test {
    protected:
-    std::filesystem::path testVideoPath;
-    std::filesystem::path testAudioPath;
-    std::filesystem::path testOutputDir;
-    TestConfigFile testConfigFile;
+    fs::path testVideoPath;
+    fs::path testAudioPath;
+    fs::path testOutputDir;
+    testUtils::TestConfigFile testConfigFile;
+
+    void assertFileExists(fs::path path) {
+        ASSERT_TRUE(fs::exists(path)) << path << " not found.";
+    }
 
     void SetUp() override {
-        std::filesystem::path currentPath = std::filesystem::current_path();
+        fs::path currentPath = fs::current_path();
+        fs::path rootPath = fs::current_path().parent_path().parent_path();
         testVideoPath = testMediaPath / "test_video.mkv";
         testAudioPath = testMediaPath / "test_audio.wav";
 
         // Check if the files exists
-        ASSERT_TRUE(std::filesystem::exists(testVideoPath))
-            << testVideoPath.string() << " not found at " + testVideoPath.string();
-        ASSERT_TRUE(std::filesystem::exists(testAudioPath))
-            << testAudioPath.string() << " not found at " + testAudioPath.string();
+        assertFileExists(testVideoPath);
+        assertFileExists(testAudioPath);
 
         // Make a directory for test output
         testOutputDir = currentPath / "test_output";
-        std::filesystem::create_directories(testOutputDir);
+        fs::create_directories(testOutputDir);
 
-        // Initialize the TestConfigFile
-        nlohmann::json jsonContent = {
-            {"deep_filter_path",
-             (testMediaPath / "../../res/deep-filter-0.5.6-x86_64-unknown-linux-musl").string()},
-            {"downloads_dir", "downloads"},
-            {"ffmpeg_path", "/usr/bin/ffmpeg"},
-            {"upload_folder", "uploads"},
-            {"use_thread_cap", false},
-            {"max_threads_if_capped", 6}};
-
-        testConfigFile.createTestConfigFile(currentPath / "testConfig.json", jsonContent);
+        // configure to use 1 Thread
+        testConfigFile.changeConfigOptions("use_thread_cap", true, "max_threads_if_capped", 1);
     }
 
     void TearDown() override {
         // Delete the testOutputDir
-        std::filesystem::remove_all(testOutputDir);
+        fs::remove_all(testOutputDir);
     }
 };
 
@@ -59,14 +54,17 @@ TEST_F(AudioProcessorTester, isolateVocalsFromTestVideo) {
     ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
         << "Unable to Load TestConfigFile";
 
-    std::filesystem::path testOutputVideoPath = testOutputDir / "test_output_video.mp4";
+    fs::path testOutputVideoPath = testOutputDir / "test_output_video.mkv";
     VideoProcessor videoProcessor(testVideoPath, testAudioPath, testOutputVideoPath);
 
     // Test the mergeMedia function
     EXPECT_EQ(videoProcessor.mergeMedia(), true);
 
     // Check if the output file was created
-    EXPECT_TRUE(std::filesystem::exists(testOutputVideoPath));
+    EXPECT_TRUE(fs::exists(testOutputVideoPath));
+
+    // check if already processed video file and output video files are same
+    testUtils::areFilesIdentical(testVideoPath, testOutputVideoPath);
 }
 
-}  // namespace MediaProcessor::UnitTesting
+}  // namespace MediaProcessor::Tests

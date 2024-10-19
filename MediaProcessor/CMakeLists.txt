@@ -15,8 +15,10 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 # Testing build are off by default. can be turned on using cmake -DBUILD_TESTING=ON
 option(BUILD_TESTING "Build the tests" OFF)
 
+# Set include directories
 include(CTest)
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/third_party/nlohmann)
 
 # Threads is required
 set(THREADS_PREFER_PTHREAD_FLAG ON)
