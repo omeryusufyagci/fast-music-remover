@@ -84,5 +84,26 @@ Submit a pull request explaining the nature of the changes.
 - **C++**: Please follow the existing style for C++ files (refer to the .clang-format file). The pre-commit hooks will automatically run clang-format on `MediaProcessor/src`.
 - **Keep Changes Modular**: Focus on singular units of work instead of larger pull requests, allowing for easier and faster progression.
 
+### Commenting Guidelines:
+
+#### General Rules:
+- **Avoid Redundancy**: Do not add comments for variables, parameters or methods that are self-explanatory.
+- **High-Level Overviews**: Add comments for public methods and classes to provide a brief overview of what they do. Include details if the method performs multiple steps or has a more complex workflow.
+- **Minimal Private Method Comments**: Avoid commenting on private methods or member variables unless they perform non-obvious functions.
+- **Doxygen Style for Public Methods**: Use Doxygen-style comments (e.g., `@brief`) for class-level and public method documentation.
+  
+#### Comment Style Example:
+```cpp
+/**
+ * @brief Merges the audio and video files into a single output file.
+ * 
+ * @return true if the merge is successful, false otherwise.
+ */
+bool mergeMedia();
+```
+
+#### Class Comments:
+Provide a brief description of what the class is responsible for. For abstract classes or interfaces, a minimal comment indicating its purpose is sufficient.
+
 ### Got Questions?
 Got questions, feedback or a feature request? Don't miss the [discussion](https://github.com/omeryusufyagci/fast-music-remover/discussions) to get in touch!
