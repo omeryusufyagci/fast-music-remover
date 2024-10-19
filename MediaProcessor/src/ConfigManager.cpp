@@ -25,11 +25,28 @@ bool ConfigManager::loadConfig(const fs::path& configFilePath) {
 }
 
 fs::path ConfigManager::getDeepFilterPath() const {
-    return m_config["deep_filter_path"].get<std::string>();
+#ifdef _WIN32
+    return fs::path(getConfigValue("deep_filter_path_windows"));
+#else
+    return fs::path(getConfigValue("deep_filter_path_unix"));
+#endif
+}
+fs::path ConfigManager::getFFmpegPath() const {
+#ifdef _WIN32
+    return fs::path(getConfigValue("ffmpeg_path_windows"));
+#else
+    return fs::path(getConfigValue("ffmpeg_path_unix"));
+#endif
 }
 
-fs::path ConfigManager::getFFmpegPath() const {
-    return m_config["ffmpeg_path"].get<std::string>();
+std::string ConfigManager::getConfigValue(const std::string& key) const {
+    auto it = m_config.find(key);
+    if (it != m_config.end()) {
+        return it->get<std::string>();
+    } else {
+        std::cerr << "Error: Config value not found for key: " << key << std::endl;
+        return "";
+    }
 }
 
 unsigned int ConfigManager::getOptimalThreadCount() {

@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import platform
 import subprocess
 from urllib.parse import urlparse
 
@@ -27,10 +28,14 @@ with open("config.json") as config_file:
 # Define base paths using absolute references
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-DEEPFILTERNET_PATH = os.path.abspath(config["deep_filter_path"])
-DOWNLOADS_DIR = os.path.abspath(config["downloads_dir"])
-FFMPEG_PATH = os.path.abspath(config["ffmpeg_path"])
-UPLOAD_FOLDER = os.path.abspath(config.get("upload_folder", os.path.join(BASE_DIR, "uploads")))  # Defaults to uploads/
+DOWNLOADS_DIR = os.path.abspath(config['downloads_dir'])
+UPLOAD_FOLDER = os.path.abspath(config.get('upload_folder', os.path.join(BASE_DIR, 'uploads')))  # Defaults to uploads/
+if platform.system() == "Windows":
+    FFMPEG_PATH = config['ffmpeg_path_windows']  # for Windows
+    DEEPFILTERNET_PATH = os.path.abspath(config['deep_filter_path_windows'])
+else:
+    FFMPEG_PATH = os.path.abspath(config['ffmpeg_path_unix'])  # for Linux or other OS
+    DEEPFILTERNET_PATH = os.path.abspath(config['deep_filter_path_unix'])
 
 os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -112,9 +117,13 @@ class MediaHandler:
 
         try:
             logging.info(f"Processing video at path: {video_path}")
+            if platform.system() == 'Windows':
+                executable_path = os.path.join('MediaProcessor', 'build', 'MediaProcessor.exe')
+            else:
+                executable_path = os.path.join('MediaProcessor', 'build', 'MediaProcessor')
 
             result = subprocess.run(
-                ["./MediaProcessor/build/MediaProcessor", str(video_path)], capture_output=True, text=True
+                [executable_path, str(video_path)], capture_output=True, text=True
             )
 
             if result.returncode != 0:
