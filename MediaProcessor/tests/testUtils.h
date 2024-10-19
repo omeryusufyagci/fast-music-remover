@@ -11,10 +11,10 @@ namespace MediaProcessor::testUtils {
 constexpr const char* DEFAULT_TEST_CONFIG_FILE_PATH = "testConfig.json";
 constexpr double DEFAULT_TOLERANCE = 0.01;
 
+/**
+ * @brief Create a test configuration file.
+ */
 class TestConfigFile {
-    /*
-    Create a test configuration file.
-    */
    public:
     TestConfigFile() : m_filePath(DEFAULT_TEST_CONFIG_FILE_PATH) {
         writeJsonToFile(m_filePath, jsonContent);
@@ -23,8 +23,27 @@ class TestConfigFile {
         writeJsonToFile(path, jsonContent);
     }
 
+    /**
+     * @brief Create a test configuration file with custom content.
+     *
+     * @param path Path of the test configuration file.
+     * @param jsonContent Custom JSON content.
+     */
     void createConfigFile(const fs::path& path, const nlohmann::json& jsonContent);
 
+    /**
+     * @brief Changes the configuration options and writes them to test configuration file.
+     *
+     * This function accepts a variable number of arguments in the form of
+     * key-value pairs e.g., (option1, value1, option2, value2, ...).
+     * The keys represent the configuration options to be changed,
+     * and the values represent the new settings for those options.
+     *
+     * example : changeConfigOptions("option1", 1, "option2", true);
+     *
+     * @tparam Args Variadic template parameter pack representing the types of the arguments.
+     * @param args The key-value pairs of configuration options and their corresponding values.
+     */
     template <typename... Args>
     void changeConfigOptions(Args&&... args) {
         changeJsonContents(std::forward<Args>(args)...);
@@ -35,6 +54,11 @@ class TestConfigFile {
         deleteConfigFile();
     }
 
+    /**
+     * @brief return the path of the test configuration file the object holds.
+     *
+     * @return Path of the test configuration file.
+     */
     fs::path getFilePath() const {
         return m_filePath;
     }
