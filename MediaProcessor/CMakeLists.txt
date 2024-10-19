@@ -10,6 +10,8 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+
 # Testing build are off by default. can be turned on using cmake -DBUILD_TESTING=ON
 option(BUILD_TESTING "Build the tests" OFF)
 include(CTest)
