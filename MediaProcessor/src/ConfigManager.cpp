@@ -45,15 +45,15 @@ fs::path ConfigManager::getDeepFilterPath() const {
 }
 
 fs::path ConfigManager::getDeepFilterTarballPath() const {
-    return m_config["deep_filter_tarball_path"].get<std::string>();
+    return getConfigValue<std::string>("deep_filter_tarball_path");
 }
 
 fs::path ConfigManager::getDeepFilterEncoderPath() const {
-    return m_config["deep_filter_encoder_path"].get<std::string>();
+    return getConfigValue<std::string>("deep_filter_encoder_path");
 }
 
 fs::path ConfigManager::getDeepFilterDecoderPath() const {
-    return m_config["deep_filter_decoder_path"].get<std::string>();
+    return getConfigValue<std::string>("deep_filter_decoder_path");
 }
 
 fs::path ConfigManager::getFFmpegPath() const {
