@@ -64,7 +64,7 @@ TEST_F(AudioProcessorTester, isolateVocalsFromTestVideo) {
     EXPECT_TRUE(fs::exists(testOutputVideoPath));
 
     // check if already processed video file and output video files are same
-    testUtils::areFilesIdentical(testVideoPath, testOutputVideoPath);
+    testUtils::compareFilesByteByByte(testVideoPath, testOutputVideoPath);
 }
 
 }  // namespace MediaProcessor::Tests
