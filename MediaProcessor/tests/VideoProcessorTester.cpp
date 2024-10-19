@@ -26,7 +26,7 @@ class AudioProcessorTester : public ::testing::Test {
 
     void SetUp() override {
         fs::path currentPath = fs::current_path();
-        fs::path rootPath = fs::current_path().parent_path().parent_path();
+
         testVideoPath = testMediaPath / "test_video.mkv";
         testAudioPath = testMediaPath / "test_audio.wav";
 
