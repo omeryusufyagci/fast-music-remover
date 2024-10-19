@@ -3,7 +3,11 @@ import logging
 import os
 import re
 import subprocess
+import typing
+import flask
+from pathlib import Path
 from urllib.parse import urlparse
+
 
 import yt_dlp
 from flask import Flask, jsonify, render_template, request, send_from_directory, url_for
@@ -25,13 +29,15 @@ with open("config.json") as config_file:
     config = json.load(config_file)
 
 # Define base paths using absolute references
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-DOWNLOADS_PATH = os.path.abspath(config["downloads_path"])
-UPLOADS_PATH = os.path.abspath(config.get("uploads_path", os.path.join(BASE_DIR, "uploads")))  # Defaults to uploads/
 
-DEEPFILTERNET_PATH = os.path.abspath(config["deep_filter_path"])
-FFMPEG_PATH = os.path.abspath(config["ffmpeg_path"])
+BASE_DIR = str(Path(__file__).parent.resolve())
+
+DOWNLOADS_PATH = str(Path(config["downloads_path"]).resolve())
+UPLOADS_PATH = str(Path(config.get("uploads_path", Path(BASE_DIR)/"uploads")).resolve())  # Defaults to uploads/
+
+DEEPFILTERNET_PATH = str(Path(config["deep_filter_path"]).resolve())
+FFMPEG_PATH = str(Path(config["ffmpeg_path"]).resolve())
 
 
 os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
@@ -42,27 +48,27 @@ class Utils:
     """Utility class for common operations like file cleanup and sanitization."""
 
     @staticmethod
-    def ensure_dir_exists(directory):
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+    def ensure_dir_exists(directory: str) -> None:
+        if not Path(directory).exists():
+            Path(directory).mkdir()
 
     @staticmethod
-    def remove_files_by_base(base_filename):
+    def remove_files_by_base(base_filename: str) -> None:
         """Removes any existing files with the same base name."""
-        base_path = os.path.join(app.config["UPLOAD_FOLDER"], base_filename)
+        base_path = Path(app.config["UPLOAD_FOLDER"])/ base_filename
         file_paths = [base_path + ".webm", base_path + "_isolated_audio.wav", base_path + "_processed_video.mp4"]
         for path in file_paths:
-            if os.path.exists(path):
+            if Path(path).exists():
                 logging.info(f"Removing old file: {path}")
-                os.remove(path)
+                Path(path).unlink()
 
     @staticmethod
-    def sanitize_filename(filename):
+    def sanitize_filename(filename: str) -> str:
         """Replace non-alphanumerics (except periods and underscores) with underscores."""
         return re.sub(r"[^a-zA-Z0-9._-]", "_", filename)
 
     @staticmethod
-    def validate_url(url):
+    def validate_url(url: str) -> bool:
         """Basic URL validation"""
         parsed_url = urlparse(url)
         return all([parsed_url.scheme, parsed_url.netloc])
@@ -75,7 +81,7 @@ class MediaHandler:
     """Class to handle video download and processing logic."""
 
     @staticmethod
-    def download_media(url):
+    def download_media(url: str) -> typing.Optional[str]:
         try:
             # Extract media info first to sanitize title
             with yt_dlp.YoutubeDL() as ydl:
@@ -85,7 +91,7 @@ class MediaHandler:
 
             ydl_opts = {
                 "format": "bestvideo+bestaudio/best",
-                "outtmpl": os.path.join(app.config["UPLOAD_FOLDER"], sanitized_title + ".%(ext)s"),
+                "outtmpl": str(Path(app.config["UPLOAD_FOLDER"])/f"{sanitized_title}.%(ext)s"),
                 "noplaylist": True,
                 "keepvideo": True,
                 "n_threads": 6,
@@ -101,15 +107,15 @@ class MediaHandler:
                     merged_ext = result.get("ext", "mp4")
 
             # Return the sanitized file path for processing
-            video_file = os.path.join(app.config["UPLOAD_FOLDER"], sanitized_title + "." + merged_ext)
-            return os.path.abspath(video_file)
+            video_file = Path(app.config["UPLOAD_FOLDER"]) / f"{sanitized_title}.{merged_ext}"
+            return str(Path(video_file).resolve())
 
         except Exception as e:
             logging.error(f"Error downloading video: {e}")
             return None
 
     @staticmethod
-    def process_with_media_processor(video_path):
+    def process_with_media_processor(video_path: str) -> typing.Optional[str]:
         """Run the C++ MediaProcessor binary with the video path"""
 
         try:
@@ -131,7 +137,7 @@ class MediaHandler:
                     # Remove any surrounding quotes (TODO: encapsulate)
                     if processed_video_path.startswith('"') and processed_video_path.endswith('"'):
                         processed_video_path = processed_video_path[1:-1]
-                    processed_video_path = os.path.abspath(processed_video_path)
+                    processed_video_path = str(Path(processed_video_path).resolve())
                     logging.info(f"Processed video path returned: {processed_video_path}")
                     return processed_video_path
 
@@ -142,7 +148,7 @@ class MediaHandler:
 
 
 @app.route("/", methods=["GET", "POST"])
-def index():
+def index()-> typing.Union[flask.Response, str]:
     if request.method == "POST":
         url = request.form["url"]
 
@@ -161,9 +167,10 @@ def index():
                 return jsonify(
                     {
                         "status": "completed",
-                        "video_url": url_for("serve_video", filename=os.path.basename(processed_video_path)),
+                        "video_url": url_for("serve_video", filename=Path(processed_video_path).name),
                     }
                 )
+        
             else:
                 return jsonify({"status": "error", "message": "Failed to process video."})
 
@@ -171,14 +178,14 @@ def index():
 
 
 @app.route("/video/<filename>")
-def serve_video(filename):
+def serve_video(filename: str) -> typing.Union[flask.Response, tuple[flask.Response, int]]:
     try:
         # Construct the abs path for the file to be served (TODO: encapsulate)
-        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        abs_file_path = os.path.abspath(file_path)
+        file_path = Path(app.config["UPLOAD_FOLDER"]) / filename
+        abs_file_path = str(Path(file_path).resolve())
         logging.debug(f"Attempting to serve video from path: {abs_file_path}")
 
-        if not os.path.exists(abs_file_path):
+        if not Path(abs_file_path).exists():
             logging.error(f"File does not exist: {abs_file_path}")
             return jsonify({"status": "error", "message": "File not found."}), 404
 
@@ -190,4 +197,4 @@ def serve_video(filename):
 
 
 if __name__ == "__main__":
-    app.run(port=8080, debug=True)
+    app.run(host='0.0.0.0', port=9090, debug=True)
