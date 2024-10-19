@@ -4,6 +4,7 @@
 
 #include "../src/Utils.h"
 
+namespace fs = std::filesystem;
 namespace MediaProcessor::Tests {
 
 // fixture
@@ -14,9 +15,9 @@ class UtilsTester : public ::testing::Test {
 };
 
 TEST_F(UtilsTester, checkPreparedOutputPaths) {
-    std::filesystem::path videoPath = "/Tests/Video.mp4",
-                          expectedVocalsPath = "/Tests/Video_isolated_audio.wav",
-                          expectedProcessedVideoPath = "/Tests/Video_processed_video.mp4";
+    fs::path videoPath = "/Tests/Video.mp4";
+    fs::path expectedVocalsPath = "/Tests/Video_isolated_audio.wav",
+             expectedProcessedVideoPath = "/Tests/Video_processed_video.mp4";
 
     auto [outputVocalsPath, outputProcessedVideoPath] = Utils::prepareOutputPaths(videoPath);
     EXPECT_EQ(expectedVocalsPath, outputVocalsPath);

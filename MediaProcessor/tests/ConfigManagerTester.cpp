@@ -3,7 +3,7 @@
 #include <fstream>
 
 #include "../src/ConfigManager.h"
-#include "ConfigFileCreator.h"
+#include "testUtils.h"
 
 namespace fs = std::filesystem;
 namespace MediaProcessor::Tests {
@@ -12,7 +12,7 @@ namespace MediaProcessor::Tests {
 class ConfigManagerTest : public ::testing::Test {
    protected:
     ConfigManager& configManager;
-    TestConfigFile testConfigFile;
+    testUtils::TestConfigFile testConfigFile;
 
     ConfigManagerTest() : configManager(ConfigManager::getInstance()) {}
 };
@@ -32,7 +32,7 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile) {
         {"use_thread_cap", true},
         {"max_threads_if_capped", 1}};
 
-    testConfigFile.createTestConfigFile("testConfig.json", jsonContent);
+    testConfigFile.createConfigFile("testConfig.json", jsonContent);
 
     // Load the config
     bool loadSuccess = configManager.loadConfig(testConfigFile.getFilePath());
@@ -74,7 +74,7 @@ TEST_F(ConfigManagerTest, LoadInvalidConfigOptions) {
                                   {"use_thread_cap", "true"},
                                   {"max_threads_if_capped", -1}};
 
-    testConfigFile.createTestConfigFile("testConfig.json", jsonContent);
+    testConfigFile.createConfigFile("testConfig.json", jsonContent);
 
     // Load the config
     bool loadSuccess = configManager.loadConfig(testConfigFile.getFilePath());
