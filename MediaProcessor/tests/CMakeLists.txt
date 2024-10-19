@@ -44,7 +44,7 @@ if(BUILD_TESTING)
         "ConfigFileCreator.cpp"
     )
     target_compile_definitions(AudioProcessorTester PRIVATE TEST_MEDIA_DIR="${TEST_MEDIA_DIR}")
-    target_link_libraries(AudioProcessorTester gtest_main)
+    target_link_libraries(AudioProcessorTester gtest_main ${CMAKE_SOURCE_DIR}/lib/libdf.so ${SNDFILE_LIBRARIES})
     add_test(NAME AudioProcessorTesting COMMAND AudioProcessorTester)
 
     # VideoProcessorTester

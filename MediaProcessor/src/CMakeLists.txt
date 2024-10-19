@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
-include_directories(include)
+# Set include directories
 include_directories(${CMAKE_SOURCE_DIR}/third_party/nlohmann)
 
+# Add the source files for the MediaProcessor executable
 add_executable(MediaProcessor
     main.cpp
     ConfigManager.cpp
@@ -14,19 +15,11 @@ add_executable(MediaProcessor
     FFmpegSettingsManager.cpp
 )
 
-# Threads is required
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
+# Link with threads and DeepFilter library
 target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
-
-# Link the DeepFilter library
 target_link_libraries(MediaProcessor PRIVATE ${CMAKE_SOURCE_DIR}/lib/libdf.so)
 
-# SNDFILE: for read/write of sampled audio files
-# https://github.com/libsndfile/libsndfile
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SNDFILE REQUIRED sndfile)
-include_directories(${SNDFILE_INCLUDE_DIRS})
+# Link with SNDFILE
 target_link_libraries(MediaProcessor PRIVATE ${SNDFILE_LIBRARIES})
 
 set_target_properties(MediaProcessor PROPERTIES
