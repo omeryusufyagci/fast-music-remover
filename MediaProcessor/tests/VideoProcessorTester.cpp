@@ -13,7 +13,7 @@ namespace MediaProcessor::Tests {
 fs::path testMediaPath = TEST_MEDIA_DIR;
 
 // fixture
-class AudioProcessorTester : public ::testing::Test {
+class VideoProcessorTester : public ::testing::Test {
    protected:
     fs::path testVideoPath;
     fs::path testAudioPath;
@@ -44,7 +44,7 @@ class AudioProcessorTester : public ::testing::Test {
     }
 };
 
-TEST_F(AudioProcessorTester, isolateVocalsFromTestVideo) {
+TEST_F(VideoProcessorTester, MergeMediaSuccessfully) {
     ConfigManager &configManager = ConfigManager::getInstance();
     ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
         << "Unable to Load TestConfigFile";
