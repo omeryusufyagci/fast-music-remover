@@ -16,7 +16,7 @@ ConfigManager& ConfigManager::getInstance() {
 bool ConfigManager::loadConfig(const fs::path& configFilePath) {
     std::ifstream config_file(configFilePath);
     if (!config_file.is_open()) {
-        std::cerr << "Error: Could not open " << configFilePath << std::endl;
+        throw std::runtime_error("Error: Could not open " + configFilePath.string());
         return false;
     }
     try {
@@ -68,12 +68,10 @@ unsigned int ConfigManager::getOptimalThreadCount() {
 }
 
 unsigned int ConfigManager::getNumThreadsValue() {
-    bool useThreadCap = getConfigValue<bool>("use_thread_cap");
-    if (useThreadCap) {
-        return getConfigValue<unsigned int>("max_threads_if_capped");
-    } else {
+    if (!getConfigValue<bool>("use_thread_cap")) {
         return 0;
     }
+    return getConfigValue<unsigned int>("max_threads_if_capped");
 }
 
 unsigned int ConfigManager::determineNumThreads(unsigned int configNumThreads,
