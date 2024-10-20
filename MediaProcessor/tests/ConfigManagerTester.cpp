@@ -3,23 +3,23 @@
 #include <fstream>
 
 #include "../src/ConfigManager.h"
-#include "testUtils.h"
+#include "TestUtils.h"
 
 namespace fs = std::filesystem;
 namespace MediaProcessor::Tests {
 
-// Test fixture
 class ConfigManagerTest : public ::testing::Test {
    protected:
     ConfigManager& configManager;
-    testUtils::TestConfigFile testConfigFile;
+    TestUtils::TestConfigFile testConfigFile;
 
     ConfigManagerTest() : configManager(ConfigManager::getInstance()) {}
 };
 
-TEST_F(ConfigManagerTest, LoadValidConfigFile) {
-    // Create a temporary config file with valid JSON content
-    nlohmann::json jsonContent = {
+// ClassName_MethodName_StateUnderTest_ExpectedBehavior gtest std naming convention
+TEST_F(ConfigManagerTest, LoadValidConfigFile_Succeeds) {
+    // Generate a temporary config file with valid JSON object
+    nlohmann::json jsonObject = {
         {"deep_filter_path", "MediaProcessor/res/deep-filter-0.5.6-x86_64-unknown-linux-musl"},
         {"deep_filter_tarball_path", "MediaProcessor/res/DeepFilterNet3_ll_onnx.tar.gz"},
         {"deep_filter_encoder_path",
@@ -32,46 +32,45 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile) {
         {"use_thread_cap", true},
         {"max_threads_if_capped", 1}};
 
-    testConfigFile.createConfigFile("testConfig.json", jsonContent);
+    testConfigFile.generateConfigFile("testConfig.json", jsonObject);
 
     bool loadSuccess = configManager.loadConfig(testConfigFile.getFilePath());
 
     EXPECT_TRUE(loadSuccess);
-    EXPECT_EQ(configManager.getDeepFilterPath(),
-              jsonContent["deep_filter_path"].get<std::string>());
+    EXPECT_EQ(configManager.getDeepFilterPath(), jsonObject["deep_filter_path"].get<std::string>());
     EXPECT_EQ(configManager.getDeepFilterTarballPath(),
-              jsonContent["deep_filter_tarball_path"].get<std::string>());
+              jsonObject["deep_filter_tarball_path"].get<std::string>());
     EXPECT_EQ(configManager.getDeepFilterEncoderPath(),
-              jsonContent["deep_filter_encoder_path"].get<std::string>());
+              jsonObject["deep_filter_encoder_path"].get<std::string>());
     EXPECT_EQ(configManager.getDeepFilterDecoderPath(),
-              jsonContent["deep_filter_decoder_path"].get<std::string>());
-    EXPECT_EQ(configManager.getFFmpegPath(), jsonContent["ffmpeg_path"].get<std::string>());
+              jsonObject["deep_filter_decoder_path"].get<std::string>());
+    EXPECT_EQ(configManager.getFFmpegPath(), jsonObject["ffmpeg_path"].get<std::string>());
     EXPECT_EQ(configManager.getOptimalThreadCount(),
-              jsonContent["max_threads_if_capped"].get<unsigned int>());
+              jsonObject["max_threads_if_capped"].get<unsigned int>());
 }
 
 TEST_F(ConfigManagerTest, LoadInvalidConfigFile) {
     fs::path invalidConfigPath = "invalid_config.json";
 
-    // Create an invalid config file for testing
+    // Generate an invalid config file for testing
     std::ofstream(invalidConfigPath) << "not a json";
 
     EXPECT_THROW(configManager.loadConfig(invalidConfigPath), std::runtime_error);
 }
 
 TEST_F(ConfigManagerTest, LoadInvalidConfigOptions) {
-    // Create a temporary config file with valid JSON content but invalid options
-    nlohmann::json jsonContent = {{"deep_filter_path", false},
-                                  {"deep_filter_tarball_path", true},
-                                  {"deep_filter_encoder_path", 1.0},
-                                  {"deep_filter_decoder_path", -1},
-                                  {"ffmpeg_path", false},
-                                  {"downloads_path", false},
-                                  {"uploads_path", false},
-                                  {"use_thread_cap", "true"},
-                                  {"max_threads_if_capped", -1}};
+    // Generate a temporary config file with valid JSON object with invalid options
+    nlohmann::json jsonObject = {{"deep_filter_path", false},
+                                 {"deep_filter_tarball_path", true},
+                                 {"deep_filter_encoder_path", 1.0},
+                                 {"deep_filter_decoder_path", -1},
+                                 {"ffmpeg_path", false},
+                                 {"downloads_path", false},
+                                 {"uploads_path", false},
+                                 {"use_thread_cap", "true"},
+                                 {"max_threads_if_capped", -1}};
 
-    testConfigFile.createConfigFile("testConfig.json", jsonContent);
+    testConfigFile.generateConfigFile("testConfig.json", jsonObject);
 
     bool loadSuccess = configManager.loadConfig(testConfigFile.getFilePath());
 

@@ -5,20 +5,19 @@
 
 #include "../src/AudioProcessor.h"
 #include "../src/ConfigManager.h"
-#include "testUtils.h"
+#include "TestUtils.h"
 
 namespace fs = std::filesystem;
 namespace MediaProcessor::Tests {
 
 fs::path testMediaPath = TEST_MEDIA_DIR;
 
-// fixture
 class AudioProcessorTester : public ::testing::Test {
    protected:
     fs::path testVideoPath;
     fs::path testAudioProcessedPath;
     fs::path testOutputDir;
-    testUtils::TestConfigFile testConfigFile;
+    TestUtils::TestConfigFile testConfigFile;
 
     void assertFileExists(fs::path path) {
         ASSERT_TRUE(fs::exists(path)) << path << " not found.";
@@ -44,7 +43,8 @@ class AudioProcessorTester : public ::testing::Test {
     }
 };
 
-TEST_F(AudioProcessorTester, isolateVocalsFromTestVideoSuccessfully) {
+// ClassName_MethodName_StateUnderTest_ExpectedBehavior gtest std naming convention
+TEST_F(AudioProcessorTester, IsolateVocals_FiltersAudioCorrectly) {
     ConfigManager &configManager = ConfigManager::getInstance();
     ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
         << "Unable to Load TestConfigFile";
@@ -52,15 +52,12 @@ TEST_F(AudioProcessorTester, isolateVocalsFromTestVideoSuccessfully) {
     fs::path testAudioOutputPath = testOutputDir / "test_output_audio.wav";
     AudioProcessor audioProcessor(testVideoPath, testAudioOutputPath);
 
-    // Test the isolateVocals function
     EXPECT_EQ(audioProcessor.isolateVocals(), true);
 
-    // Check if the output file was created
     EXPECT_TRUE(fs::exists(testAudioOutputPath));
 
-    // check if output file and already processed files are same
     EXPECT_TRUE(
-        testUtils::CompareFiles::compareAudioFiles(testAudioOutputPath, testAudioProcessedPath));
+        TestUtils::CompareFiles::compareAudioFiles(testAudioOutputPath, testAudioProcessedPath));
 }
 
 }  // namespace MediaProcessor::Tests
