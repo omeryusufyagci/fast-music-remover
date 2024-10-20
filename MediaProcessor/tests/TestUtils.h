@@ -6,47 +6,39 @@
 #include <stdexcept>
 
 namespace fs = std::filesystem;
-namespace MediaProcessor::testUtils {
+namespace MediaProcessor::TestUtils {
 
 constexpr const char* DEFAULT_TEST_CONFIG_FILE_PATH = "testConfig.json";
 
 /**
- * @brief Create a test configuration file.
+ * @brief Generate a test configuration file.
  */
 class TestConfigFile {
    public:
     TestConfigFile() : m_filePath(DEFAULT_TEST_CONFIG_FILE_PATH) {
-        writeJsonToFile(m_filePath, jsonContent);
+        writeJsonToFile(m_filePath, jsonObject);
     }
     explicit TestConfigFile(const fs::path& path) : m_filePath(path) {
-        writeJsonToFile(path, jsonContent);
+        writeJsonToFile(path, jsonObject);
     }
 
     /**
-     * @brief Create a test configuration file with custom content.
-     *
-     * @param path Path of the test configuration file.
-     * @param jsonContent Custom JSON content.
+     * @brief Generate a test configuration file with a custom object.
      */
-    void createConfigFile(const fs::path& path, const nlohmann::json& jsonContent);
+    void generateConfigFile(const fs::path& path, const nlohmann::json& jsonObject);
 
     /**
-     * @brief Changes the configuration options and writes them to test configuration file.
+     * @brief Updates configuration options and writes them to the file.
      *
-     * This function accepts a variable number of arguments in the form of
-     * key-value pairs e.g., (option1, value1, option2, value2, ...).
-     * The keys represent the configuration options to be changed,
-     * and the values represent the new settings for those options.
+     * Accepts key-value pairs as arguments (e.g., "key", 1, "key2", true).
      *
-     * example : changeConfigOptions("option1", 1, "option2", true);
-     *
-     * @tparam T Variadic template parameter pack representing the types of the arguments.
-     * @param args The key-value pairs of configuration options and their corresponding values.
+     * @tparam T Variadic template parameter pack for argument types.
+     * @param args Key-value pairs of configuration options and their values.
      */
     template <typename... T>
     void changeConfigOptions(T&&... args) {
-        changeJsonContents(std::forward<T>(args)...);
-        writeJsonToFile(m_filePath, jsonContent);
+        changeJsonObjects(std::forward<T>(args)...);
+        writeJsonToFile(m_filePath, jsonObject);
     }
 
     ~TestConfigFile() {
@@ -67,23 +59,23 @@ class TestConfigFile {
     bool deleteConfigFile() const;
 
     template <typename T>
-    void changeJsonContent(const std::string& option, const T& value) {
-        if (!jsonContent.contains(option)) {
+    void changeJsonObject(const std::string& option, const T& value) {
+        if (!jsonObject.contains(option)) {
             throw std::runtime_error(option + " not found");
         }
-        jsonContent[option] = value;
+        jsonObject[option] = value;
     }
 
-    void changeJsonContents() {}
+    void changeJsonObjects() {}
     template <typename TKey, typename TValue, typename... TRest>
-    void changeJsonContents(const TKey& option, const TValue& value, TRest&&... rest) {
-        changeJsonContent(option, value);
-        changeJsonContents(std::forward<TRest>(rest)...);
+    void changeJsonObjects(const TKey& option, const TValue& value, TRest&&... rest) {
+        changeJsonObject(option, value);
+        changeJsonObjects(std::forward<TRest>(rest)...);
     }
 
     fs::path m_filePath;
     fs::path m_rootPath = fs::path(TEST_MEDIA_DIR).parent_path().parent_path();
-    nlohmann::json jsonContent = {
+    nlohmann::json jsonObject = {
         {"deep_filter_path",
          (m_rootPath / "res/deep-filter-0.5.6-x86_64-unknown-linux-musl").string()},
         {"deep_filter_tarball_path", (m_rootPath / "res/DeepFilterNet3_ll_onnx.tar.gz")},
@@ -107,23 +99,23 @@ class CompareFiles {
     /**
      * @brief Compare two files byte-by-byte.
      *
-     * @param file1 The path to the first file.
-     * @param file2 The path to the second file.
+     * @param filePath1 The path to the first file.
+     * @param filePath2 The path to the second file.
      * @param chunkSize The size of the chunks to read (default: 1024).
      * @return true if the files are identical, false otherwise.
      */
-    static bool compareFilesByteByByte(const fs::path& file1, const fs::path& file2,
+    static bool compareFilesByteByByte(const fs::path& filePath1, const fs::path& filePath2,
                                        size_t chunkSize = DEFAULT_CHUNK_SIZE);
     /**
      * @brief Compare two audio files with a given tolerance.
      *
-     * @param file1 The path to the first audio file.
-     * @param file2 The path to the second audio file.
+     * @param filePath1 The path to the first audio file.
+     * @param filePath2 The path to the second audio file.
      * @param tolerance The tolerance level for comparing audio samples (default: 0.01).
      * @param chunkSize The size of the chunks to read in terms of frames (default: 1024).
      * @return true if the audio files are similar within the tolerance, false otherwise.
      */
-    static bool compareAudioFiles(const fs::path& file1, const fs::path& file2,
+    static bool compareAudioFiles(const fs::path& filePath1, const fs::path& filePath2,
                                   double tolerance = DEFAULT_TOLERANCE,
                                   size_t chunkSize = DEFAULT_CHUNK_SIZE);
 
@@ -137,6 +129,6 @@ class CompareFiles {
     static bool compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance);
 };
 
-}  // namespace MediaProcessor::testUtils
+}  // namespace MediaProcessor::TestUtils
 
 #endif  // TESTUTILS_H

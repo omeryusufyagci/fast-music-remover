@@ -1,4 +1,4 @@
-#include "testUtils.h"
+#include "TestUtils.h"
 
 #include <sndfile.h>
 
@@ -6,23 +6,22 @@
 #include <stdexcept>
 #include <vector>
 
-namespace MediaProcessor::testUtils {
+namespace MediaProcessor::TestUtils {
 
-void TestConfigFile::writeJsonToFile(const fs::path& path,
-                                     const nlohmann::json& jsonContent) const {
+void TestConfigFile::writeJsonToFile(const fs::path& path, const nlohmann::json& jsonObject) const {
     std::ofstream file(m_filePath);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open Test Configuration File at " +
                                  m_filePath.string());
     }
-    file << jsonContent.dump(4);
+    file << jsonObject.dump(4);
     file.close();
 }
 
-void TestConfigFile::createConfigFile(const fs::path& path, const nlohmann::json& jsonContent) {
+void TestConfigFile::generateConfigFile(const fs::path& path, const nlohmann::json& jsonObject) {
     deleteConfigFile();
     m_filePath = path;
-    writeJsonToFile(path, jsonContent);
+    writeJsonToFile(path, jsonObject);
 }
 
 bool TestConfigFile::deleteConfigFile() const {
@@ -36,16 +35,16 @@ bool TestConfigFile::deleteConfigFile() const {
     return true;
 }
 
-bool CompareFiles::compareFilesByteByByte(const fs::path& file1, const fs::path& file2,
+bool CompareFiles::compareFilesByteByByte(const fs::path& filePath1, const fs::path& filePath2,
                                           size_t chunkSize) {
-    std::ifstream f1(file1, std::ios::binary);
-    std::ifstream f2(file2, std::ios::binary);
+    std::ifstream f1(filePath1, std::ios::binary);
+    std::ifstream f2(filePath2, std::ios::binary);
 
     if (!f1.is_open()) {
-        throw std::runtime_error("Failed to open file: " + file1.string());
+        throw std::runtime_error("Failed to open file: " + filePath1.string());
     }
     if (!f2.is_open()) {
-        throw std::runtime_error("Failed to open file: " + file2.string());
+        throw std::runtime_error("Failed to open file: " + filePath2.string());
     }
 
     f1.seekg(0, std::ios::end);
@@ -77,18 +76,18 @@ bool CompareFiles::compareFilesByteByByte(const fs::path& file1, const fs::path&
     return true;
 }
 
-bool CompareFiles::compareAudioFiles(const fs::path& file1, const fs::path& file2, double tolerance,
-                                     size_t chunkSize) {
+bool CompareFiles::compareAudioFiles(const fs::path& filePath1, const fs::path& filePath2,
+                                     double tolerance, size_t chunkSize) {
     SF_INFO sfInfo1, sfInfo2;
-    SNDFILE* sndFile1 = sf_open(file1.c_str(), SFM_READ, &sfInfo1);
+    SNDFILE* sndFile1 = sf_open(filePath1.c_str(), SFM_READ, &sfInfo1);
     if (!sndFile1) {
-        throw std::runtime_error("Failed to open file " + file1.string());
+        throw std::runtime_error("Failed to open file " + filePath1.string());
     }
 
-    SNDFILE* sndFile2 = sf_open(file2.c_str(), SFM_READ, &sfInfo2);
+    SNDFILE* sndFile2 = sf_open(filePath2.c_str(), SFM_READ, &sfInfo2);
     if (!sndFile2) {
         sf_close(sndFile1);
-        throw std::runtime_error("Failed to open file " + file2.string());
+        throw std::runtime_error("Failed to open file " + filePath2.string());
     }
 
     // Check if the file formats are the same
@@ -136,4 +135,4 @@ bool CompareFiles::compareBuffersWithTolerance(T begin1, T end1, T begin2, T end
     });
 }
 
-}  // namespace MediaProcessor::testUtils
+}  // namespace MediaProcessor::TestUtils
