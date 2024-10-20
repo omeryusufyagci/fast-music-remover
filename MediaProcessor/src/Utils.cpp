@@ -13,10 +13,6 @@
 namespace MediaProcessor::Utils {
 
 bool runCommand(const std::string &command) {
-    /*
-     * Executes a system command, captures its output, and returns true if successful.
-     */
-
     std::array<char, 128> buffer;
     std::string result;
     std::string fullCommand = command + " 2>&1";  // Redirect stderr to stdout
@@ -41,10 +37,6 @@ bool runCommand(const std::string &command) {
 
 std::pair<std::filesystem::path, std::filesystem::path> prepareOutputPaths(
     const std::filesystem::path &videoPath) {
-    /*
-     * Prepares and returns the output paths for the vocals and processed video files.
-     */
-
     std::string baseFilename = videoPath.stem().string();
 
     std::filesystem::path outputDir = videoPath.parent_path();
@@ -56,10 +48,6 @@ std::pair<std::filesystem::path, std::filesystem::path> prepareOutputPaths(
 }
 
 bool ensureDirectoryExists(const std::filesystem::path &path) {
-    /*
-     * Ensures the specified directory exists by making the directory if necessary
-     */
-
     if (!std::filesystem::exists(path)) {
         std::cout << "Output directory does not exist, creating it: " << path << std::endl;
         std::filesystem::create_directories(path);
