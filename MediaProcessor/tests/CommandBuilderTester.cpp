@@ -4,13 +4,7 @@
 
 namespace MediaProcessor::Testing {
 
-class CommandBuilderTest : public ::testing::Test {
-   protected:
-    void SetUp() override {}
-    void TearDown() override {}
-};
-
-TEST_F(CommandBuilderTest, buildCommand) {
+TEST(CommandBuilderTest, buildCommand) {
     CommandBuilder builder;
     builder.addArgument("arg1");
     builder.addFlag("flag");
