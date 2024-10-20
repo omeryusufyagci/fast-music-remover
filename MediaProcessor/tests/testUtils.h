@@ -9,7 +9,6 @@ namespace fs = std::filesystem;
 namespace MediaProcessor::testUtils {
 
 constexpr const char* DEFAULT_TEST_CONFIG_FILE_PATH = "testConfig.json";
-constexpr double DEFAULT_TOLERANCE = 0.01;
 
 /**
  * @brief Create a test configuration file.
@@ -99,11 +98,44 @@ class TestConfigFile {
         {"max_threads_if_capped", 6}};
 };
 
-bool compareFilesByteByByte(const fs::path& file1, const fs::path& file2);
-bool compareAudioFiles(const fs::path& file1, const fs::path& file2,
-                       double tolerance = DEFAULT_TOLERANCE);
-template <typename T>
-bool compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance);
+/**
+ * @brief A utility class for comparing files.
+ *
+ */
+class CompareFiles {
+   public:
+    /**
+     * @brief Compare two files byte-by-byte.
+     *
+     * @param file1 The path to the first file.
+     * @param file2 The path to the second file.
+     * @param chunkSize The size of the chunks to read (default: 1024).
+     * @return true if the files are identical, false otherwise.
+     */
+    static bool compareFilesByteByByte(const fs::path& file1, const fs::path& file2,
+                                       size_t chunkSize = DEFAULT_CHUNK_SIZE);
+    /**
+     * @brief Compare two audio files with a given tolerance.
+     *
+     * @param file1 The path to the first audio file.
+     * @param file2 The path to the second audio file.
+     * @param tolerance The tolerance level for comparing audio samples (default: 0.01).
+     * @param chunkSize The size of the chunks to read in terms of frames (default: 1024).
+     * @return true if the audio files are similar within the tolerance, false otherwise.
+     */
+    static bool compareAudioFiles(const fs::path& file1, const fs::path& file2,
+                                  double tolerance = DEFAULT_TOLERANCE,
+                                  size_t chunkSize = DEFAULT_CHUNK_SIZE);
+
+   private:
+    static constexpr size_t DEFAULT_CHUNK_SIZE = 1024;
+    static constexpr double DEFAULT_TOLERANCE = 0.01;
+
+    template <typename T>
+    static bool isWithinTolerance(const T& a, const T& b, double tolerance);
+    template <typename T>
+    static bool compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance);
+};
 
 }  // namespace MediaProcessor::testUtils
 

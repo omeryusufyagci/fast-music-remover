@@ -59,7 +59,8 @@ TEST_F(AudioProcessorTester, isolateVocalsFromTestVideoSuccessfully) {
     EXPECT_TRUE(fs::exists(testAudioOutputPath));
 
     // check if output file and already processed files are same
-    EXPECT_TRUE(testUtils::compareAudioFiles(testAudioOutputPath, testAudioProcessedPath));
+    EXPECT_TRUE(
+        testUtils::CompareFiles::compareAudioFiles(testAudioOutputPath, testAudioProcessedPath));
 }
 
 }  // namespace MediaProcessor::Tests

@@ -17,6 +17,7 @@ class VideoProcessorTester : public ::testing::Test {
    protected:
     fs::path testVideoPath;
     fs::path testAudioPath;
+    fs::path testVideoProcessedPath;
     fs::path testOutputDir;
     testUtils::TestConfigFile testConfigFile;
 
@@ -28,15 +29,15 @@ class VideoProcessorTester : public ::testing::Test {
         fs::path currentPath = fs::current_path();
 
         testVideoPath = testMediaPath / "test_video.mkv";
-        testAudioPath = testMediaPath / "test_audio.wav";
+        testAudioPath = testMediaPath / "test_audio_processed.wav";
+        testVideoProcessedPath = testMediaPath / "test_video_processed.mp4";
 
         assertFileExists(testVideoPath);
         assertFileExists(testAudioPath);
+        assertFileExists(testVideoProcessedPath);
 
         testOutputDir = currentPath / "test_output";
         fs::create_directories(testOutputDir);
-
-        testConfigFile.changeConfigOptions("use_thread_cap", true, "max_threads_if_capped", 1);
     }
 
     void TearDown() override {
@@ -49,7 +50,7 @@ TEST_F(VideoProcessorTester, MergeMediaSuccessfully) {
     ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
         << "Unable to Load TestConfigFile";
 
-    fs::path testOutputVideoPath = testOutputDir / "test_output_video.mkv";
+    fs::path testOutputVideoPath = testOutputDir / "test_output_video.mp4";
     VideoProcessor videoProcessor(testVideoPath, testAudioPath, testOutputVideoPath);
 
     // Test the mergeMedia function
@@ -59,7 +60,8 @@ TEST_F(VideoProcessorTester, MergeMediaSuccessfully) {
     EXPECT_TRUE(fs::exists(testOutputVideoPath));
 
     // check if already processed video file and output video files are same
-    testUtils::compareFilesByteByByte(testVideoPath, testOutputVideoPath);
+    EXPECT_TRUE(testUtils::CompareFiles::compareFilesByteByByte(testVideoProcessedPath,
+                                                                testOutputVideoPath));
 }
 
 }  // namespace MediaProcessor::Tests
