@@ -58,6 +58,13 @@ std::pair<fs::path, fs::path> prepareOutputPaths(const fs::path &videoPath);
  */
 std::string trimTrailingSpace(const std::string &str);
 
+/**
+ * @brief Gets the duration of a media file (audio or video) using ffprobe.
+ *
+ * @return The duration of the media in seconds, or -1 if an error occurred.
+ */
+double getMediaDuration(const fs::path &mediaPath);
+
 }  // namespace MediaProcessor::Utils
 
 #endif  // UTILS_H

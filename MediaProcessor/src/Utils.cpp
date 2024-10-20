@@ -6,6 +6,9 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+
+#include "CommandBuilder.h"
 
 namespace MediaProcessor::Utils {
 
@@ -87,6 +90,36 @@ std::string trimTrailingSpace(const std::string &str) {
         return str;
     }
     return str.substr(0, str.size() - 1);
+}
+
+double getMediaDuration(const fs::path &mediaPath) {
+    // Prepare ffprobe command
+    CommandBuilder cmd;
+    cmd.addArgument("ffprobe");
+    cmd.addFlag("-v", "error");
+    cmd.addFlag("-show_entries", "format=duration");
+    cmd.addFlag("-of", "default=noprint_wrappers=1:nokey=1");
+    cmd.addArgument(mediaPath.string());
+
+    FILE *pipe = popen(cmd.build().c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Error: Failed to run ffprobe to get media duration." << std::endl;
+        return -1;
+    }
+
+    char buffer[128];
+    std::string result;
+    while (fgets(buffer, sizeof buffer, pipe) != nullptr) {
+        result += buffer;
+    }
+    pclose(pipe);
+
+    try {
+        return std::stod(result);
+    } catch (const std::exception &e) {
+        std::cerr << "Error: Could not parse media duration." << std::endl;
+        return -1;
+    }
 }
 
 }  // namespace MediaProcessor::Utils

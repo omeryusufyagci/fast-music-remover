@@ -34,11 +34,11 @@ class AudioProcessor {
    private:
     fs::path m_inputVideoPath;
     fs::path m_outputAudioPath;
-    fs::path m_outputDir;
-    fs::path m_chunksDir;
+    fs::path m_outputPath;
+    fs::path m_chunksPath;
     fs::path m_processedChunksDir;
-    std::vector<fs::path> m_chunkPaths;
-    std::vector<fs::path> m_processedChunkPaths;
+    std::vector<fs::path> m_chunkPathCol;
+    std::vector<fs::path> m_processedChunkCol;
 
     int m_numChunks;
 
@@ -55,8 +55,6 @@ class AudioProcessor {
     bool invokeDeepFilterFFI(fs::path chunkPath);
 
     std::string buildFilterComplex() const;
-
-    double getAudioDuration(const fs::path &audioPath);
 
     void populateChunkDurations(std::vector<double> &startTimes,
                                 std::vector<double> &durations) const;
