@@ -41,12 +41,12 @@ class TestConfigFile {
      *
      * example : changeConfigOptions("option1", 1, "option2", true);
      *
-     * @tparam Args Variadic template parameter pack representing the types of the arguments.
+     * @tparam T Variadic template parameter pack representing the types of the arguments.
      * @param args The key-value pairs of configuration options and their corresponding values.
      */
-    template <typename... Args>
-    void changeConfigOptions(Args&&... args) {
-        changeJsonContents(std::forward<Args>(args)...);
+    template <typename... T>
+    void changeConfigOptions(T&&... args) {
+        changeJsonContents(std::forward<T>(args)...);
         writeJsonToFile(m_filePath, jsonContent);
     }
 
@@ -67,8 +67,8 @@ class TestConfigFile {
     void writeJsonToFile(const fs::path& path, const nlohmann::json& jsonContent) const;
     bool deleteConfigFile() const;
 
-    template <typename ValueType>
-    void changeJsonContent(const std::string& option, const ValueType& value) {
+    template <typename T>
+    void changeJsonContent(const std::string& option, const T& value) {
         if (!jsonContent.contains(option)) {
             throw std::runtime_error(option + " not found");
         }
@@ -76,21 +76,22 @@ class TestConfigFile {
     }
 
     void changeJsonContents() {}
-    template <typename Option, typename Value, typename... Rest>
-    void changeJsonContents(const Option& option, const Value& value, Rest&&... rest) {
+    template <typename TKey, typename TValue, typename... TRest>
+    void changeJsonContents(const TKey& option, const TValue& value, TRest&&... rest) {
         changeJsonContent(option, value);
-        changeJsonContents(std::forward<Rest>(rest)...);
+        changeJsonContents(std::forward<TRest>(rest)...);
     }
 
     fs::path m_filePath;
-    fs::path rootPath = fs::path(TEST_MEDIA_DIR).parent_path().parent_path();
+    fs::path m_rootPath = fs::path(TEST_MEDIA_DIR).parent_path().parent_path();
     nlohmann::json jsonContent = {
         {"deep_filter_path",
-         (rootPath / "res/deep-filter-0.5.6-x86_64-unknown-linux-musl").string()},
-        {"deep_filter_tarball_path", (rootPath / "res/DeepFilterNet3_ll_onnx.tar.gz")},
-        {"deep_filter_encoder_path", (rootPath / "res/DeepFilterNet3_ll_onnx/tmp/export/enc.onnx")},
+         (m_rootPath / "res/deep-filter-0.5.6-x86_64-unknown-linux-musl").string()},
+        {"deep_filter_tarball_path", (m_rootPath / "res/DeepFilterNet3_ll_onnx.tar.gz")},
+        {"deep_filter_encoder_path",
+         (m_rootPath / "res/DeepFilterNet3_ll_onnx/tmp/export/enc.onnx")},
         {"deep_filter_decoder_path",
-         (rootPath / "res/DeepFilterNet3_ll_onnx/tmp/export/df_dec.onnx")},
+         (m_rootPath / "res/DeepFilterNet3_ll_onnx/tmp/export/df_dec.onnx")},
         {"ffmpeg_path", "/usr/bin/ffmpeg"},
         {"downloads_path", "downloads"},
         {"uploads_path", "uploads"},
@@ -101,8 +102,8 @@ class TestConfigFile {
 bool compareFilesByteByByte(const fs::path& file1, const fs::path& file2);
 bool compareAudioFiles(const fs::path& file1, const fs::path& file2,
                        double tolerance = DEFAULT_TOLERANCE);
-template <typename Iter>
-bool compareBuffersWithTolerance(Iter begin1, Iter end1, Iter begin2, Iter end2, double tolerance);
+template <typename T>
+bool compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance);
 
 }  // namespace MediaProcessor::testUtils
 

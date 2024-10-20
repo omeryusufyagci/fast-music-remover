@@ -86,8 +86,8 @@ bool compareAudioFiles(const fs::path& file1, const fs::path& file2, double tole
                                        buffer2.end(), tolerance);
 }
 
-template <typename Iter>
-bool compareBuffersWithTolerance(Iter begin1, Iter end1, Iter begin2, Iter end2, double tolerance) {
+template <typename T>
+bool compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance) {
     while (begin1 != end1 && begin2 != end2) {
         if (std::fabs(*begin1 - *begin2) > tolerance) {
             return false;

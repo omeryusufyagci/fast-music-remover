@@ -27,13 +27,13 @@ bool ConfigManager::loadConfig(const fs::path& configFilePath) {
     return true;
 }
 
-template <typename valueType>
-valueType ConfigManager::getConfigValue(const std::string& optionName) const {
+template <typename T>
+T ConfigManager::getConfigValue(const std::string& optionName) const {
     if (!m_config.contains(optionName)) {
         throw std::runtime_error("Config option '" + optionName + "' not found");
     }
     try {
-        return m_config[optionName].get<valueType>();
+        return m_config[optionName].get<T>();
     } catch (const std::exception& e) {
         throw std::runtime_error("Could not read '" + optionName +
                                  "' value: " + std::string(e.what()));
