@@ -12,8 +12,8 @@ endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
-# Testing build are off by default. can be turned on using cmake -DBUILD_TESTING=ON
-option(BUILD_TESTING "Build the tests" OFF)
+# Tests are excluded by default, use `cmake -DBUILD_TESTING=ON` to build with tests.
+option(BUILD_TESTING "Test Build" OFF)
 
 # Set include directories
 include(CTest)
@@ -30,6 +30,8 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(SNDFILE REQUIRED sndfile)
 include_directories(${SNDFILE_INCLUDE_DIRS})
 
-# Add subdirectories for source files and gtest
-add_subdirectory(src)
-add_subdirectory(tests)
+# Include the cmake files under cmake/
+include(cmake/src.cmake)
+if(BUILD_TESTING)
+    include(cmake/test.cmake)
+endif()
