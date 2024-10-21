@@ -7,17 +7,23 @@
 
 namespace MediaProcessor {
 
-void CommandBuilder::addArgument(const std::string& arg) {
+CommandBuilder& CommandBuilder::addArgument(const std::string& arg) {
     m_arguments.push_back(arg);
+
+    return *this;
 }
 
-void CommandBuilder::addFlag(const std::string& flag) {
+CommandBuilder& CommandBuilder::addFlag(const std::string& flag) {
     m_arguments.push_back(flag);
+
+    return *this;
 }
 
-void CommandBuilder::addFlag(const std::string& flag, const std::string& value) {
+CommandBuilder& CommandBuilder::addFlag(const std::string& flag, const std::string& value) {
     m_arguments.push_back(flag);
     m_arguments.push_back(value);
+
+    return *this;
 }
 
 std::string CommandBuilder::build() const {
