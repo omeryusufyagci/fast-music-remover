@@ -1,0 +1,72 @@
+name: Build, Test and `clang-format` Core
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ffmpeg cmake nlohmann-json3-dev libsndfile1-dev g++
+
+      - name: Build MediaProcessor
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ../MediaProcessor
+          make
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ffmpeg cmake nlohmann-json3-dev libsndfile1-dev g++
+
+      - name: Build with Tests Enabled
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DBUILD_TESTING=ON ../MediaProcessor
+          make
+
+      - name: Run Tests
+        run: |
+          cd build
+          ctest --output-on-failure
+
+  clang-format-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: sudo apt update && sudo apt install -y clang-format
+
+      - name: Run clang-format Check on MediaProcessor
+        run: |
+          find MediaProcessor/src -regex '.*\.\(cpp\|h\)' -exec clang-format --dry-run --Werror {} +
+
+      - name: Display Message if Formatting Fails
+        if: failure()
+        run: echo "Code formatting issues found in MediaProcessor. Please run clang-format to fix them."
