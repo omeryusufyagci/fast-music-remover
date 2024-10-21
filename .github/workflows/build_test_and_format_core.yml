@@ -26,7 +26,7 @@ jobs:
           mkdir -p build
           cd build
           cmake -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release ../MediaProcessor
-          make
+          make -j$(nproc)
 
       - name: Run Tests
         run: |
