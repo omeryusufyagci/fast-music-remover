@@ -1,17 +1,21 @@
 #include "DeepFilterCommandBuilder.h"
-#include <stdexcept>
+
 #include <sstream>
+#include <stdexcept>
+
 
 namespace MediaProcessor {
 
-DeepFilterCommandBuilder& DeepFilterCommandBuilder::setInputAudio(const std::string& inputAudioPath) {
+DeepFilterCommandBuilder& DeepFilterCommandBuilder::setInputAudio(
+    const std::string& inputAudioPath) {
     m_inputAudioPath = inputAudioPath;
     addFlag("--input");
     addArgument(inputAudioPath);
     return *this;
 }
 
-DeepFilterCommandBuilder& DeepFilterCommandBuilder::setOutputAudio(const std::string& outputAudioPath) {
+DeepFilterCommandBuilder& DeepFilterCommandBuilder::setOutputAudio(
+    const std::string& outputAudioPath) {
     m_outputAudioPath = outputAudioPath;
     addFlag("--output");
     addArgument(outputAudioPath);
