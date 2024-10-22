@@ -3,13 +3,11 @@
 #include <sstream>
 #include <stdexcept>
 
-
 namespace MediaProcessor {
 
 DeepFilterCommandBuilder& DeepFilterCommandBuilder::setInputAudio(
     const std::string& inputAudioPath) {
     m_inputAudioPath = inputAudioPath;
-    addFlag("--input");
     addArgument(inputAudioPath);
     return *this;
 }
@@ -17,7 +15,6 @@ DeepFilterCommandBuilder& DeepFilterCommandBuilder::setInputAudio(
 DeepFilterCommandBuilder& DeepFilterCommandBuilder::setOutputAudio(
     const std::string& outputAudioPath) {
     m_outputAudioPath = outputAudioPath;
-    addFlag("--output");
     addArgument(outputAudioPath);
     return *this;
 }
@@ -28,8 +25,7 @@ DeepFilterCommandBuilder& DeepFilterCommandBuilder::setNoiseReductionLevel(doubl
     }
     m_noiseReductionLevel = level;
 
-    addFlag("--noise-reduction");
-    addArgument(std::to_string(level));
+    addFlag("--noise-reduction", std::to_string(level));
     return *this;
 }
 
@@ -41,7 +37,7 @@ std::string DeepFilterCommandBuilder::build() const {
         throw std::runtime_error("Output audio path must be specified.");
     }
 
-    return CommandBuilder::build();  // Use the inherited method to build the final command string.
+    return CommandBuilder::build();
 }
 
 }  // namespace MediaProcessor

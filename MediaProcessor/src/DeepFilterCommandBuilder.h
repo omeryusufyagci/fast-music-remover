@@ -16,7 +16,7 @@ class DeepFilterCommandBuilder : public CommandBuilder {
    private:
     std::string m_inputAudioPath;
     std::string m_outputAudioPath;
-    double m_noiseReductionLevel = 0.5;  // Default noise reduction level.
+    double m_noiseReductionLevel = 0.5;
 };
 
 }  // namespace MediaProcessor
