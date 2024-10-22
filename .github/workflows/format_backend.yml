@@ -1,4 +1,4 @@
-name: Code Formatting Check
+name: Backend Formatter
 
 on:
   push:

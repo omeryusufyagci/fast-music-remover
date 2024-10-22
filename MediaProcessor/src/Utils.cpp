@@ -6,14 +6,13 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+
+#include "CommandBuilder.h"
 
 namespace MediaProcessor::Utils {
 
 bool runCommand(const std::string &command) {
-    /*
-     * Executes a system command, captures its output, and returns true if successful.
-     */
-
     std::array<char, 128> buffer;
     std::string result;
     std::string fullCommand = command + " 2>&1";  // Redirect stderr to stdout
@@ -38,10 +37,6 @@ bool runCommand(const std::string &command) {
 
 std::pair<std::filesystem::path, std::filesystem::path> prepareOutputPaths(
     const std::filesystem::path &videoPath) {
-    /*
-     * Prepares and returns the output paths for the vocals and processed video files.
-     */
-
     std::string baseFilename = videoPath.stem().string();
 
     std::filesystem::path outputDir = videoPath.parent_path();
@@ -53,10 +48,6 @@ std::pair<std::filesystem::path, std::filesystem::path> prepareOutputPaths(
 }
 
 bool ensureDirectoryExists(const std::filesystem::path &path) {
-    /*
-     * Ensures the specified directory exists by making the directory if necessary
-     */
-
     if (!std::filesystem::exists(path)) {
         std::cout << "Output directory does not exist, creating it: " << path << std::endl;
         std::filesystem::create_directories(path);
@@ -87,6 +78,36 @@ std::string trimTrailingSpace(const std::string &str) {
         return str;
     }
     return str.substr(0, str.size() - 1);
+}
+
+double getMediaDuration(const fs::path &mediaPath) {
+    // Prepare ffprobe command
+    CommandBuilder cmd;
+    cmd.addArgument("ffprobe");
+    cmd.addFlag("-v", "error");
+    cmd.addFlag("-show_entries", "format=duration");
+    cmd.addFlag("-of", "default=noprint_wrappers=1:nokey=1");
+    cmd.addArgument(mediaPath.string());
+
+    FILE *pipe = popen(cmd.build().c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Error: Failed to run ffprobe to get media duration." << std::endl;
+        return -1;
+    }
+
+    char buffer[128];
+    std::string result;
+    while (fgets(buffer, sizeof buffer, pipe) != nullptr) {
+        result += buffer;
+    }
+    pclose(pipe);
+
+    try {
+        return std::stod(result);
+    } catch (const std::exception &e) {
+        std::cerr << "Error: Could not parse media duration." << std::endl;
+        return -1;
+    }
 }
 
 }  // namespace MediaProcessor::Utils

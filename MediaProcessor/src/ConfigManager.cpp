@@ -16,32 +16,35 @@ ConfigManager& ConfigManager::getInstance() {
 bool ConfigManager::loadConfig(const fs::path& configFilePath) {
     std::ifstream config_file(configFilePath);
     if (!config_file.is_open()) {
-        std::cerr << "Error: Could not open " << configFilePath << std::endl;
+        throw std::runtime_error("Error: Could not open " + configFilePath.string());
         return false;
     }
-
-    config_file >> m_config;
+    try {
+        config_file >> m_config;
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Could not read config file: " + std::string(e.what()));
+    }
     return true;
 }
 
 fs::path ConfigManager::getDeepFilterPath() const {
-    return m_config["deep_filter_path"].get<std::string>();
+    return getConfigValue<std::string>("deep_filter_path");
 }
 
 fs::path ConfigManager::getDeepFilterTarballPath() const {
-    return m_config["deep_filter_tarball_path"].get<std::string>();
+    return getConfigValue<std::string>("deep_filter_tarball_path");
 }
 
 fs::path ConfigManager::getDeepFilterEncoderPath() const {
-    return m_config["deep_filter_encoder_path"].get<std::string>();
+    return getConfigValue<std::string>("deep_filter_encoder_path");
 }
 
 fs::path ConfigManager::getDeepFilterDecoderPath() const {
-    return m_config["deep_filter_decoder_path"].get<std::string>();
+    return getConfigValue<std::string>("deep_filter_decoder_path");
 }
 
 fs::path ConfigManager::getFFmpegPath() const {
-    return m_config["ffmpeg_path"].get<std::string>();
+    return getConfigValue<std::string>("ffmpeg_path");
 }
 
 unsigned int ConfigManager::getOptimalThreadCount() {
@@ -52,9 +55,10 @@ unsigned int ConfigManager::getOptimalThreadCount() {
 }
 
 unsigned int ConfigManager::getNumThreadsValue() {
-    return (m_config["use_thread_cap"].get<bool>())
-               ? m_config["max_threads_if_capped"].get<unsigned int>()
-               : 0;
+    if (!getConfigValue<bool>("use_thread_cap")) {
+        return 0;
+    }
+    return getConfigValue<unsigned int>("max_threads_if_capped");
 }
 
 unsigned int ConfigManager::determineNumThreads(unsigned int configNumThreads,
