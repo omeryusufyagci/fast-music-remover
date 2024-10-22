@@ -3,29 +3,44 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "Utils.h"
+
 namespace MediaProcessor {
 
-DeepFilterCommandBuilder& DeepFilterCommandBuilder::setInputAudio(
+DeepFilterCommandBuilder& DeepFilterCommandBuilder::setInputFile(
     const std::string& inputAudioPath) {
+    /**
+     * FIXME: Find a solution to ensure flexibility in calling `setInputFile()`.
+     * See the header for more details on the problem.
+     */
+
     m_inputAudioPath = inputAudioPath;
     addArgument(inputAudioPath);
+
     return *this;
 }
 
-DeepFilterCommandBuilder& DeepFilterCommandBuilder::setOutputAudio(
+DeepFilterCommandBuilder& DeepFilterCommandBuilder::setOutputFile(
     const std::string& outputAudioPath) {
     m_outputAudioPath = outputAudioPath;
-    addArgument(outputAudioPath);
+    addFlag("--output-dir", outputAudioPath);
+
     return *this;
 }
 
 DeepFilterCommandBuilder& DeepFilterCommandBuilder::setNoiseReductionLevel(double level) {
-    if (level < 0.0 || level > 1.0) {
+    if (!Utils::isWithinRange(level, 0.0, 1.0)) {
         throw std::invalid_argument("Noise reduction level must be between 0.0 and 1.0");
     }
     m_noiseReductionLevel = level;
-
     addFlag("--noise-reduction", std::to_string(level));
+
+    return *this;
+}
+
+DeepFilterCommandBuilder& DeepFilterCommandBuilder::enableDelayCompensation() {
+    addFlag("--compensate-delay");
+
     return *this;
 }
 
