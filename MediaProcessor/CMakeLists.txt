@@ -12,8 +12,8 @@ endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
-# Tests are excluded by default, use `cmake -DBUILD_TESTING=ON` to build with tests.
-option(BUILD_TESTING "Test Build" OFF)
+include_directories(include)
+include_directories(${CMAKE_SOURCE_DIR}/third_party/nlohmann)
 
 add_executable(MediaProcessor
     src/main.cpp
@@ -23,26 +23,21 @@ add_executable(MediaProcessor
     src/Utils.cpp
     src/CommandBuilder.cpp
     src/HardwareUtils.cpp
-    src/DeepFilterCommandBuilder.cpp
     src/FFmpegSettingsManager.cpp
+    src/DeepFilterCommandBuilder.cpp
 )
-# Set include directories
-include(CTest)
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/third_party/nlohmann)
 
 # Threads is required
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
+
+# Link the DeepFilter library
+target_link_libraries(MediaProcessor PRIVATE ${CMAKE_SOURCE_DIR}/lib/libdf.so)
 
 # SNDFILE: for read/write of sampled audio files
 # https://github.com/libsndfile/libsndfile
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SNDFILE REQUIRED sndfile)
 include_directories(${SNDFILE_INCLUDE_DIRS})
-
-# Include the cmake files under cmake/
-include(cmake/src.cmake)
-if(BUILD_TESTING)
-    include(cmake/test.cmake)
-endif()
+target_link_libraries(MediaProcessor PRIVATE ${SNDFILE_LIBRARIES})
