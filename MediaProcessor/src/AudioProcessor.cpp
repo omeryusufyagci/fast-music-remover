@@ -27,7 +27,7 @@ AudioProcessor::AudioProcessor(const fs::path& inputVideoPath, const fs::path& o
     m_processedChunksDir = m_outputDir / "processed_chunks";
 
     m_numChunks = ConfigManager::getInstance().getOptimalThreadCount();
-    std::cout << "INFO: using " << m_numChunks << " threads." << std::endl;
+    std::cerr << "INFO: using " << m_numChunks << " threads." << std::endl;
 }
 
 bool AudioProcessor::isolateVocals() {
@@ -41,8 +41,8 @@ bool AudioProcessor::isolateVocals() {
     Utils::ensureDirectoryExists(m_outputDir);
     Utils::removeFileIfExists(m_outputAudioPath);
 
-    std::cout << "Input video path: " << m_inputVideoPath << std::endl;
-    std::cout << "Output audio path: " << m_outputAudioPath << std::endl;
+    std::cerr << "Input video path: " << m_inputVideoPath << std::endl;
+    std::cerr << "Output audio path: " << m_outputAudioPath << std::endl;
 
     if (!extractAudio()) {
         return false;
@@ -92,7 +92,7 @@ bool AudioProcessor::extractAudio() {
         return false;
     }
 
-    std::cout << "Audio extracted successfully to: " << m_outputAudioPath << std::endl;
+    std::cerr << "Audio extracted successfully to: " << m_outputAudioPath << std::endl;
     return true;
 }
 

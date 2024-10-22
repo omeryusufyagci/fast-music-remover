@@ -8,7 +8,10 @@ from urllib.parse import urlparse
 from utils import Utils
 from media_handler import MediaHandler
 
-from flask import Flask, jsonify, render_template, request, send_from_directory, url_for
+from typing import Union
+from response_handler import ResponseHandler
+
+from flask import Flask, jsonify, render_template, request, send_from_directory, url_for, Response
 
 """
 This is the backend of the Fast Music Remover tool.
@@ -35,7 +38,7 @@ with open(config_path) as config_file:
 # Define base paths using absolute references
 
 DOWNLOADS_PATH = str((BASE_DIR/config["downloads_path"]).resolve())
-UPLOADS_PATH   = str((BASE_DIR / config.get("uploads_path", "uploads")).resolve()) # Defaults to uploads/
+UPLOADS_PATH   = str((BASE_DIR / config.get("uploads_path", "uploads")).resolve()) 
 DEEPFILTERNET_PATH = str((BASE_DIR / config["deep_filter_path"]).resolve())
 FFMPEG_PATH = str(Path(config["ffmpeg_path"]).resolve())
 
@@ -45,47 +48,45 @@ print(f"Config path: {config_path}\n Downlad path: {DOWNLOADS_PATH} \nUpload pat
 os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
 app.config["UPLOAD_FOLDER"] = UPLOADS_PATH
 
-config["deep_filter_path"] = str(BASE_DIR / config["deep_filter_path"])
-config["deep_filter_tarball_path"] = str(BASE_DIR / config["deep_filter_tarball_path"])
-config["deep_filter_enoder_path"] = str(BASE_DIR / config["deep_filter_enoder_path"])
-config["deep_filter_decoder_path"] = str(BASE_DIR / config["deep_filter_decoder_path"])
-config["downloads_path"] = str(BASE_DIR / config["downloads_path"])
-config["uploads_path"] = str(BASE_DIR / config["uploads_path"])
+
 
 Utils.ensure_dir_exists(app.config["UPLOAD_FOLDER"])
 
 @app.route("/", methods=["GET", "POST"])
-def index()-> typing.Union[flask.Response, str]:
+def index()-> Union[Response, str]:
     if request.method == "POST":
         url = request.form["url"]
 
         if not Utils.validate_url(url):
-            return jsonify({"status": "error", "message": "Invalid URL provided."})
+            return ResponseHandler.error("Invalid URL provided.", 400)
 
         if url:
             video_path = MediaHandler.download_media(url,app.config["UPLOAD_FOLDER"])
 
             if not video_path:
-                return jsonify({"status": "error", "message": "Failed to download video."})
+                return ResponseHandler.error("Failed to download video.", 500)
 
             processed_video_path = MediaHandler.process_with_media_processor(video_path,BASE_DIR,config_path)
+            #Since backend is in a different directory compared to config, am explicity passing the config_path
+
+            print(f"The Media handerler has successfully performed the operation"+processed_video_path)
 
 
-            if processed_video_path:
-                return jsonify(
-                    {
-                        "status": "completed",
-                        "video_url": url_for("serve_video", filename=Path(processed_video_path).name),
-                    }
-                )
+            if processed_video_path: 
+                return ResponseHandler.success(
+                "Video processed successfully.",
+                {
+                    "video_url": url_for("serve_video", filename=Path(processed_video_path).name)
+                }
+            )
         
             else:
-                return jsonify({"status": "error", "message": "Failed to process video."})
+                 return ResponseHandler.error("Failed to process video.", 500)
 
     return render_template("index.html")
 
 @app.route("/video/<filename>")
-def serve_video(filename: str) -> typing.Union[flask.Response, tuple[flask.Response, int]]:
+def serve_video(filename: str) -> Union[Response, tuple[Response, int]]:
     try:
         # Construct the abs path for the file to be served (TODO: encapsulate)
         file_path = Path(app.config["UPLOAD_FOLDER"]) / filename
@@ -94,13 +95,15 @@ def serve_video(filename: str) -> typing.Union[flask.Response, tuple[flask.Respo
 
         if not Path(abs_file_path).exists():
             logging.error(f"File does not exist: {abs_file_path}")
-            return jsonify({"status": "error", "message": "File not found."}), 404
+            return ResponseHandler.error("File not found.", 404)
 
         # Serve the file from the uploads directory
         return send_from_directory(directory=app.config["UPLOAD_FOLDER"], path=filename, mimetype="video/mp4")
+    
+
     except Exception as e:
         logging.error(f"Error serving video: {e}")
-        return jsonify({"status": "error", "message": "Failed to serve video."}), 500
+        return ResponseHandler.error("Failed to serve video.", 500)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=9090, debug=True)

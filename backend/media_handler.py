@@ -1,16 +1,19 @@
 import logging
 import subprocess
-import typing
+import json
 from pathlib import Path
 
 import yt_dlp
-from utils import Utils  # Import Utils from util.py
+from utils import Utils  
+from typing import Optional, Union
+from flask import Response
+from response_handler import ResponseHandler
 
 class MediaHandler:
     """Class to handle video download and processing logic."""
 
     @staticmethod
-    def download_media(url: str, base_directory:str) -> typing.Optional[str]:
+    def download_media(url: str, base_directory: str) -> Optional[str]:
         try:
             # Extract media info first to sanitize title
             with yt_dlp.YoutubeDL() as ydl:
@@ -44,31 +47,48 @@ class MediaHandler:
             return None
 
     @staticmethod
-    def process_with_media_processor(video_path: str, base_directory:any, config_path:any) -> typing.Optional[str]:
+    def process_with_media_processor(video_path: str, base_directory:Union[Response, str], config_path:  str) -> Optional[str]:
         """Run the C++ MediaProcessor binary with the video path"""
 
         try:
             logging.info(f"Processing video at path: {video_path}")
 
+            input_data = {
+                "video_file_path": video_path,
+                "config_file_path": config_path
+            }
+
             result = subprocess.run(
-                [str(base_directory / "MediaProcessor" / "build" / "MediaProcessor"), str(video_path), config_path], capture_output=True, text=True
+                [str(base_directory / "MediaProcessor" / "build" / "MediaProcessor")], 
+                input= ResponseHandler.core_data_passer("The input data",input_data), 
+                capture_output=True, 
+                text=True
             )
 
             if result.returncode != 0:
                 logging.error(f"Error processing video: {result.stderr}")
                 return None
-
+            print(f"Return code: {result.returncode}")
+            print(f"stdout: {result.stdout}")
+            print(f"stderr: {result.stderr}")
+        
+            
             # Parse the output to get the processed video path (TODO: encapsulate)
-            for line in result.stdout.splitlines():
-                if "Video processed successfully" in line:
-                    processed_video_path = line.split(": ", 1)[1].strip()
-
-                    # Remove any surrounding quotes (TODO: encapsulate)
-                    if processed_video_path.startswith('"') and processed_video_path.endswith('"'):
-                        processed_video_path = processed_video_path[1:-1]
-                    processed_video_path = str(Path(processed_video_path).resolve())
+            try:
+               
+                response = json.loads(result.stdout)
+                if response.get("status") == "success":
+                    processed_video_path = response["data"]["processed_video_path"]
+                    # Log the processed video path
                     logging.info(f"Processed video path returned: {processed_video_path}")
-                    return processed_video_path
+                    # Return success response
+                    return  processed_video_path
+                    
+                else:
+                    logging.error("Unexpected response from MediaProcessor")
+
+            except json.JSONDecodeError:
+                logging.error("Failed to parse JSON from MediaProcessor output")
 
             return None
         except Exception as e:

@@ -58,7 +58,7 @@ bool ensureDirectoryExists(const std::filesystem::path &path) {
      */
 
     if (!std::filesystem::exists(path)) {
-        std::cout << "Output directory does not exist, creating it: " << path << std::endl;
+        std::cerr << "Output directory does not exist, creating it: " << path << std::endl;
         std::filesystem::create_directories(path);
         return true;
     }
@@ -67,7 +67,7 @@ bool ensureDirectoryExists(const std::filesystem::path &path) {
 
 bool removeFileIfExists(const std::filesystem::path &filePath) {
     if (std::filesystem::exists(filePath)) {
-        std::cout << "File already exists, removing it: " << filePath << std::endl;
+        std::cerr << "File already exists, removing it: " << filePath << std::endl;
         std::filesystem::remove(filePath);
         return true;
     }
