@@ -148,6 +148,7 @@ bool AudioProcessor::invokeDeepFilter(fs::path chunkPath) {
     const fs::path deepFilterPath = configManager.getDeepFilterPath();
     const fs::path deepFilterTarballPath = configManager.getDeepFilterTarballPath();
 
+    // TODO: implement with DeepFilterCommandBuilder once base class is updated (#51)
     // `--compensate-delay` ensures the audio remains in sync after filtering
     CommandBuilder cmd;
     cmd.addArgument(deepFilterPath.string());

@@ -63,7 +63,7 @@ unsigned int ConfigManager::getNumThreadsValue() {
 
 unsigned int ConfigManager::determineNumThreads(unsigned int configNumThreads,
                                                 unsigned int hardwareNumThreads) {
-    return Utils::isWithinRange(configNumThreads, 1, hardwareNumThreads) ? configNumThreads
-                                                                         : hardwareNumThreads;
+    return Utils::isWithinRange(configNumThreads, 1u, hardwareNumThreads) ? configNumThreads
+                                                                          : hardwareNumThreads;
 }
 }  // namespace MediaProcessor

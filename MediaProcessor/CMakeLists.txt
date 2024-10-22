@@ -18,7 +18,6 @@ option(BUILD_TESTING "Test Build" OFF)
 # Set include directories
 include(CTest)
 include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/third_party/nlohmann)
 
 # Threads is required
 set(THREADS_PREFER_PTHREAD_FLAG ON)

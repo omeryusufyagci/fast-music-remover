@@ -9,6 +9,7 @@ add_executable(MediaProcessor
     ${CMAKE_SOURCE_DIR}/src/CommandBuilder.cpp
     ${CMAKE_SOURCE_DIR}/src/HardwareUtils.cpp
     ${CMAKE_SOURCE_DIR}/src/FFmpegSettingsManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/DeepFilterCommandBuilder.cpp
 )
 
 target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
