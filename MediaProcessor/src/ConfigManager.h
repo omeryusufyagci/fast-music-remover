@@ -54,9 +54,36 @@ class ConfigManager {
     unsigned int determineNumThreads(unsigned int configNumThreads,
                                      unsigned int hardwareNumThreads);
 
+    template <typename T>
+    T getConfigValue(const std::string& optionName) const;
+
+    template <typename T>
+    T getConfigValue(const std::string& optionName, const T& defaultValue) const;
+
     ConfigManager() = default;
     nlohmann::json m_config; /**< JSON object holding the configuration data. */
 };
+
+template <typename T>
+T ConfigManager::getConfigValue(const std::string& optionName) const {
+    if (!m_config.contains(optionName)) {
+        throw std::runtime_error("Config option '" + optionName + "' not found.");
+    }
+
+    try {
+        return m_config[optionName].get<T>();
+    } catch (const nlohmann::json::exception& e) {
+        throw std::runtime_error("Failed to retrieve config option '" + optionName +
+                                 "': " + std::string(e.what()));
+    }
+}
+
+template <typename T>
+T ConfigManager::getConfigValue(const std::string& optionName, const T& defaultValue) const {
+    return m_config.value(
+        optionName,
+        defaultValue);  // built-in .value() from the JSON lib handles the checks for us
+}
 
 }  // namespace MediaProcessor
 

@@ -38,13 +38,6 @@ bool removeFileIfExists(const fs::path &filePath);
 bool containsWhitespace(const std::string &str);
 
 /**
- * @brief Checks if a value is within a specified range (inclusive).
- *
- * @return true if the value is within the range, false otherwise.
- */
-bool isWithinRange(unsigned int value, unsigned int lowerBound, unsigned int upperBound);
-
-/**
  * @brief Prepares the output paths for audio and video processing.
  *
  * @return A pair containing the output audio path and the output video path.
@@ -57,6 +50,23 @@ std::pair<fs::path, fs::path> prepareOutputPaths(const fs::path &videoPath);
  * @return A new string with trailing whitespace removed.
  */
 std::string trimTrailingSpace(const std::string &str);
+
+/**
+ * @brief Gets the duration of a media file (audio or video) using ffprobe.
+ *
+ * @return The duration of the media in seconds, or -1 if an error occurred.
+ */
+double getMediaDuration(const fs::path &mediaPath);
+
+/**
+ * @brief Checks if a value is within a specified range (inclusive).
+ *
+ * @return true if the value is within the range, false otherwise.
+ */
+template <typename T>
+bool isWithinRange(T value, T lowerBound, T upperBound) {
+    return value >= lowerBound && value <= upperBound;
+}
 
 }  // namespace MediaProcessor::Utils
 

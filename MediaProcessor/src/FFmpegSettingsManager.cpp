@@ -16,11 +16,6 @@ FFmpegSettingsManager::FFmpegSettingsManager() {
                             {VideoCodec::UNKNOWN, "unknown"}};
 }
 
-FFmpegSettingsManager& FFmpegSettingsManager::getInstance() {
-    static FFmpegSettingsManager instance;
-    return instance;
-}
-
 // Global Setters
 void FFmpegSettingsManager::setOverwrite(bool overwrite) {
     m_globalSettings.overwrite = overwrite;
@@ -90,7 +85,7 @@ std::string FFmpegSettingsManager::enumToString(
     return (it != valueMap.end()) ? it->second : "unknown";
 }
 
-// Explicit instantiations ensure the compiler generates the template for a type
+// Explicit template instantiations for AudioCodec and VideoCodec
 template std::string FFmpegSettingsManager::enumToString<AudioCodec>(
     const AudioCodec& codec, const std::unordered_map<AudioCodec, std::string>& codecMap) const;
 template std::string FFmpegSettingsManager::enumToString<VideoCodec>(
