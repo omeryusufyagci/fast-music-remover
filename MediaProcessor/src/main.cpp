@@ -35,8 +35,6 @@ int main() {
     std::string json_input;
     std::getline(std::cin, json_input);
 
-    std::cerr << "The subprocess has been started";
-
     json input;
     try {
         input = json::parse(json_input);
@@ -52,7 +50,7 @@ int main() {
         video_file_path = data.at("video_file_path").get<std::string>();
         config_file_path = data.at("config_file_path").get<std::string>();
 
-        std::cerr << "\nThese is the passed parameter\n\n"
+        std::cerr << "\nParameters received by Media Handler\n"
                   << "video_file_path: " << video_file_path << "\n"
                   << "config_file_path: " << config_file_path << "\n";
 
@@ -79,7 +77,6 @@ int main() {
         return 1;
     }
 
-    std::cerr << "Before Merging" << std::endl;
     VideoProcessor videoProcessor(inputMediaPath, extractedVocalsPath, processedMediaPath);
 
     if (!videoProcessor.mergeMedia()) {
@@ -87,9 +84,6 @@ int main() {
         return 1;
     }
     // Output JSON success response
-
-    std::cerr << "Before sending the JSON response" << std::endl;
-
     json success_response = {{"status", "success"},
                              {"message", "Video processed successfully."},
                              {"data", {{"processed_video_path", processedMediaPath.string()}}}};

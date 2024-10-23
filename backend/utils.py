@@ -1,6 +1,4 @@
-import json
 import logging
-import os
 import re
 from pathlib import Path
 from urllib.parse import urlparse
@@ -17,7 +15,7 @@ class Utils:
     @staticmethod
     def remove_files_by_base(base_filename: str, upload_folder:str) -> None:
         """Removes any existing files with the same base name."""
-        base_path = Path(upload_folder)/ base_filename
+        base_path = str(Path(upload_folder)/ base_filename)
         file_paths = [base_path + ".webm", base_path + "_isolated_audio.wav", base_path + "_processed_video.mp4"]
         for path in file_paths:
             if Path(path).exists():

@@ -1,17 +1,14 @@
 import json
 import logging
 import os
-import typing
-import flask
 from pathlib import Path
-from urllib.parse import urlparse
 from utils import Utils
 from media_handler import MediaHandler
 
 from typing import Union
 from response_handler import ResponseHandler
 
-from flask import Flask, jsonify, render_template, request, send_from_directory, url_for, Response
+from flask import Flask, render_template, request, send_from_directory, url_for, Response
 
 """
 This is the backend of the Fast Music Remover tool.
@@ -26,7 +23,6 @@ Workflow:
 app = Flask(__name__, template_folder="../templates")
 
 BASE_DIR = Path(__file__).parent.parent.resolve()
-
 # Construct the path to config.json
 config_path = str((BASE_DIR / "config.json").resolve())
 
@@ -35,20 +31,17 @@ config_path = str((BASE_DIR / "config.json").resolve())
 with open(config_path) as config_file:
     config = json.load(config_file)
 
-# Define base paths using absolute references
 
+# Define base paths using absolute references
 DOWNLOADS_PATH = str((BASE_DIR/config["downloads_path"]).resolve())
 UPLOADS_PATH   = str((BASE_DIR / config.get("uploads_path", "uploads")).resolve()) 
 DEEPFILTERNET_PATH = str((BASE_DIR / config["deep_filter_path"]).resolve())
 FFMPEG_PATH = str(Path(config["ffmpeg_path"]).resolve())
-
-
-print(f"Config path: {config_path}\n Downlad path: {DOWNLOADS_PATH} \nUpload path: {UPLOADS_PATH}\n deepfile:{DEEPFILTERNET_PATH}")
-
 os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
 app.config["UPLOAD_FOLDER"] = UPLOADS_PATH
 
-
+#Log for dev reference
+print(f"Config path: {config_path}\nDownlad path: {DOWNLOADS_PATH} \nUpload path: {UPLOADS_PATH}\nDeepfile:{DEEPFILTERNET_PATH}")
 
 Utils.ensure_dir_exists(app.config["UPLOAD_FOLDER"])
 
@@ -69,9 +62,6 @@ def index()-> Union[Response, str]:
             processed_video_path = MediaHandler.process_with_media_processor(video_path,BASE_DIR,config_path)
             #Since backend is in a different directory compared to config, am explicity passing the config_path
 
-            print(f"The Media handerler has successfully performed the operation"+processed_video_path)
-
-
             if processed_video_path: 
                 return ResponseHandler.success(
                 "Video processed successfully.",
@@ -79,7 +69,6 @@ def index()-> Union[Response, str]:
                     "video_url": url_for("serve_video", filename=Path(processed_video_path).name)
                 }
             )
-        
             else:
                  return ResponseHandler.error("Failed to process video.", 500)
 
@@ -100,10 +89,9 @@ def serve_video(filename: str) -> Union[Response, tuple[Response, int]]:
         # Serve the file from the uploads directory
         return send_from_directory(directory=app.config["UPLOAD_FOLDER"], path=filename, mimetype="video/mp4")
     
-
     except Exception as e:
         logging.error(f"Error serving video: {e}")
         return ResponseHandler.error("Failed to serve video.", 500)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=9090, debug=True)
+    app.run(port=9090, debug=True)
