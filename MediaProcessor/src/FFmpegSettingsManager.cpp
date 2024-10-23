@@ -78,17 +78,12 @@ VideoCodec FFmpegSettingsManager::getVideoCodec() const {
     return m_videoSettings.codec;
 }
 
-template <typename T>
-std::string FFmpegSettingsManager::enumToString(
-    const T& value, const std::unordered_map<T, std::string>& valueMap) const {
-    auto it = valueMap.find(value);
-    return (it != valueMap.end()) ? it->second : "unknown";
+std::unordered_map<AudioCodec, std::string>& FFmpegSettingsManager::getAudioCodecToString() {
+    return m_audioCodecToString;
 }
 
-// Explicit template instantiations for AudioCodec and VideoCodec
-template std::string FFmpegSettingsManager::enumToString<AudioCodec>(
-    const AudioCodec& codec, const std::unordered_map<AudioCodec, std::string>& codecMap) const;
-template std::string FFmpegSettingsManager::enumToString<VideoCodec>(
-    const VideoCodec& codec, const std::unordered_map<VideoCodec, std::string>& codecMap) const;
+std::unordered_map<VideoCodec, std::string>& FFmpegSettingsManager::getVideoCodecToString() {
+    return m_videoCodecToString;
+}
 
 }  // namespace MediaProcessor

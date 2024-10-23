@@ -51,17 +51,9 @@ class FFmpegSettingsManager {
     // Video Getters
     VideoCodec getVideoCodec() const;
 
-    /**
-     * @brief Converts an enum value to its corresponding string representation.
-     *
-     * @tparam T Enum type.
-     * @param value The enum value.
-     * @param valueMap Map of enum values to their string representations.
-     * @return The string representation of the enum value.
-     */
-    template <typename T>
-    std::string enumToString(const T& value,
-                             const std::unordered_map<T, std::string>& valueMap) const;
+    // Value Map Getters
+    std::unordered_map<AudioCodec, std::string>& getAudioCodecToString();
+    std::unordered_map<VideoCodec, std::string>& getVideoCodecToString();
 
    private:
     std::unordered_map<AudioCodec, std::string> m_audioCodecToString;
