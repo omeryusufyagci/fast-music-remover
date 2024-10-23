@@ -4,7 +4,11 @@
 #include <string>
 #include <unordered_map>
 
-#include "ConfigManager.h"
+/**
+ * TODO:
+ * Having input/output file operations in the settings manager is not nice.
+ * These should be handled as the command is built, within the FFmpegCommandBuilder class.
+ */
 
 namespace MediaProcessor {
 
@@ -12,20 +16,14 @@ enum class AudioCodec { AAC, MP3, FLAC, OPUS, UNKNOWN };
 enum class VideoCodec { H264, H265, VP8, VP9, UNKNOWN };
 
 /**
- * @brief Manages FFmpeg-specific global, audio, and video settings.
+ * @brief Manages settings for FFmpeg-specific global, audio, and video settings.
  *
- * The FFmpegSettingsManager is a singleton that provides interfaces to set
- * and get settings for global, audio, and video configurations.
- *
- * Note: This class does not manage configuration data directly. Configurations
- * should be retrieved via the `ConfigManager`.
+ * Provides an interface for setting and retrieving configuration options,
+ * including file paths, codecs, and other processing parameters.
  */
 class FFmpegSettingsManager {
    public:
-    /**
-     * @brief Retrieves the singleton instance of FFmpegSettingsManager.
-     */
-    static FFmpegSettingsManager& getInstance();
+    FFmpegSettingsManager();
 
     // Global Setters
     void setOverwrite(bool overwrite);
@@ -65,18 +63,7 @@ class FFmpegSettingsManager {
     std::string enumToString(const T& value,
                              const std::unordered_map<T, std::string>& valueMap) const;
 
-    /**
-     * @brief Retrieves the path to the FFmpeg executable.
-     *
-     * @return The FFmpeg path as a string.
-     */
-    std::string getFFmpegPath() const {
-        return ConfigManager::getInstance().getFFmpegPath().string();
-    }
-
    private:
-    FFmpegSettingsManager();
-
     std::unordered_map<AudioCodec, std::string> m_audioCodecToString;
     std::unordered_map<VideoCodec, std::string> m_videoCodecToString;
 
