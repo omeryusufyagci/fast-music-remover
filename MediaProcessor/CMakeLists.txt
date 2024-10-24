@@ -10,21 +10,27 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-include_directories(include)
-include_directories(${CMAKE_SOURCE_DIR}/third_party/nlohmann)
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
+# Tests are excluded by default, use `cmake -DBUILD_TESTING=ON` to build with tests.
+option(BUILD_TESTING "Test Build" OFF)
 
-add_executable(MediaProcessor
-    src/main.cpp
-    src/ConfigManager.cpp
-    src/AudioProcessor.cpp
-    src/VideoProcessor.cpp
-    src/Utils.cpp
-    src/CommandBuilder.cpp
-    src/HardwareUtils.cpp
-)
+# Set include directories
+include(CTest)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Threads is required
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-target_link_libraries(MediaProcessor PRIVATE Threads::Threads)
+
+# SNDFILE: for read/write of sampled audio files
+# https://github.com/libsndfile/libsndfile
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SNDFILE REQUIRED sndfile)
+include_directories(${SNDFILE_INCLUDE_DIRS})
+
+# Include the cmake files under cmake/
+include(cmake/src.cmake)
+if(BUILD_TESTING)
+    include(cmake/test.cmake)
+endif()

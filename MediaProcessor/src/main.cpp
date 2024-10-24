@@ -12,15 +12,20 @@ namespace fs = std::filesystem;
 using namespace MediaProcessor;
 
 int main(int argc, char* argv[]) {
-    /*
-     * Main function to process a video file by isolating vocals and merging them back with the
-     * original video. Removes music, sound effects, and noise while retaining clear vocals.
+    /**
+     * @brief Processes a video file to isolate vocals and merge them back with the original video.
+     *
+     * This program removes music, sound effects, and noise while retaining clear vocals.
      *
      * Workflow:
      *   1. Load configuration from "config.json".
      *   2. Extract and isolate vocals using DeepFilterNet.
      *   3. Process the audio in chunks with parallel processing.
-     *   4. Merge the isolated vocals back with the original video to create the output.
+     *   4. Merge the isolated vocals back with the original video.
+     *
+     * @param argc Number of command-line arguments.
+     * @param argv Array of command-line argument strings.
+     * @return Exit status code (0 for success, non-zero for failure).
      *
      * Usage: <executable> <video_file_path>
      */

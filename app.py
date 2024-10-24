@@ -27,13 +27,15 @@ with open("config.json") as config_file:
 # Define base paths using absolute references
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+DOWNLOADS_PATH = os.path.abspath(config["downloads_path"])
+UPLOADS_PATH = os.path.abspath(config.get("uploads_path", os.path.join(BASE_DIR, "uploads")))  # Defaults to uploads/
+
 DEEPFILTERNET_PATH = os.path.abspath(config["deep_filter_path"])
-DOWNLOADS_DIR = os.path.abspath(config["downloads_dir"])
 FFMPEG_PATH = os.path.abspath(config["ffmpeg_path"])
-UPLOAD_FOLDER = os.path.abspath(config.get("upload_folder", os.path.join(BASE_DIR, "uploads")))  # Defaults to uploads/
+
 
 os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["UPLOAD_FOLDER"] = UPLOADS_PATH
 
 
 class Utils:
