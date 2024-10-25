@@ -2,10 +2,11 @@ FROM python:3.10-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies (little heavy as FFmpeg devlibs are required)
+# Install dependencies (including FFmpeg and libsndfile)
 RUN apt-get update && \
     apt-get install -y build-essential cmake ffmpeg wget pkg-config \
-                       libavcodec-dev libavformat-dev libavfilter-dev libavdevice-dev libswscale-dev && \
+                       libavcodec-dev libavformat-dev libavfilter-dev \
+                       libavdevice-dev libswscale-dev libsndfile-dev && \
     apt-get clean
 
 # pkg manager doesn't find this?
