@@ -51,8 +51,6 @@ class FFmpegSettingsManager {
 
     struct FFmpegGlobalSettings {
         bool overwrite = false;
-        std::string inputFile;
-        std::string outputFile;
     } m_globalSettings;
 
     struct FFmpegAudioSettings {
