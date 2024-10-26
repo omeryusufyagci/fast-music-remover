@@ -4,12 +4,6 @@
 #include <string>
 #include <unordered_map>
 
-/**
- * TODO:
- * Having input/output file operations in the settings manager is not nice.
- * These should be handled as the command is built, within the FFmpegCommandBuilder class.
- */
-
 namespace MediaProcessor {
 
 enum class AudioCodec { AAC, MP3, FLAC, OPUS, UNKNOWN };
@@ -27,13 +21,9 @@ class FFmpegSettingsManager {
 
     // Global Setters
     void setOverwrite(bool overwrite);
-    void setInputFile(const std::string& inputFile);
-    void setOutputFile(const std::string& outputFile);
 
     // Global Getters
     bool getOverwrite() const;
-    std::string getInputFile() const;
-    std::string getOutputFile() const;
 
     // Audio Setters
     void setAudioCodec(AudioCodec codec);
@@ -51,17 +41,9 @@ class FFmpegSettingsManager {
     // Video Getters
     VideoCodec getVideoCodec() const;
 
-    /**
-     * @brief Converts an enum value to its corresponding string representation.
-     *
-     * @tparam T Enum type.
-     * @param value The enum value.
-     * @param valueMap Map of enum values to their string representations.
-     * @return The string representation of the enum value.
-     */
-    template <typename T>
-    std::string enumToString(const T& value,
-                             const std::unordered_map<T, std::string>& valueMap) const;
+    // Value Map Getters
+    std::unordered_map<AudioCodec, std::string>& getAudioCodecAsString();
+    std::unordered_map<VideoCodec, std::string>& getVideoCodecAsString();
 
    private:
     std::unordered_map<AudioCodec, std::string> m_audioCodecToString;
