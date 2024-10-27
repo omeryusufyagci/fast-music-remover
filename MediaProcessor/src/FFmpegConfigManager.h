@@ -1,8 +1,11 @@
-#ifndef FFMPEGSETTINGSMANAGER_H
-#define FFMPEGSETTINGSMANAGER_H
+#ifndef FFMPEGCONFIGMANAGER_H
+#define FFMPEGCONFIGMANAGER_H
 
+#include <filesystem>
 #include <string>
 #include <unordered_map>
+
+namespace fs = std::filesystem;
 
 namespace MediaProcessor {
 
@@ -10,20 +13,24 @@ enum class AudioCodec { AAC, MP3, FLAC, OPUS, UNKNOWN };
 enum class VideoCodec { H264, H265, VP8, VP9, UNKNOWN };
 
 /**
- * @brief Manages settings for FFmpeg-specific global, audio, and video settings.
+ * @brief Manages FFmpeg-specific configurations and user settings
  *
  * Provides an interface for setting and retrieving configuration options,
  * including file paths, codecs, and other processing parameters.
  */
-class FFmpegSettingsManager {
+class FFmpegConfigManager {
    public:
-    FFmpegSettingsManager();
+    FFmpegConfigManager();
 
     // Global Setters
     void setOverwrite(bool overwrite);
+    void setInputFilePath(const fs::path inputFilePath);
+    void setOutputFilePath(const fs::path outputFilePath);
 
     // Global Getters
     bool getOverwrite() const;
+    fs::path getInputFilePath() const;
+    fs::path getOutputFilePath() const;
 
     // Audio Setters
     void setAudioCodec(AudioCodec codec);
@@ -46,13 +53,13 @@ class FFmpegSettingsManager {
     std::unordered_map<VideoCodec, std::string>& getVideoCodecAsString();
 
    private:
-    std::unordered_map<AudioCodec, std::string> m_audioCodecToString;
-    std::unordered_map<VideoCodec, std::string> m_videoCodecToString;
+    std::unordered_map<AudioCodec, std::string> m_audioCodecAsString;
+    std::unordered_map<VideoCodec, std::string> m_videoCodecAsString;
 
     struct FFmpegGlobalSettings {
         bool overwrite = false;
-        std::string inputFile;
-        std::string outputFile;
+        fs::path inputFilePath;
+        fs::path outputFilePath;
     } m_globalSettings;
 
     struct FFmpegAudioSettings {
@@ -68,4 +75,4 @@ class FFmpegSettingsManager {
 
 }  // namespace MediaProcessor
 
-#endif  // FFMPEGSETTINGSMANAGER_H
+#endif  // FFMPEGCONFIGMANAGER_H
