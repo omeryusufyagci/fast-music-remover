@@ -1,14 +1,13 @@
 #include "FFmpegCommandBuilder.h"
 
 #include "ConfigManager.h"
-#include "FFmpegSettingsManager.h"
+#include "FFmpegConfigManager.h"
 #include "Utils.h"
 
 namespace MediaProcessor {
 
-FFmpegCommandBuilder::FFmpegCommandBuilder(FFmpegSettingsManager& ffmpegSettings)
-    : m_ffmpegSettings(ffmpegSettings),
-      m_ffmpegPath(ConfigManager::getInstance().getFFmpegPath()) {}
+FFmpegCommandBuilder::FFmpegCommandBuilder(FFmpegConfigManager& ffmpegConfig)
+    : m_ffmpegConfig(ffmpegConfig), m_ffmpegPath(ConfigManager::getInstance().getFFmpegPath()) {}
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addOverwrite() {
     addFlag("-y");
@@ -17,22 +16,22 @@ FFmpegCommandBuilder& FFmpegCommandBuilder::addOverwrite() {
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addInputFile(const fs::path& inputFile) {
-    m_inputFile = inputFile;
+    m_inputFilePath = inputFile;
     addFlag("-i", inputFile.string());
 
     return *this;
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addOutputFile(const fs::path& outputFile) {
-    m_outputFile = outputFile;
+    m_outputFilePath = outputFile;
     addArgument(outputFile.string());
 
     return *this;
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addAudioCodec() {
-    std::string codec = Utils::enumToString<AudioCodec>(m_ffmpegSettings.getAudioCodec(),
-                                                        m_ffmpegSettings.getAudioCodecAsString());
+    std::string codec = Utils::enumToString<AudioCodec>(m_ffmpegConfig.getAudioCodec(),
+                                                        m_ffmpegConfig.getAudioCodecAsString());
 
     addFlag("-c:a", codec);
 
@@ -40,22 +39,22 @@ FFmpegCommandBuilder& FFmpegCommandBuilder::addAudioCodec() {
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addAudioSampleRate() {
-    int sampleRate = m_ffmpegSettings.getAudioSampleRate();
+    int sampleRate = m_ffmpegConfig.getAudioSampleRate();
     addFlag("-ar", std::to_string(sampleRate));
 
     return *this;
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addAudioChannels() {
-    int channels = m_ffmpegSettings.getAudioChannels();
+    int channels = m_ffmpegConfig.getAudioChannels();
     addFlag("-ac", std::to_string(channels));
 
     return *this;
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addVideoCodec() {
-    std::string codec = Utils::enumToString<VideoCodec>(m_ffmpegSettings.getVideoCodec(),
-                                                        m_ffmpegSettings.getVideoCodecAsString());
+    std::string codec = Utils::enumToString<VideoCodec>(m_ffmpegConfig.getVideoCodec(),
+                                                        m_ffmpegConfig.getVideoCodecAsString());
 
     addFlag("-c:v", codec);
 
@@ -63,11 +62,11 @@ FFmpegCommandBuilder& FFmpegCommandBuilder::addVideoCodec() {
 }
 
 std::string FFmpegCommandBuilder::build() const {
-    if (m_inputFile.empty()) {
+    if (m_inputFilePath.empty()) {
         throw std::runtime_error("Input file path must be specified.");
     }
 
-    if (m_outputFile.empty()) {
+    if (m_outputFilePath.empty()) {
         throw std::runtime_error("Output file path must be specified.");
     }
 

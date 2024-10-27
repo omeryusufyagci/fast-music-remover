@@ -4,7 +4,7 @@
 #include <filesystem>
 
 #include "CommandBuilder.h"
-#include "FFmpegSettingsManager.h"
+#include "FFmpegConfigManager.h"
 
 namespace fs = std::filesystem;
 
@@ -19,9 +19,9 @@ class FFmpegCommandBuilder : public CommandBuilder {
      * @brief Initializes the FFmpegCommandBuilder and adds the FFmpeg binary
      *        path as the first argument
      *
-     * @param ffmpegSettings A reference to an instance of FFmpegSettingsManager
+     * @param ffmpegConfig A reference to an instance of FFmpegConfigManager
      */
-    FFmpegCommandBuilder(FFmpegSettingsManager& ffmpegSettings);
+    FFmpegCommandBuilder(FFmpegConfigManager& ffmpegConfig);
 
     /**
      * @brief Adds overwrite flag
@@ -90,11 +90,11 @@ class FFmpegCommandBuilder : public CommandBuilder {
     std::string build() const override;
 
    private:
-    FFmpegSettingsManager& m_ffmpegSettings;
+    FFmpegConfigManager& m_ffmpegConfig;
 
     fs::path m_ffmpegPath;
-    fs::path m_inputFile;
-    fs::path m_outputFile;
+    fs::path m_inputFilePath;
+    fs::path m_outputFilePath;
 };
 
 }  // namespace MediaProcessor
