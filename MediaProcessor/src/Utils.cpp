@@ -9,7 +9,7 @@
 #include <stdexcept>
 
 #include "CommandBuilder.h"
-#include "FFmpegSettingsManager.h"
+#include "FFmpegConfigManager.h"
 
 namespace MediaProcessor::Utils {
 

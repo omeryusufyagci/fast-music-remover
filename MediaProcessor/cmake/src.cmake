@@ -8,7 +8,7 @@ add_executable(MediaProcessor
     ${CMAKE_SOURCE_DIR}/src/Utils.cpp
     ${CMAKE_SOURCE_DIR}/src/CommandBuilder.cpp
     ${CMAKE_SOURCE_DIR}/src/HardwareUtils.cpp
-    ${CMAKE_SOURCE_DIR}/src/FFmpegSettingsManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/FFmpegConfigManager.cpp
     ${CMAKE_SOURCE_DIR}/src/DeepFilterCommandBuilder.cpp
 )
 
