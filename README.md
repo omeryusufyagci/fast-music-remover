@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/logo.jpg" alt="Fast Music Remover Logo" width="120">
+<img src="docs/images/logo.jpg" alt="Fast Music Remover Logo" width="160">
 
 # Fast Music Remover
 
