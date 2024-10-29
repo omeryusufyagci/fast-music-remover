@@ -17,11 +17,11 @@
 
 </div>
 
-`Fast Music Remover` aims to provide a lightweight tool to remove music, sound effects and noise from internet media. Processing takes about 8% of the original source length -that is under 5 seconds for a minute long video to be ready for playback! 
+`Fast Music Remover` is a lightweight tool designed to remove music, sound effects and noise from internet media. Processing takes about 8% of the original source length -that's under 5 seconds for a minute-long video! 
 
 Support for realtime processing is currently in the works, and there are many other features and improvements we're working on in parallel. If this sounds interesting to you, consider [contributing](CONTRIBUTING.md)!
 
-The primary objective of the project is to enhance the audio tracks of typical mainstream media, such as lecture recordings, field reports and interviews. To see `Fast Music Remover` in action, take a look at our demo video below!
+The primary goal of the project is to enhance the audio tracks of typical mainstream media, such as lecture recordings, field reports and interviews. To see `Fast Music Remover` in action, take a look at our demo video below!
 
 ---
 
