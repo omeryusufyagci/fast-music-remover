@@ -77,11 +77,13 @@ VideoCodec FFmpegConfigManager::getVideoCodec() const {
     return m_videoSettings.codec;
 }
 
-std::unordered_map<AudioCodec, std::string>& FFmpegConfigManager::getAudioCodecAsString() {
+const std::unordered_map<AudioCodec, std::string>& FFmpegConfigManager::getAudioCodecAsString()
+    const {
     return m_audioCodecAsString;
 }
 
-std::unordered_map<VideoCodec, std::string>& FFmpegConfigManager::getVideoCodecAsString() {
+const std::unordered_map<VideoCodec, std::string>& FFmpegConfigManager::getVideoCodecAsString()
+    const {
     return m_videoCodecAsString;
 }
 
