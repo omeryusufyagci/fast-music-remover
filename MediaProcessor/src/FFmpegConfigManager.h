@@ -4,13 +4,19 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#include "ConfigManager.h"
+#include "FFmpegController.h"
 
 namespace fs = std::filesystem;
 
 namespace MediaProcessor {
+constexpr double DEFAULT_OVERLAP_DURATION = 0.5;
 
-enum class AudioCodec { AAC, MP3, FLAC, OPUS, UNKNOWN };
-enum class VideoCodec { H264, H265, VP8, VP9, UNKNOWN };
+enum class AudioCodec { AAC, MP3, FLAC, OPUS, COPY, UNKNOWN };
+enum class VideoCodec { H264, H265, VP8, VP9, COPY, UNKNOWN };
+enum class CodecStrictness { VERY, STRICT, NORMAL, UNOFFICIAL, EXPERIMENTAL };
 
 /**
  * @brief Manages FFmpeg-specific configurations and user settings
@@ -49,8 +55,8 @@ class FFmpegConfigManager {
     VideoCodec getVideoCodec() const;
 
     // Value Map Getters
-    std::unordered_map<AudioCodec, std::string>& getAudioCodecAsString();
-    std::unordered_map<VideoCodec, std::string>& getVideoCodecAsString();
+    const std::unordered_map<AudioCodec, std::string>& getAudioCodecAsString() const;
+    const std::unordered_map<VideoCodec, std::string>& getVideoCodecAsString() const;
 
    private:
     std::unordered_map<AudioCodec, std::string> m_audioCodecAsString;
@@ -64,8 +70,14 @@ class FFmpegConfigManager {
 
     struct FFmpegAudioSettings {
         AudioCodec codec = AudioCodec::AAC;
+        fs::path chunksPath;
+        std::vector<fs::path> processedChunkCol;
+        int chunkIndex = 0;
         int sampleRate = 48000;
         int numChannels = 2;
+        double audioStartTime = 0;
+        double audioDuration = 0;
+        double overlapDuration = DEFAULT_OVERLAP_DURATION;
     } m_audioSettings;
 
     struct FFmpegVideoSettings {
