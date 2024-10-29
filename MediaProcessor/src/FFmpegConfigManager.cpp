@@ -46,6 +46,14 @@ void FFmpegConfigManager::setAudioCodec(AudioCodec codec) {
     m_audioSettings.codec = codec;
 }
 
+void FFmpegConfigManager::setProcessedChunkCol(const std::vector<fs::path> processedChunkCol) {
+    m_audioSettings.processedChunkCol = processedChunkCol;
+}
+
+void FFmpegConfigManager::setNumChunks(int numChunks) {
+    m_audioSettings.numChunks = numChunks;
+}
+
 void FFmpegConfigManager::setAudioSampleRate(int sampleRate) {
     m_audioSettings.sampleRate = sampleRate;
 }
@@ -54,9 +62,29 @@ void FFmpegConfigManager::setAudioChannels(int channels) {
     m_audioSettings.numChannels = channels;
 }
 
+void FFmpegConfigManager::setAudioStartTime(double startTime) {
+    m_audioSettings.audioStartTime = startTime;
+}
+
+void FFmpegConfigManager::setAudioDuration(double duration) {
+    m_audioSettings.audioDuration = duration;
+}
+
+void FFmpegConfigManager::setOverlapDuration(double overlapDuration) {
+    m_audioSettings.overlapDuration = overlapDuration;
+}
+
 // Audio Getters
 AudioCodec FFmpegConfigManager::getAudioCodec() const {
     return m_audioSettings.codec;
+}
+
+std::vector<fs::path> FFmpegConfigManager::getProcessedChunkCol() const {
+    return m_audioSettings.processedChunkCol;
+}
+
+int FFmpegConfigManager::getNumChunks() const {
+    return m_audioSettings.numChunks;
 }
 
 int FFmpegConfigManager::getAudioSampleRate() const {
@@ -65,6 +93,18 @@ int FFmpegConfigManager::getAudioSampleRate() const {
 
 int FFmpegConfigManager::getAudioChannels() const {
     return m_audioSettings.numChannels;
+}
+
+double FFmpegConfigManager::getAudioStartTime() const {
+    return m_audioSettings.audioStartTime;
+}
+
+double FFmpegConfigManager::getAudioDuration() const {
+    return m_audioSettings.audioDuration;
+}
+
+double FFmpegConfigManager::getOverlapDuration() const {
+    return m_audioSettings.overlapDuration;
 }
 
 // Video Setters
@@ -77,11 +117,13 @@ VideoCodec FFmpegConfigManager::getVideoCodec() const {
     return m_videoSettings.codec;
 }
 
-std::unordered_map<AudioCodec, std::string>& FFmpegConfigManager::getAudioCodecAsString() {
+const std::unordered_map<AudioCodec, std::string>& FFmpegConfigManager::getAudioCodecAsString()
+    const {
     return m_audioCodecAsString;
 }
 
-std::unordered_map<VideoCodec, std::string>& FFmpegConfigManager::getVideoCodecAsString() {
+const std::unordered_map<VideoCodec, std::string>& FFmpegConfigManager::getVideoCodecAsString()
+    const {
     return m_videoCodecAsString;
 }
 
