@@ -6,8 +6,10 @@
 
 namespace MediaProcessor {
 
-FFmpegCommandBuilder::FFmpegCommandBuilder(FFmpegConfigManager& ffmpegConfig)
-    : m_ffmpegConfig(ffmpegConfig), m_ffmpegPath(ConfigManager::getInstance().getFFmpegPath()) {}
+FFmpegCommandBuilder::FFmpegCommandBuilder(const FFmpegConfigManager& ffmpegConfig)
+    : m_ffmpegConfig(ffmpegConfig) {
+    addArgument(ConfigManager::getInstance().getFFmpegPath());
+}
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addOverwrite() {
     addFlag("-y");
@@ -15,62 +17,124 @@ FFmpegCommandBuilder& FFmpegCommandBuilder::addOverwrite() {
     return *this;
 }
 
-FFmpegCommandBuilder& FFmpegCommandBuilder::addInputFile(const fs::path& inputFile) {
-    m_inputFilePath = inputFile;
-    addFlag("-i", inputFile.string());
+FFmpegCommandBuilder& FFmpegCommandBuilder::addInputFile() {
+    addFlag("-i", m_ffmpegConfig.getInputFilePath());
 
     return *this;
 }
 
-FFmpegCommandBuilder& FFmpegCommandBuilder::addOutputFile(const fs::path& outputFile) {
-    m_outputFilePath = outputFile;
-    addArgument(outputFile.string());
+FFmpegCommandBuilder& FFmpegCommandBuilder::addInputFile(const fs::path& inputFilePath) {
+    addFlag("-i", inputFilePath);
+
+    return *this;
+}
+
+FFmpegCommandBuilder& FFmpegCommandBuilder::addOutputFile() {
+    addArgument(m_ffmpegConfig.getOutputFilePath());
 
     return *this;
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addAudioCodec() {
-    std::string codec = Utils::enumToString<AudioCodec>(m_ffmpegConfig.getAudioCodec(),
-                                                        m_ffmpegConfig.getAudioCodecAsString());
-
-    addFlag("-c:a", codec);
+    addFlag("-c:a", Utils::enumToString<AudioCodec>(m_ffmpegConfig.getAudioCodec(),
+                                                    m_ffmpegConfig.getAudioCodecAsString()));
 
     return *this;
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addAudioSampleRate() {
-    int sampleRate = m_ffmpegConfig.getAudioSampleRate();
-    addFlag("-ar", std::to_string(sampleRate));
+    addFlag("-ar", std::to_string(m_ffmpegConfig.getAudioSampleRate()));
 
     return *this;
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addAudioChannels() {
-    int channels = m_ffmpegConfig.getAudioChannels();
-    addFlag("-ac", std::to_string(channels));
+    addFlag("-ac", std::to_string(m_ffmpegConfig.getAudioChannels()));
+
+    return *this;
+}
+
+FFmpegCommandBuilder& FFmpegCommandBuilder::addStartTime(const std::ostringstream& startTime) {
+    addFlag("-ss", startTime.str());
+
+    return *this;
+}
+
+FFmpegCommandBuilder& FFmpegCommandBuilder::addDuration(const std::ostringstream& duration) {
+    addFlag("-t", duration.str());
 
     return *this;
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addVideoCodec() {
-    std::string codec = Utils::enumToString<VideoCodec>(m_ffmpegConfig.getVideoCodec(),
-                                                        m_ffmpegConfig.getVideoCodecAsString());
-
-    addFlag("-c:v", codec);
+    addFlag("-c:v", Utils::enumToString<VideoCodec>(m_ffmpegConfig.getVideoCodec(),
+                                                    m_ffmpegConfig.getVideoCodecAsString()));
 
     return *this;
 }
 
-std::string FFmpegCommandBuilder::build() const {
-    if (m_inputFilePath.empty()) {
-        throw std::runtime_error("Input file path must be specified.");
+FFmpegCommandBuilder& FFmpegCommandBuilder::addChunkPath() {
+    addArgument(m_ffmpegConfig.getOutputFilePath());
+
+    return *this;
+}
+
+FFmpegCommandBuilder& FFmpegCommandBuilder::addStrictExperimental() {
+    addFlag("-strict", "experimental");
+
+    return *this;
+}
+
+FFmpegCommandBuilder& FFmpegCommandBuilder::addStream(const std::string map) {
+    addFlag("-map", map);
+
+    return *this;
+}
+
+FFmpegCommandBuilder& FFmpegCommandBuilder::addShortest() {
+    addFlag("-shortest");
+
+    return *this;
+}
+
+FFmpegCommandBuilder& FFmpegCommandBuilder::addFilterComplex(
+    const std::vector<fs::path> processedChunkCol, double overlapDuration) {
+    addFlag("-filter_complex", buildFilterComplex(processedChunkCol, overlapDuration));
+
+    return *this;
+}
+
+std::string FFmpegCommandBuilder::buildCrossfade(int chunkColSize, double overlapDuration) const {
+    std::string filterComplex;
+    int filterIndex = 0;
+
+    for (int i = 0; i < chunkColSize - 1; ++i) {
+        if (i == 0) {
+            // Generate a `crossfade` for the first chunk pair (0 and 1)
+            filterComplex += "[" + std::to_string(i) + ":a][" + std::to_string(i + 1) +
+                             ":a]acrossfade=d=" + std::to_string(overlapDuration) +
+                             ":c1=tri:c2=tri[a" + std::to_string(filterIndex) + "]; ";
+        } else {
+            // For the rest, use the result of the previous crossfade (a<filterIndex-1>)
+            // and apply a new crossfade with the next chunk (chunk i+1)
+            filterComplex += "[a" + std::to_string(filterIndex - 1) + "][" + std::to_string(i + 1) +
+                             ":a]acrossfade=d=" + std::to_string(overlapDuration) +
+                             ":c1=tri:c2=tri[a" + std::to_string(filterIndex) + "]; ";
+        }
+        filterIndex++;
     }
 
-    if (m_outputFilePath.empty()) {
-        throw std::runtime_error("Output file path must be specified.");
-    }
+    // Merge the output of the last crossfade into a final output audio stream
+    filterComplex += "[a" + std::to_string(filterIndex - 1) + "]amerge=inputs=1[outa]";
+    return filterComplex;
+}
 
-    return CommandBuilder::build();
+std::string FFmpegCommandBuilder::buildFilterComplex(const std::vector<fs::path> processedChunkCol,
+                                                     double overlapDuration) const {
+    // Build filter complex, i.e. a set of instructions for FFmpeg (called filter graph)
+    std::string filterComplex =
+        buildCrossfade(static_cast<int>(processedChunkCol.size()), overlapDuration);
+    return filterComplex;
 }
 
 }  // namespace MediaProcessor
