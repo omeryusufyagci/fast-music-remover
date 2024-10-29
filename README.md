@@ -1,19 +1,27 @@
 <div align="center">
 
+<img src="docs/images/logo.jpg" alt="Fast Music Remover Logo" width="120">
+
 # Fast Music Remover
 
 </div>
 
 <div align="center">
 
-[![GitHub license](https://img.shields.io/github/license/omeryusufyagci/fast-music-remover)](https://github.com/omeryusufyagci/fast-music-remover/blob/main/LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/omeryusufyagci/fast-music-remover?color=yellow)](https://github.com/omeryusufyagci/fast-music-remover/issues)
-[![GitHub stars](https://img.shields.io/github/stars/omeryusufyagci/fast-music-remover?style=social)](https://github.com/omeryusufyagci/fast-music-remover/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/omeryusufyagci/fast-music-remover?style=social)](https://github.com/omeryusufyagci/fast-music-remover/network/members)
+  [![GitHub license](https://img.shields.io/github/license/omeryusufyagci/fast-music-remover)](https://github.com/omeryusufyagci/fast-music-remover/blob/main/LICENSE)
+  [![GitHub issues](https://img.shields.io/github/issues/omeryusufyagci/fast-music-remover?color=yellow)](https://github.com/omeryusufyagci/fast-music-remover/issues)
+  [![Tests](https://img.shields.io/github/actions/workflow/status/omeryusufyagci/fast-music-remover/build_test_and_format_core.yml?label=Linux&logo=linux&style=flat-square&color=success)](https://github.com/omeryusufyagci/fast-music-remover/actions/workflows/build_test_and_format_core.yml)
+  [![Discord](https://img.shields.io/discord/1291805536911622265?label=&logo=discord&logoColor=white&color=7289DA&style=flat-square)](https://discord.gg/xje3PQTEYp)
+  [![GitHub stars](https://img.shields.io/github/stars/omeryusufyagci/fast-music-remover?style=social)](https://github.com/omeryusufyagci/fast-music-remover/stargazers)
+  [![GitHub forks](https://img.shields.io/github/forks/omeryusufyagci/fast-music-remover?style=social)](https://github.com/omeryusufyagci/fast-music-remover/network/members)
 
 </div>
 
-`Fast Music Remover` aims to provide a lightweight and fast tool to remove music, sound effects, and noise from any internet media. Even at its early stages, it shows promise for near-realtime usage, with processing times around just 8% of the original media length —meaning it can process a 10-minute video in less than a minute! While only offline analysis is currently supported, the project has a clear aim to support live feeds as well. Please consider [contributing](CONTRIBUTING.md) if this interests you!
+`Fast Music Remover` aims to provide a lightweight tool to remove music, sound effects and noise from internet media. Processing takes about 8% of the original source length -that is under 5 seconds for a minute long video to be ready for playback! 
+
+Support for realtime processing is currently in the works, and there are many other features and improvements we're working on in parallel. If this sounds interesting to you, consider [contributing](CONTRIBUTING.md)!
+
+The primary objective of the project is to enhance the audio tracks of typical mainstream media, such as lecture recordings, field reports and interviews. To see `Fast Music Remover` in action, take a look at our demo video below!
 
 ---
 
@@ -28,34 +36,37 @@ https://github.com/user-attachments/assets/e46c161b-0178-4213-b468-245e9f829d5e
 
 ## Background
 
-This project builds on an initial attempt using a `demucs`-based Python implementation, which had a filtering time cost greater than the source media length. This is due to `demucs`'s advanced capabilities, such as identifying individual instruments, which are features beyond the scope of this project. That initial version can still be found [here](https://github.com/omeryusufyagci/music-remover).
+This project started as an experiment with a `demucs`-based Python tool. While this was powerful in isolating individual audio components, the processing performance was limited. Although effective, `demucs` was a bit overqualified for the job; great for instrument separation but not ideal for the streamlined, low-latency filtering we’re aiming for here. If you're curious to see where it all began, you can still check out that initial version [here](https://github.com/omeryusufyagci/music-remover).
 
-## Use Cases
+## Motivation and Use Cases
 
-`Fast Music Remover` can serve a wide range of needs, such as:
+`Fast Music Remover` was built to tackle shared pain points and offer a completely free, open solution for enhancing audio in everyday media. Here’s where it shines:
 
-* **Interview Editing**: Extract clear voice tracks for professional editing of interviews, especially field reports, removing ambient noise without distorting speech.
-* **Education & Lectures**: Remove background noise and improve the overall audio quality of recorded lectures, making them clearer and easier for students to understand.
-* **Streaming & Social Media**: Clean up your media before posting it on your preferred platform, avoiding copyright issues by removing background music or sound effects.
-* **Home Recording Enthusiasts**: Enhance the quality of home-recorded content by removing unnecessary noise or isolating specific audio tracks for better post-production.
-* **Regular Media Consumers**: Remove distractions from your favorite podcast or video, allowing you to focus on the content without the sound effects.
+* **Interview Editing**: Extract clear voice tracks for interviews and field reports, cutting through ambient noise without losing speech clarity.
+* **Education & Lectures**: Strip away background noise to improve the sound quality of lecture recordings.
+* **Streaming & Social Media**: Prepare your media for posting by removing background music or effects to avoid copyright issues.
+* **Home Recording Enthusiasts**: Clean up home recordings, isolating specific tracks and eliminating unwanted noise for a polished final product.
+* **Regular Media Consumers**: Enjoy your favorite podcast or video without the extra sound effects, keeping the focus on what matters.
+
+## Roadmap
+
+Our immediate priority is to provide a stable first release with cross-platform support for Linux, macOS, and Windows. We’re focused on getting this early version out as soon as possible, and your feedback will help shape the direction of the project.
+
+Following the first release, we plan to introduce a separate, unstable release with some features in alpha stage, such as realtime support.
 
 ## Contributing
-Contributions are always welcome! If you're interested in helping improve `Fast Music Remover`, there are several ways to get involved:
 
-* **Report Bugs or Suggest Features**: Open an issue to report a bug or suggest new features you'd like to see.
-* **Improve the Code**: Check the open issues and contribute with a pull request.
-* **Testing**: Help by manually testing the software or writing automated tests to improve code coverage and robustness.
-* **Enhance Documentation**: Improve existing documentation, add examples, or clarify unclear sections. This makes it easier for others to use and contribute.
-* **Spread the Word**: Share `Fast Music Remover` with others and participate in [discussions](https://github.com/omeryusufyagci/fast-music-remover/discussions) to shape the project direction.
+We have a wide array of interesting technical challenges spanning multiple domains. Take part and join us in building a free an open tool that addresses practical needs! 
 
-Please see the [contributing guidelines](CONTRIBUTING.md) for more details on how to get started.
+Check out the [contributing guidelines](CONTRIBUTING.md) for details on how to get started.
 
 ## Benchmarks
 
-The processed audio quality shows no audible degradation so far. A formal benchmarking process for performance and quality is planned. If you're interested in contributing to the benchmarking process, please open an issue or reach out via the [discussions](https://github.com/omeryusufyagci/fast-music-remover/discussions)!
+The processed audio quality shows no audible degradation so far. A formal benchmarking process for performance and quality is planned. If you're interested in contributing to the benchmarking process, you can open an issue, reach out via the [discussions](https://github.com/omeryusufyagci/fast-music-remover/discussions) or [discord](https://discord.gg/xje3PQTEYp).
 
 ## Prerequisites
+
+> **Quick Tip:** If you're just looking to test `Fast Music Remover`, you can skip these prerequisites and jump straight to the [Docker Quick Start](#option-1-quick-start-with-docker) below!
 
 To get started with `Fast Music Remover`, ensure that you have the following software installed on your system. These dependencies are necessary for running the backend server, compiling the C++ processor, and handling media files.
 
@@ -138,7 +149,7 @@ To get started with `Fast Music Remover`, ensure that you have the following sof
 
 ## Getting Started
 
-To get started with `Fast Music Remover`, you have two main options: running it directly via Docker (quick and easy) or installing all the necessary dependencies manually for greater customization and control.
+To get started with `Fast Music Remover`, you have two main options: running it directly via the provided Dockerfile or installing all the necessary dependencies manually.
 
 ### Option 1: Quick Start with Docker
 
@@ -151,15 +162,15 @@ If Docker is installed, you can quickly try `Fast Music Remover` by running the 
 ```sh
 docker-compose up --build
 ```
-> **Note**: You may need `sudo` to run this command, depending on your system.
+> **Note**: You may need `sudo` to run this command, depending on how your system is setup.
 
 Once it's up, open `http://localhost:8080` in your browser, and you can test the service right away by submitting a URL.
 
-This Docker setup will spin up a containerized version of the app with everything set up: the Flask backend, the C++ MediaProcessor, and the frontend. Once processing is done, you'll be able to watch the filtered video in the media player.
+This Docker setup will spin up a containerized version of the tool with everything set up: the Flask backend, the C++ MediaProcessor, and the frontend. Once processing is done, a playback of the processed media will be available on the frontend.
 
 ### Option 2: Manual Installation
 
-For those who want more control or are looking to contribute to development, follow these steps to set up `Fast Music Remover` manually.
+For those who want more control or are looking to contribute, follow these steps to set up `Fast Music Remover` manually.
 
 #### Step 1: Ensure Dependencies Are Installed
 
@@ -189,7 +200,7 @@ cd build
 cmake ..
 make
 ```
-> **Note**: Ensure there are no errors during compilation. If you encounter an error, double-check that all prerequisites are installed.
+> **Note**: If you encounter errors here, double-check that all prerequisites are installed.
 
 #### Step 4: Start the Backend Server
 
@@ -201,6 +212,4 @@ python3 app.py
 
 ## License
 
-`Fast Music Remover` is released under the MIT license. The license can be found in the [LICENSE](LICENSE) file.
-
-[![Star History Chart](https://api.star-history.com/svg?repos=omeryusufyagci/fast-music-remover&type=Date)](https://star-history.com/#omeryusufyagci/fast-music-remover)
+`Fast Music Remover` is released under the MIT [license](LICENSE).
