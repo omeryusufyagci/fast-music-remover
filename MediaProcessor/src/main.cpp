@@ -31,16 +31,15 @@ int main(int argc, char* argv[]) {
      * Usage: <executable> <video_file_path>
      */
     if (argc != 3) {
-        std::string usageMessage =
-            "Usage: " + std::string(argv[0]) + " <video_file_path> <config_file_path>";
-        CommunicationHandler::handleError(usageMessage);
+        std::cerr << "Usage: " << argv[0] << " <video_file_path> <config_file_path>" << std::endl;
+        return 1;
     }
 
     fs::path inputMediaPath = fs::absolute(argv[1]);
     fs::path configFilePath = fs::absolute(argv[2]);
 
     ConfigManager& configManager = ConfigManager::getInstance();
-    if (!configManager.loadConfig("config.json")) {
+    if (!configManager.loadConfig(configFilePath)) {
         std::cerr << "Error: Could not load configuration." << std::endl;
         return 1;
     }

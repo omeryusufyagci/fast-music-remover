@@ -40,32 +40,20 @@ class TestMediaHandler(unittest.TestCase):
         self.assertEqual(result, str(expected_file.resolve()))
 
     @patch("media_handler.subprocess.run")
-    @patch("media_handler.ResponseHandler.core_data_passer")
-    def test_process_with_media_processor_success(self, mock_core_data_passer, mock_subprocess_run):
-        # Mock response from core_data_passer
-        mock_core_data_passer.return_value = json.dumps(
-        {   "status": "success",
-            "message": "the input data",
-            "data": self.input_data}
-        )
+    def test_process_with_media_processor_success(self, mock_subprocess_run):
         # Mock subprocess.run to simulate a successful response
         mock_subprocess_run.return_value = MagicMock(
             returncode=0,
-            stdout=json.dumps({
-                "status": "success",
-                "data": {"processed_video_path": "/path/to/processed_video.mp4"}
-            }),
+            stdout="Video processed successfully: /path/to/processed_video.mp4",
             stderr=""
+            
         )
-
         # Test process_with_media_processor
         result = MediaHandler.process_with_media_processor(
             self.video_path, self.base_directory, self.config_path
         )
 
         self.assertEqual(result, "/path/to/processed_video.mp4")
-
-
 
 
 
@@ -85,6 +73,7 @@ class TestMediaHandler(unittest.TestCase):
 
         self.assertIsNone(result)
 
+    #These errors are not present as of yet, they are for future proofing
     @patch("media_handler.subprocess.run")
     def test_process_with_media_processor_invalid_json(self, mock_subprocess_run):
         # Mock subprocess.run to simulate invalid JSON output
