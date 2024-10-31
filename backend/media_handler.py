@@ -50,18 +50,11 @@ class MediaHandler:
         """Run the C++ MediaProcessor binary with the video path"""
         try:
             logging.info(f"Processing video at path: {video_path}")
-
-            input_data = {
-                "video_file_path": video_path,
-                "config_file_path": config_path
-            }
             base_directory = Path(base_directory)
 
+
             result = subprocess.run(
-                [str(base_directory / "MediaProcessor/build/MediaProcessor")], 
-                input= ResponseHandler.core_data_passer("The input data",input_data), 
-                capture_output=True, 
-                text=True
+                [str(base_directory / "MediaProcessor/build/MediaProcessor"), str(video_path), config_path], capture_output=True, text=True
             )
 
             if result.returncode != 0:
@@ -72,20 +65,16 @@ class MediaHandler:
             print(result.stderr)
 
             # Parse the output to get the processed video path (TODO: encapsulate)
-            try:
-                response = json.loads(result.stdout)
-                if response.get("status") == "success":
-                    processed_video_path = response["data"]["processed_video_path"]
-                    # Log the processed video path
-                    logging.info(f"Processed video path returned: {processed_video_path}")
-                    # Return success response
-                    return  processed_video_path
-                    
-                else:
-                    logging.error("Unexpected response from MediaProcessor")
+            for line in result.stdout.splitlines():
+                if "Video processed successfully" in line:
+                    processed_video_path = line.split(": ", 1)[1].strip()
 
-            except json.JSONDecodeError:
-                logging.error("Failed to parse JSON from MediaProcessor output")
+                    # Remove any surrounding quotes (TODO: encapsulate)
+                    if processed_video_path.startswith('"') and processed_video_path.endswith('"'):
+                        processed_video_path = processed_video_path[1:-1]
+                    processed_video_path = str(Path(processed_video_path).resolve())
+                    logging.info(f"Processed video path returned: {processed_video_path}")
+                    return processed_video_path
 
             return None
         except Exception as e:
