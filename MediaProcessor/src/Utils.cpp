@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include "CommandBuilder.h"
+#include "FFmpegSettingsManager.h"
 
 namespace MediaProcessor::Utils {
 
@@ -105,5 +106,17 @@ double getMediaDuration(const fs::path &mediaPath) {
         return -1;
     }
 }
+
+template <typename T>
+std::string enumToString(const T &value, const std::unordered_map<T, std::string> &valueMap) {
+    auto it = valueMap.find(value);
+    return (it != valueMap.end()) ? it->second : "unknown";
+}
+
+// Explicit instantiations ensure the compiler generates the template for a type
+template std::string enumToString<AudioCodec>(
+    const AudioCodec &codec, const std::unordered_map<AudioCodec, std::string> &codecMap);
+template std::string enumToString<VideoCodec>(
+    const VideoCodec &codec, const std::unordered_map<VideoCodec, std::string> &codecMap);
 
 }  // namespace MediaProcessor::Utils

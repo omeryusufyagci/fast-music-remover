@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 namespace fs = std::filesystem;
@@ -67,6 +68,17 @@ template <typename T>
 bool isWithinRange(T value, T lowerBound, T upperBound) {
     return value >= lowerBound && value <= upperBound;
 }
+
+/**
+ * @brief Converts an enum value to its corresponding string representation.
+ *
+ * @tparam T Enum type.
+ * @param value The enum value.
+ * @param valueMap Map of enum values to their string representations.
+ * @return The string representation of the enum value.
+ */
+template <typename T>
+std::string enumToString(const T &value, const std::unordered_map<T, std::string> &valueMap);
 
 }  // namespace MediaProcessor::Utils
 

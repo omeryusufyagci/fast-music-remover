@@ -22,17 +22,17 @@ class ICommandBuilder {
     /**
      * @brief Adds an argument to the command.
      */
-    virtual void addArgument(const std::string& arg) = 0;
+    virtual ICommandBuilder& addArgument(const std::string& arg) = 0;
 
     /**
      * @brief Adds a flag to the command.
      */
-    virtual void addFlag(const std::string& flag) = 0;
+    virtual ICommandBuilder& addFlag(const std::string& flag) = 0;
 
     /**
      * @brief Adds a flag with a specified value to the command.
      */
-    virtual void addFlag(const std::string& flag, const std::string& value) = 0;
+    virtual ICommandBuilder& addFlag(const std::string& flag, const std::string& value) = 0;
 };
 
 }  // namespace MediaProcessor
