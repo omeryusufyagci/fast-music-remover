@@ -14,13 +14,18 @@ add_executable(MediaProcessor
 
 # Link DeepFilter wrt platform
 if(APPLE)
-    if(CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
+    include(CheckCXXCompilerFlag)
+
+    # This fixes arch detection on macOS
+    check_cxx_compiler_flag("-arch arm64" COMPILER_SUPPORTS_ARM64)
+
+    if(COMPILER_SUPPORTS_ARM64 AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
         set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)
     else()
-        message(FATAL_ERROR "x86_64 MacOS is currently not supported (should come very soon!).")
-        # set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)
+        message(FATAL_ERROR "Unsupported macOS architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
     endif()
-elseif(WIN32)
+
+    elseif(WIN32)
     set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dll.a) # .dll.a for linking, .dll for runtime
 elseif(UNIX)
     set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.so)
@@ -28,13 +33,24 @@ else()
     message(FATAL_ERROR "Unsupported platform")
 endif()
 
-# Link the executable with necessary libraries
+# Find and link SndFile library
+find_package(SndFile REQUIRED)
+link_directories(${CMAKE_SOURCE_DIR}/lib)
+
 target_link_libraries(MediaProcessor PRIVATE
     Threads::Threads
-    ${SNDFILE_LIBRARIES}
+    SndFile::sndfile
     ${DF_LIBRARY}
 )
 
+# Some of this was for macOS try to remove if possible
 set_target_properties(MediaProcessor PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+    INSTALL_RPATH "${CMAKE_SOURCE_DIR}/lib"
+    BUILD_RPATH "${CMAKE_SOURCE_DIR}/lib"
+    INSTALL_RPATH_USE_LINK_PATH TRUE
 )
+
+# Find and link the JSON lib
+find_package(nlohmann_json 3.10.5 REQUIRED)
+target_link_libraries(MediaProcessor PRIVATE nlohmann_json::nlohmann_json)
