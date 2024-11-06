@@ -64,17 +64,17 @@ class MediaHandler:
             #This is to see the communication messages from the Core
             logging.error(result.stderr)
 
-            # Parse the output to get the processed video path (TODO: encapsulate)
-            for line in result.stdout.splitlines():
-                if "Video processed successfully" in line:
-                    processed_video_path = line.split(": ", 1)[1].strip()
+            processed_video_path = Utils.get_processed_video_path(result.stdout.splitlines())
 
-                    # Remove any surrounding quotes (TODO: encapsulate)
-                    if processed_video_path.startswith('"') and processed_video_path.endswith('"'):
-                        processed_video_path = processed_video_path[1:-1]
-                    processed_video_path = str(Path(processed_video_path).resolve())
-                    logging.info(f"Processed video path returned: {processed_video_path}")
-                    return processed_video_path
+            if processed_video_path:
+                # Remove any surrounding quotes
+                processed_video_path = Utils.remove_surrounding_quotes(processed_video_path)
+                processed_video_path = str(Path(processed_video_path).resolve())
+                logging.info(f"Processed video path returned: {processed_video_path}")
+                return processed_video_path
+            else:
+                logging.error("Processed video path not found in the output.")
+                return None
 
             return None
         except Exception as e:

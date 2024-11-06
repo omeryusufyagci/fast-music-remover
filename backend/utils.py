@@ -32,3 +32,23 @@ class Utils:
         """Basic URL validation"""
         parsed_url = urlparse(url)
         return all([parsed_url.scheme, parsed_url.netloc])
+    
+    @staticmethod
+    def get_processed_video_path(stdout_lines):
+        """
+        Parses the stdout lines to find the processed video path.
+        """
+        for line in stdout_lines:
+            if "Video processed successfully" in line:
+                processed_video_path = line.split(": ", 1)[1].strip()
+                return processed_video_path
+        return None
+    
+    @staticmethod
+    def remove_surrounding_quotes(text):
+        """
+        Removes surrounding quotes from a string if present.
+        """
+        if text.startswith('"') and text.endswith('"'):
+            return text[1:-1]
+        return text
