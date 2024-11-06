@@ -54,15 +54,15 @@ class MediaHandler:
 
 
             result = subprocess.run(
-                [str(base_directory / "MediaProcessor/build/MediaProcessor"), str(video_path), config_path], capture_output=True, text=True
+                [str(base_directory / "MediaProcessor/build/MediaProcessor"), str(video_path)], capture_output=True, text=True
             )
 
             if result.returncode != 0:
                 logging.error(f"Error processing video: {result.stderr}")
                 return None
             
-            #To print all the logs which have been moved to stderr
-            print(result.stderr)
+            #This is to see the communication messages from the Core
+            logging.error(result.stderr)
 
             # Parse the output to get the processed video path (TODO: encapsulate)
             for line in result.stdout.splitlines():

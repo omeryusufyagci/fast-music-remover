@@ -55,26 +55,26 @@ def index()-> Union[Response, str]:
         url = request.form["url"]
 
         if not Utils.validate_url(url):
-            return ResponseHandler.error("Invalid URL provided.", 400)
+            return ResponseHandler.generate_error_response("Invalid URL provided.", 400)
 
         if url:
             video_path = MediaHandler.download_media(url,UPLOADS_PATH)
 
             if not video_path:
-                return ResponseHandler.error("Failed to download video.", 500)
+                return ResponseHandler.generate_error_response("Failed to download video.", 500)
 
             processed_video_path = MediaHandler.process_with_media_processor(video_path,BASE_DIR,config_path)
             #Since backend is in a different directory compared to config, am explicity passing the config_path
 
             if processed_video_path: 
-                return ResponseHandler.success(
+                return ResponseHandler.generate_success_response(
                 "Video processed successfully.",
                 {
                     "video_url": url_for("serve_video", filename=Path(processed_video_path).name)
                 }
             )
             else:
-                 return ResponseHandler.error("Failed to process video.", 500)
+                 return ResponseHandler.generate_error_response("Failed to process video.", 500)
 
     return render_template("index.html")
 
@@ -87,8 +87,8 @@ def serve_video(filename: str) -> Response:
         logging.debug(f"Attempting to serve video from path: {abs_file_path}")
 
         if not Path(abs_file_path).exists():
-            logging.error(f"File does not exist: {abs_file_path}")
-            return ResponseHandler.error("File not found.", 404)
+            logging.generate_error_response(f"File does not exist: {abs_file_path}")
+            return ResponseHandler.generate_error_response("File not found.", 404)
 
         # Serve the file from the uploads directory
         return send_from_directory(directory=app.config["UPLOAD_FOLDER"], path=filename, mimetype="video/mp4")

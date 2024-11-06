@@ -1,15 +1,14 @@
 #include <filesystem>
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <string>
 
 #include "AudioProcessor.h"
-#include "CommunicationHandler.h"
 #include "ConfigManager.h"
 #include "Utils.h"
 #include "VideoProcessor.h"
 
 namespace fs = std::filesystem;
+
 using namespace MediaProcessor;
 
 int main(int argc, char* argv[]) {
@@ -30,16 +29,15 @@ int main(int argc, char* argv[]) {
      *
      * Usage: <executable> <video_file_path>
      */
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <video_file_path> <config_file_path>" << std::endl;
+
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <video_file_path>" << std::endl;
         return 1;
     }
-
     fs::path inputMediaPath = fs::absolute(argv[1]);
-    fs::path configFilePath = fs::absolute(argv[2]);
 
     ConfigManager& configManager = ConfigManager::getInstance();
-    if (!configManager.loadConfig(configFilePath)) {
+    if (!configManager.loadConfig("config.json")) {
         std::cerr << "Error: Could not load configuration." << std::endl;
         return 1;
     }
