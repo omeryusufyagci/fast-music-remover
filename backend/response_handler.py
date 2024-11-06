@@ -15,7 +15,7 @@ class ResponseHandler:
         return jsonify(response), 200
 
     @staticmethod
-    def error(message: str, status_code: int = 400) ->tuple[Response, int]:
+    def error(message: str, status_code: int = 400) ->Response:
         """Return a consistent JSON response for errors."""
         response = {
             "status": "error",

@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 
 import yt_dlp
-from utils import Utils  
+from backend.utils import Utils  
 from typing import Optional, Union
-from response_handler import ResponseHandler
+from backend.response_handler import ResponseHandler
 
 class MediaHandler:
     """Class to handle video download and processing logic."""

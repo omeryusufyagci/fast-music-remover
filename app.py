@@ -2,11 +2,11 @@ import json
 import logging
 import os
 from pathlib import Path
-from utils import Utils
-from media_handler import MediaHandler
+from backend.utils import Utils
+from backend.media_handler import MediaHandler
 
 from typing import Union
-from response_handler import ResponseHandler
+from backend.response_handler import ResponseHandler
 
 from flask import Flask, render_template, request, send_from_directory, url_for, Response
 
@@ -20,9 +20,9 @@ Workflow:
 
 """
 
-app = Flask(__name__, template_folder="../templates")
+app = Flask(__name__, template_folder="templates")
 
-BASE_DIR = Path(__file__).parent.parent.resolve()
+BASE_DIR = Path(__file__).parent.resolve()
 # Construct the path to config.json
 config_path = str((BASE_DIR / "config.json").resolve())
 
@@ -41,6 +41,10 @@ os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
 app.config["UPLOAD_FOLDER"] = UPLOADS_PATH
 
 #Log for dev reference
+print(f"Base directory: {BASE_DIR}")
+print(f"Deep filter config path: {config['deep_filter_path']}")
+print(f"Resolved Deepfile path: {DEEPFILTERNET_PATH}")
+
 print(f"Config path: {config_path}\nDownlad path: {DOWNLOADS_PATH} \nUpload path: {UPLOADS_PATH}\nDeepfile:{DEEPFILTERNET_PATH}")
 
 Utils.ensure_dir_exists(app.config["UPLOAD_FOLDER"])
@@ -54,7 +58,7 @@ def index()-> Union[Response, str]:
             return ResponseHandler.error("Invalid URL provided.", 400)
 
         if url:
-            video_path = MediaHandler.download_media(url,app.config["UPLOAD_FOLDER"])
+            video_path = MediaHandler.download_media(url,UPLOADS_PATH)
 
             if not video_path:
                 return ResponseHandler.error("Failed to download video.", 500)
@@ -75,7 +79,7 @@ def index()-> Union[Response, str]:
     return render_template("index.html")
 
 @app.route("/video/<filename>")
-def serve_video(filename: str) -> Union[Response, tuple[Response, int]]:
+def serve_video(filename: str) -> Response:
     try:
         # Construct the abs path for the file to be served (TODO: encapsulate)
         file_path = Path(app.config["UPLOAD_FOLDER"]) / filename
