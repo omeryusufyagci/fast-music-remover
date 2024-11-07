@@ -92,7 +92,7 @@ bool FFmpegController::mergeMedia(const fs::path& videoPath, const fs::path& aud
         .addInputFile(audioPath)
         .addVideoCodec()
         .addAudioCodec()
-        .addStrictExperimental()
+        .addCodecStrictness()
         .addStream("0:v:0")
         .addStream("1:a:0")
         .addShortest()

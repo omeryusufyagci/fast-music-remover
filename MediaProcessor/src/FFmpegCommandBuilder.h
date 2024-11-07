@@ -101,11 +101,11 @@ class FFmpegCommandBuilder : public CommandBuilder {
     FFmpegCommandBuilder& addChunkPath();
 
     /**
-     * @brief Adds strictness flag with "experimental" option
+     * @brief Adds "-strict" flag with the configured strictness
      *
      * @return A reference to the current object for method chaining
      */
-    FFmpegCommandBuilder& addStrictExperimental();
+    FFmpegCommandBuilder& addCodecStrictness();
 
     /**
      * @brief Adds the stream with the given mapping

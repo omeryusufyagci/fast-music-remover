@@ -14,11 +14,21 @@ FFmpegConfigManager::FFmpegConfigManager() {
                             {VideoCodec::VP8, "libvpx"},
                             {VideoCodec::VP9, "libvpx-vp9"},
                             {VideoCodec::UNKNOWN, "unknown"}};
+
+    m_codecStrictnessAsString = {{CodecStrictness::VERY, "very"},
+                                 {CodecStrictness::STRICT, "strict"},
+                                 {CodecStrictness::NORMAL, "normal"},
+                                 {CodecStrictness::UNOFFICIAL, "unofficial"},
+                                 {CodecStrictness::EXPERIMENTAL, "experimental"}};
 }
 
 // Global Setters
 void FFmpegConfigManager::setOverwrite(bool overwrite) {
     m_globalSettings.overwrite = overwrite;
+}
+
+void FFmpegConfigManager::setCodecStrictness(CodecStrictness strictness) {
+    m_globalSettings.strictness = strictness;
 }
 
 void FFmpegConfigManager::setInputFilePath(const fs::path inputFilePath) {
@@ -32,6 +42,10 @@ void FFmpegConfigManager::setOutputFilePath(const fs::path outputFilePath) {
 // Global Getters
 bool FFmpegConfigManager::getOverwrite() const {
     return m_globalSettings.overwrite;
+}
+
+CodecStrictness FFmpegConfigManager::getCodecStrictness() const {
+    return m_globalSettings.strictness;
 }
 
 fs::path FFmpegConfigManager::getInputFilePath() const {
@@ -85,6 +99,11 @@ const std::unordered_map<AudioCodec, std::string>& FFmpegConfigManager::getAudio
 const std::unordered_map<VideoCodec, std::string>& FFmpegConfigManager::getVideoCodecAsString()
     const {
     return m_videoCodecAsString;
+}
+
+const std::unordered_map<CodecStrictness, std::string>&
+FFmpegConfigManager::getCodecStrictnessAsString() const {
+    return m_codecStrictnessAsString;
 }
 
 }  // namespace MediaProcessor

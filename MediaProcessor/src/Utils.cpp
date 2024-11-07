@@ -151,5 +151,8 @@ template std::string enumToString<AudioCodec>(
     const AudioCodec& codec, const std::unordered_map<AudioCodec, std::string>& codecMap);
 template std::string enumToString<VideoCodec>(
     const VideoCodec& codec, const std::unordered_map<VideoCodec, std::string>& codecMap);
+template std::string enumToString<CodecStrictness>(
+    const CodecStrictness& strictness,
+    const std::unordered_map<CodecStrictness, std::string>& strictnessMap);
 
 }  // namespace MediaProcessor::Utils
