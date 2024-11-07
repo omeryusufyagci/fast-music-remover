@@ -15,6 +15,7 @@ constexpr double DEFAULT_OVERLAP_DURATION = 0.5;
 
 enum class AudioCodec { AAC, MP3, FLAC, OPUS, UNKNOWN };
 enum class VideoCodec { H264, H265, VP8, VP9, UNKNOWN };
+enum class CodecStrictness { VERY, STRICT, NORMAL, UNOFFICIAL, EXPERIMENTAL };
 
 /**
  * @brief Manages FFmpeg-specific configurations and user settings
@@ -28,11 +29,13 @@ class FFmpegConfigManager {
 
     // Global Setters
     void setOverwrite(bool overwrite);
+    void setCodecStrictness(CodecStrictness strictness);
     void setInputFilePath(const fs::path inputFilePath);
     void setOutputFilePath(const fs::path outputFilePath);
 
     // Global Getters
     bool getOverwrite() const;
+    CodecStrictness getCodecStrictness() const;
     fs::path getInputFilePath() const;
     fs::path getOutputFilePath() const;
 
@@ -65,13 +68,16 @@ class FFmpegConfigManager {
     // Value Map Getters
     const std::unordered_map<AudioCodec, std::string>& getAudioCodecAsString() const;
     const std::unordered_map<VideoCodec, std::string>& getVideoCodecAsString() const;
+    const std::unordered_map<CodecStrictness, std::string>& getCodecStrictnessAsString() const;
 
    private:
     std::unordered_map<AudioCodec, std::string> m_audioCodecAsString;
     std::unordered_map<VideoCodec, std::string> m_videoCodecAsString;
+    std::unordered_map<CodecStrictness, std::string> m_codecStrictnessAsString;
 
     struct FFmpegGlobalSettings {
         bool overwrite = false;
+        CodecStrictness strictness = CodecStrictness::EXPERIMENTAL;
         fs::path inputFilePath;
         fs::path outputFilePath;
     } m_globalSettings;
