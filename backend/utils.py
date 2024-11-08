@@ -2,6 +2,7 @@ import logging
 import re
 from pathlib import Path
 from urllib.parse import urlparse
+from typing import Optional
 
 
 class Utils:
@@ -34,7 +35,7 @@ class Utils:
         return all([parsed_url.scheme, parsed_url.netloc])
     
     @staticmethod
-    def get_processed_video_path(stdout_lines):
+    def get_processed_video_path(stdout_lines: str) -> Optional[str]:
         """
         Parses the stdout lines to find the processed video path.
         """
@@ -45,7 +46,7 @@ class Utils:
         return None
     
     @staticmethod
-    def remove_surrounding_quotes(text):
+    def remove_surrounding_quotes(text: str) -> str:
         """
         Removes surrounding quotes from a string if present.
         """

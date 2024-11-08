@@ -26,11 +26,9 @@ BASE_DIR = Path(__file__).parent.resolve()
 # Construct the path to config.json
 config_path = str((BASE_DIR / "config.json").resolve())
 
-
 # Load the config file
 with open(config_path) as config_file:
     config = json.load(config_file)
-
 
 # Define base paths using absolute references
 DOWNLOADS_PATH = str((BASE_DIR/config["downloads_path"]).resolve())
@@ -40,15 +38,12 @@ FFMPEG_PATH = str(Path(config["ffmpeg_path"]).resolve())
 os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
 app.config["UPLOAD_FOLDER"] = UPLOADS_PATH
 
-#Log for dev reference
-print(f"Base directory: {BASE_DIR}")
-print(f"Deep filter config path: {config['deep_filter_path']}")
-print(f"Resolved Deepfile path: {DEEPFILTERNET_PATH}")
 
-print(f"Config path: {config_path}\nDownlad path: {DOWNLOADS_PATH} \nUpload path: {UPLOADS_PATH}\nDeepfile:{DEEPFILTERNET_PATH}")
+#Log for dev reference:
+logging.info(f"Config path: {config_path}\nDownlad path: {DOWNLOADS_PATH} \nUpload path: {UPLOADS_PATH}\nDeepfile:{DEEPFILTERNET_PATH}")
+
 
 Utils.ensure_dir_exists(app.config["UPLOAD_FOLDER"])
-
 @app.route("/", methods=["GET", "POST"])
 def index()-> Union[Response, str]:
     if request.method == "POST":

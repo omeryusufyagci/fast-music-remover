@@ -2,7 +2,7 @@ import unittest
 import os
 import tempfile
 from pathlib import Path
-from utils import Utils
+from backend.utils import Utils
 
 class TestUtils(unittest.TestCase):
 
@@ -68,6 +68,30 @@ class TestUtils(unittest.TestCase):
 
         no_scheme_url = "www.youtube.com"
         self.assertFalse(Utils.validate_url(no_scheme_url))
+
+    def test_remove_surrounding_quotes(self):
+        valid_quote_removed = Utils.remove_surrounding_quotes("\"valid_file-name\"")   
+        self.assertEqual(valid_quote_removed, "valid_file-name")
+
+        invalid_quote_removed = Utils.remove_surrounding_quotes("valid_file-name")   
+        self.assertEqual(invalid_quote_removed, "valid_file-name")
+
+
+    def test_get_processed_video_path(self):
+        # Test with a valid string that includes the correct success message
+        valid_processed_string = Utils.get_processed_video_path(
+            ["Video processed successfully: valid_file-name"]
+        )
+        self.assertEqual(valid_processed_string, "valid_file-name")
+
+        # Test with an invalid string that does not contain the success message
+        invalid_processed_string = Utils.get_processed_video_path(
+            ["Video processed successful"]
+        )
+        self.assertIsNone(invalid_processed_string)
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

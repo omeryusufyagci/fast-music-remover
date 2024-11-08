@@ -2,8 +2,7 @@ import tempfile
 import unittest
 from unittest.mock import patch, MagicMock
 from pathlib import Path
-from media_handler import MediaHandler
-import json
+from backend.media_handler import MediaHandler
 
 class TestMediaHandler(unittest.TestCase):
 
@@ -18,7 +17,7 @@ class TestMediaHandler(unittest.TestCase):
             "config_file_path": self.config_path
         }
 
-    @patch("media_handler.yt_dlp.YoutubeDL")
+    @patch("backend.media_handler.yt_dlp.YoutubeDL")
     def test_download_media(self, mock_yt_dlp):
         # Mock YoutubeDL instance
         mock_ydl_instance = MagicMock()
@@ -39,7 +38,7 @@ class TestMediaHandler(unittest.TestCase):
         expected_file = Path(self.base_directory) / "Test_Video.mp4"
         self.assertEqual(result, str(expected_file.resolve()))
 
-    @patch("media_handler.subprocess.run")
+    @patch("backend.media_handler.subprocess.run")
     def test_process_with_media_processor_success(self, mock_subprocess_run):
         # Mock subprocess.run to simulate a successful response
         mock_subprocess_run.return_value = MagicMock(
@@ -57,7 +56,7 @@ class TestMediaHandler(unittest.TestCase):
 
 
 
-    @patch("media_handler.subprocess.run")
+    @patch("backend.media_handler.subprocess.run")
     def test_process_with_media_processor_failure(self, mock_subprocess_run):
         # Mock subprocess.run to simulate a failed response
         mock_subprocess_run.return_value = MagicMock(
@@ -74,7 +73,7 @@ class TestMediaHandler(unittest.TestCase):
         self.assertIsNone(result)
 
     #These errors are not present as of yet, they are for future proofing
-    @patch("media_handler.subprocess.run")
+    @patch("backend.media_handler.subprocess.run")
     def test_process_with_media_processor_invalid_json(self, mock_subprocess_run):
         # Mock subprocess.run to simulate invalid JSON output
         mock_subprocess_run.return_value = MagicMock(
