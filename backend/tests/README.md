@@ -1,5 +1,8 @@
-`cd /home/prakash/fast-music-remover`
+```
+cd /home/`whoami`/fast-music-remover
 
-`PYTHONPATH=$(pwd) python -m unittest discover -s backend/tests -p 'test_*.py`
+PYTHONPATH=$(pwd)  python -m pytest -v
+
+```
 
 Run the above two commands to test the code
