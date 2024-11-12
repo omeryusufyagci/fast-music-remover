@@ -23,9 +23,9 @@ if(APPLE)
         set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)
     else()
         message(FATAL_ERROR "Unsupported macOS architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+        # set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)
     endif()
-
-    elseif(WIN32)
+elseif(WIN32)
     set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dll.a) # .dll.a for linking, .dll for runtime
 elseif(UNIX)
     set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.so)
@@ -33,13 +33,10 @@ else()
     message(FATAL_ERROR "Unsupported platform")
 endif()
 
-# Find and link SndFile library
-find_package(SndFile REQUIRED)
-link_directories(${CMAKE_SOURCE_DIR}/lib)
 
 target_link_libraries(MediaProcessor PRIVATE
     Threads::Threads
-    SndFile::sndfile
+    ${SNDFILE_LIBRARIES}
     ${DF_LIBRARY}
 )
 
