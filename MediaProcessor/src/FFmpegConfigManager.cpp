@@ -131,6 +131,7 @@ VideoCodec FFmpegConfigManager::getVideoCodec() const {
     return m_videoSettings.codec;
 }
 
+// Value Map as String Getters
 const std::unordered_map<AudioCodec, std::string>& FFmpegConfigManager::getAudioCodecAsString()
     const {
     return m_audioCodecAsString;
@@ -146,4 +147,13 @@ FFmpegConfigManager::getCodecStrictnessAsString() const {
     return m_codecStrictnessAsString;
 }
 
+// Update Settings
+void FFmpegConfigManager::updateSettings(
+    const struct FFmpegGlobalSettings& globalSettings = FFmpegGlobalSettings(),
+    const struct FFmpegAudioSettings& audioSettings = FFmpegAudioSettings(),
+    const struct FFmpegVideoSettings& videoSettings = FFmpegVideoSettings()) {
+    m_globalSettings = globalSettings;
+    m_audioSettings = audioSettings;
+    m_videoSettings = videoSettings;
+}
 }  // namespace MediaProcessor

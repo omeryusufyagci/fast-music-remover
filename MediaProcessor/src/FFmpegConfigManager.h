@@ -25,6 +25,29 @@ enum class CodecStrictness { VERY, STRICT, NORMAL, UNOFFICIAL, EXPERIMENTAL };
  */
 class FFmpegConfigManager {
    public:
+    struct FFmpegGlobalSettings {
+        bool overwrite = false;
+        CodecStrictness strictness = CodecStrictness::EXPERIMENTAL;
+        fs::path inputFilePath;
+        fs::path outputFilePath;
+    } m_globalSettings;
+
+    struct FFmpegAudioSettings {
+        AudioCodec codec = AudioCodec::AAC;
+        fs::path chunksPath;
+        std::vector<fs::path> processedChunkCol;
+        int chunkIndex = 0;
+        int sampleRate = 48000;
+        int numChannels = 2;
+        double audioStartTime = 0;
+        double audioDuration = 0;
+        double overlapDuration = DEFAULT_OVERLAP_DURATION;
+    } m_audioSettings;
+
+    struct FFmpegVideoSettings {
+        VideoCodec codec = VideoCodec::H264;
+    } m_videoSettings;
+
     FFmpegConfigManager();
 
     // Global Setters
@@ -70,33 +93,15 @@ class FFmpegConfigManager {
     const std::unordered_map<VideoCodec, std::string>& getVideoCodecAsString() const;
     const std::unordered_map<CodecStrictness, std::string>& getCodecStrictnessAsString() const;
 
+    // Update Global, Audio, or Video Settings
+    void updateSettings(const struct FFmpegGlobalSettings& globalSettings,
+                        const struct FFmpegAudioSettings& audioSettings,
+                        const struct FFmpegVideoSettings& videoSettings);
+
    private:
     std::unordered_map<AudioCodec, std::string> m_audioCodecAsString;
     std::unordered_map<VideoCodec, std::string> m_videoCodecAsString;
     std::unordered_map<CodecStrictness, std::string> m_codecStrictnessAsString;
-
-    struct FFmpegGlobalSettings {
-        bool overwrite = false;
-        CodecStrictness strictness = CodecStrictness::EXPERIMENTAL;
-        fs::path inputFilePath;
-        fs::path outputFilePath;
-    } m_globalSettings;
-
-    struct FFmpegAudioSettings {
-        AudioCodec codec = AudioCodec::AAC;
-        fs::path chunksPath;
-        std::vector<fs::path> processedChunkCol;
-        int chunkIndex = 0;
-        int sampleRate = 48000;
-        int numChannels = 2;
-        double audioStartTime = 0;
-        double audioDuration = 0;
-        double overlapDuration = DEFAULT_OVERLAP_DURATION;
-    } m_audioSettings;
-
-    struct FFmpegVideoSettings {
-        VideoCodec codec = VideoCodec::H264;
-    } m_videoSettings;
 };
 
 }  // namespace MediaProcessor
