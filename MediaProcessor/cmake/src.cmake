@@ -5,6 +5,7 @@ add_executable(MediaProcessor
     ${CMAKE_SOURCE_DIR}/src/ConfigManager.cpp
     ${CMAKE_SOURCE_DIR}/src/AudioProcessor.cpp
     ${CMAKE_SOURCE_DIR}/src/VideoProcessor.cpp
+    ${CMAKE_SOURCE_DIR}/src/MediaProcessor.cpp
     ${CMAKE_SOURCE_DIR}/src/Utils.cpp
     ${CMAKE_SOURCE_DIR}/src/CommandBuilder.cpp
     ${CMAKE_SOURCE_DIR}/src/HardwareUtils.cpp
@@ -38,6 +39,8 @@ target_link_libraries(MediaProcessor PRIVATE
     Threads::Threads
     ${SNDFILE_LIBRARIES}
     ${DF_LIBRARY}
+    nlohmann_json::nlohmann_json
+
 )
 
 # Some of this was for macOS try to remove if possible
@@ -47,7 +50,3 @@ set_target_properties(MediaProcessor PROPERTIES
     BUILD_RPATH "${CMAKE_SOURCE_DIR}/lib"
     INSTALL_RPATH_USE_LINK_PATH TRUE
 )
-
-# Find and link the JSON lib
-find_package(nlohmann_json 3.10.5 REQUIRED)
-target_link_libraries(MediaProcessor PRIVATE nlohmann_json::nlohmann_json)
