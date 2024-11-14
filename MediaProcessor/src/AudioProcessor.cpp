@@ -24,7 +24,7 @@ AudioProcessor::AudioProcessor(const fs::path& inputVideoPath, const fs::path& o
       m_overlapDuration(DEFAULT_OVERLAP_DURATION) {
     m_outputPath = m_outputAudioPath.parent_path();
     m_chunksPath = m_outputPath / "chunks";
-    m_processedChunksDir = m_outputPath / "processed_chunks";
+    m_processedChunksPath = m_outputPath / "processed_chunks";
 
     m_numChunks = ConfigManager::getInstance().getOptimalThreadCount();
     std::cout << "INFO: using " << m_numChunks << " threads." << std::endl;
@@ -68,7 +68,7 @@ bool AudioProcessor::isolateVocals() {
 
     // Intermediary files
     fs::remove_all(m_chunksPath);
-    fs::remove_all(m_processedChunksDir);
+    fs::remove_all(m_processedChunksPath);
 
     return true;
 }
@@ -139,7 +139,7 @@ bool AudioProcessor::generateChunkFile(int index, const double startTime, const 
         return false;
     }
 
-    m_chunkPathCol.push_back(chunkPath);
+    m_chunkColPath.push_back(chunkPath);
     return true;
 }
 
@@ -153,7 +153,7 @@ bool AudioProcessor::invokeDeepFilter(fs::path chunkPath) {
     CommandBuilder cmd;
     cmd.addArgument(deepFilterPath.string());
     cmd.addFlag("--compensate-delay");
-    cmd.addFlag("--output-dir", m_processedChunksDir.string());
+    cmd.addFlag("--output-dir", m_processedChunksPath.string());
     cmd.addArgument(chunkPath.string());
 
     if (!Utils::runCommand(cmd.build())) {
@@ -187,7 +187,7 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath) {
     // Prepare output file with SNDFILE
     // TODO: extract into a utility
     SF_INFO sfInfoOut = sfInfoIn;
-    fs::path processedChunkPath = m_processedChunksDir / chunkPath.filename();
+    fs::path processedChunkPath = m_processedChunksPath / chunkPath.filename();
     SNDFILE* outputFile = sf_open(processedChunkPath.c_str(), SFM_WRITE, &sfInfoOut);
     if (!outputFile) {
         std::cerr << "Error: Could not open output WAV file: " << processedChunkPath << std::endl;
@@ -215,14 +215,14 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath) {
 }
 
 bool AudioProcessor::filterChunks() {
-    Utils::ensureDirectoryExists(m_processedChunksDir);
+    Utils::ensureDirectoryExists(m_processedChunksPath);
 
     ThreadPool pool(m_numChunks);
 
     std::vector<std::future<void>> results;
     for (int i = 0; i < m_numChunks; ++i) {
         results.emplace_back(pool.enqueue([&, i]() {
-            fs::path chunkPath = m_chunkPathCol[i];
+            fs::path chunkPath = m_chunkColPath[i];
 
             invokeDeepFilter(chunkPath);
             // invokeDeepFilterFFI(chunkPath);  // RT API still under validation
@@ -236,9 +236,9 @@ bool AudioProcessor::filterChunks() {
 
     // Prepare paths for processed chunks
     for (int i = 0; i < m_numChunks; ++i) {
-        fs::path chunkPath = m_chunkPathCol[i];
-        fs::path processedChunkPath = m_processedChunksDir / chunkPath.filename();
-        m_processedChunkCol.push_back(processedChunkPath);
+        fs::path chunkPath = m_chunkColPath[i];
+        fs::path processedChunkPath = m_processedChunksPath / chunkPath.filename();
+        m_processedChunkColPath.push_back(processedChunkPath);
     }
 
     return true;
@@ -266,12 +266,12 @@ std::string AudioProcessor::buildFilterComplex() const {
     std::string filterComplex = "";
     int filterIndex = 0;
 
-    if (m_processedChunkCol.size() < 2) {
+    if (m_processedChunkColPath.size() < 2) {
         return filterComplex;  // Return empty string if not enough chunks
     }
 
     // TODO: extract this into an `applyCrossFade()` method.
-    for (int i = 0; i < static_cast<int>(m_processedChunkCol.size()) - 1; ++i) {
+    for (int i = 0; i < static_cast<int>(m_processedChunkColPath.size()) - 1; ++i) {
         if (i == 0) {
             // Generate a `crossfade` for the first chunk pair (0 and 1)
             filterComplex += "[" + std::to_string(i) + ":a][" + std::to_string(i + 1) +
@@ -300,11 +300,11 @@ bool AudioProcessor::mergeChunks() {
     CommandBuilder cmd;
     cmd.addArgument(ffmpegPath.string());
     cmd.addFlag("-y");
-    for (const auto& chunkPath : m_processedChunkCol) {
+    for (const auto& chunkPath : m_processedChunkColPath) {
         cmd.addFlag("-i", chunkPath.string());
     }
 
-    if (static_cast<int>(m_processedChunkCol.size()) >= 2) {
+    if (static_cast<int>(m_processedChunkColPath.size()) >= 2) {
         cmd.addFlag("-filter_complex", buildFilterComplex());
         cmd.addFlag("-map", "[outa]");
     }
