@@ -23,9 +23,9 @@ Support for realtime processing is currently in the works, and there are many ot
 
 The primary goal of the project is to enhance the audio tracks of typical mainstream media, such as lecture recordings, field reports and interviews. To see `Fast Music Remover` in action, take a look at our demo video below!
 
-## UI
+## UI & Demo Video
 
-We offer a minimalist UI to streamline access to the `MediaProcessor`'s core features.
+We offer a minimalistic UI to streamline access to the `MediaProcessor`'s core features.
 
 <div align="center">
   <img src="docs/images/UI-screenshot.png" alt="UI" width="600">
