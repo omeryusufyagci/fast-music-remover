@@ -34,16 +34,23 @@ h1 {
     position: relative;
     border: 2px solid transparent;
     border-radius: 8px;
-    padding: 12px;
+    padding: 15px;
     transition: border-color 0.3s ease;
 }
+
 .input-section.active {
-    border-color: #6c5ce7;
+    border-color: transparent;
     background-color: #f9f9ff;
 }
+
 .input-section label {
     font-size: 1.1rem;
     color: #555;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+.input-section:not(.active) .upload-area {
+    border: 2px solid #ccc;
 }
 .toggle-container {
     position: absolute;
@@ -107,6 +114,13 @@ h1 {
 .url-input::placeholder, .file-upload::placeholder {
     color: #aaa;
 }
+#urlSection.active .url-input {
+    border: 2px solid #6c5ce7;
+}
+
+#urlSection:not(.active) .url-input {
+    border: 2px solid #ccc;
+}
 .demo-overlay {
     position: absolute;
     top: 50%;
@@ -135,7 +149,7 @@ h1 {
 }
 .upload-area {
     background-color: #f1f3f6;
-    border: 2px dashed #ddd;
+    border: 2px solid #6c5ce7;
     padding: 30px;
     border-radius: 8px;
     cursor: pointer;
@@ -143,13 +157,13 @@ h1 {
     align-items: center;
     justify-content: center;
     text-align: center;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
     position: relative;
 }
 
 .upload-area.file-uploaded {
     /* Styling for when a file is uploaded */
-    border: 2px solid #6c5ce7; 
+    border: 2px solid #6c5ce7;
 }
 
 .upload-area .remove-file {
