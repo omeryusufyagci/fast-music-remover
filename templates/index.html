@@ -4,43 +4,386 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fast Music Remover</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Fast Music Remover</h1>
+        
+        <div class="input-section" id="urlSection">
+            <label for="url">Enter a video URL (e.g., YouTube URL):</label>
+            <input type="text" id="url" class="url-input" placeholder="https://www.youtube.com/watch?v=is6dcedp4w0" oninput="handleSourceChange()" />
+            <div class="demo-overlay" onmouseenter="highlightDemoUrl()" onmouseleave="removeHighlightDemoUrl()" onclick="applyDemoUrl()">Use Demo Video</div>
+            <div class="toggle-container" style="display: none;" onclick="toggleActiveSource('url')">
+                <span>Active</span>
+                <div class="toggle-switch" id="urlToggle"></div>
+            </div>
+        </div>
+
+        <div class="input-section" id="fileSection">
+            <label for="fileInput">Or Upload a File:</label>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click();">
+                <input type="file" id="fileInput" class="file-upload" style="display: none;" onchange="handleFileUpload(this.files[0])" />
+                <span>Drag and drop a file here or click to browse</span>
+            </div>
+            <div class="file-preview" id="filePreview" onclick="toggleActiveSource('file')">
+                <span id="fileName"></span>
+                <div class="remove-file" onclick="removeFile(event)">Remove</div>
+            </div>
+            <div class="toggle-container" style="display: none;" onclick="toggleActiveSource('file')">
+                <span>Active</span>
+                <div class="toggle-switch" id="fileToggle"></div>
+            </div>
+        </div>
+
+        <button type="button" class="button" onclick="submitForm()">Process Video</button>
+        <p id="status"></p>
+        <video id="videoPlayer" controls>
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
     <script>
+        let uploadedFile = null;
+        let activeSource = null;
+
+        function handleSourceChange() {
+            const url = document.getElementById("url").value.trim();
+            const fileToggleContainer = document.querySelector("#fileSection .toggle-container");
+            const urlToggleContainer = document.querySelector("#urlSection .toggle-container");
+
+            if (uploadedFile) {
+                activeSource = "file";
+            } else if (url) {
+                activeSource = "url";
+            } else {
+                activeSource = null;
+            }
+
+            if (url && uploadedFile) {
+                urlToggleContainer.style.display = "flex";
+                fileToggleContainer.style.display = "flex";
+            } else {
+                urlToggleContainer.style.display = "none";
+                fileToggleContainer.style.display = "none";
+            }
+            setActiveSource(activeSource);
+        }
+
+        function handleFileUpload(file) {
+            if (file) {
+                uploadedFile = file;
+                document.getElementById("fileName").textContent = file.name;
+                document.getElementById("filePreview").style.display = "flex";
+                activeSource = "file";
+                setActiveSource("file");
+                handleSourceChange(); // needed to ensure active source is reflected properly
+            }
+        }
+
+        function removeFile(event) {
+            event.stopPropagation();
+            uploadedFile = null;
+            document.getElementById("fileInput").value = "";
+            document.getElementById("filePreview").style.display = "none";
+            handleSourceChange();
+        }
+
+        function applyDemoUrl() {
+            document.getElementById("url").value = "https://www.youtube.com/watch?v=is6dcedp4w0";
+            activeSource = "url";
+            handleSourceChange(); // needed to ensure active source is reflected properly
+        }
+
+        function toggleActiveSource(source) {
+            activeSource = (activeSource === source) ? null : source;
+            setActiveSource(activeSource);
+        }
+
+        function setActiveSource(source) {
+            document.getElementById("urlSection").classList.toggle("active", source === "url");
+            document.getElementById("fileSection").classList.toggle("active", source === "file");
+            document.getElementById("urlToggle").classList.toggle("active", source === "url");
+            document.getElementById("fileToggle").classList.toggle("active", source === "file");
+        }
+
+        function highlightDemoUrl() {
+            document.getElementById("url").classList.add("demo-highlight");
+        }
+
+        function removeHighlightDemoUrl() {
+            document.getElementById("url").classList.remove("demo-highlight");
+        }
+
         function submitForm() {
-            const url = document.getElementById("url").value;
+            const status = document.getElementById("status");
+
+            if (!activeSource) {
+                status.textContent = "Please select a source (URL or File) to process.";
+                return;
+            }
+
+            const formData = new FormData();
+            if (activeSource === "file") {
+                formData.append("file", uploadedFile);
+            } else {
+                formData.append("url", document.getElementById("url").value);
+            }
+
+            status.textContent = "Processing...";
             fetch("/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: `url=${encodeURIComponent(url)}`,
+                body: formData,
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === "completed") {
                     document.getElementById("videoPlayer").src = data.video_url;
-                    document.getElementById("status").textContent = "Processing completed!";
+                    document.getElementById("videoPlayer").style.display = "block";
+                    status.textContent = "Processing completed!";
                 } else {
-                    document.getElementById("status").textContent = "An error occurred!";
+                    status.textContent = data.message || "An error occurred!";
                 }
             })
-            .catch(error => {
-                document.getElementById("status").textContent = "An error occurred!";
+            .catch(() => {
+                status.textContent = "An error occurred while connecting to the server.";
             });
-
-            document.getElementById("status").textContent = "Processing...";
         }
+
+        const uploadArea = document.querySelector(".upload-area");
+
+        uploadArea.addEventListener("dragenter", (event) => {
+            event.preventDefault();
+            uploadArea.classList.add("drag-over");
+        });
+
+        uploadArea.addEventListener("dragover", (event) => {
+            event.preventDefault(); // This prevents the video file to be opened on a new tab which is the default behavior
+            uploadArea.classList.add("drag-over");
+        });
+
+        uploadArea.addEventListener("dragleave", () => {
+            uploadArea.classList.remove("drag-over");
+        });
+
+        uploadArea.addEventListener("drop", (event) => {
+            event.preventDefault(); // This prevents the video file to be opened on a new tab which is the default behavior
+            uploadArea.classList.remove("drag-over");
+            
+            if (event.dataTransfer.files.length > 0) {
+                handleFileUpload(event.dataTransfer.files[0]);
+            }
+        });
     </script>
-</head>
-<body>
-    <h1>Fast Music Remover</h1>
-    <form onsubmit="event.preventDefault(); submitForm();">
-        <label for="url">Enter YouTube URL:</label>
-        <input type="text" id="url" name="url" placeholder="Enter YouTube URL">
-        <button type="submit">Process Video</button>
-    </form>
-    <p id="status"></p>
-    <video id="videoPlayer" controls style="display: block; width: 100%; max-width: 800px;">
-        Your browser does not support the video tag.
-    </video>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: url('static/images/background-image.jpg') center center / cover no-repeat;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+        h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .input-section {
+            margin-bottom: 20px;
+            text-align: left;
+            position: relative;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 10px;
+            transition: border-color 0.3s ease;
+        }
+        .input-section.active {
+            border-color: #6c5ce7;
+            background-color: #f9f9ff;
+        }
+        .input-section label {
+            font-size: 1.1rem;
+            color: #555;
+        }
+        .toggle-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .toggle-container span {
+            font-size: 0.9rem;
+            color: #555;
+            margin-right: 8px;
+        }
+        .toggle-switch {
+            width: 34px;
+            height: 18px;
+            background-color: #ddd;
+            border-radius: 9px;
+            position: relative;
+            transition: background-color 0.3s;
+        }
+        .toggle-switch::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border-radius: 50%;
+            top: 1px;
+            left: 1px;
+            transition: transform 0.3s;
+        }
+        .toggle-switch.active {
+            background-color: #6c5ce7;
+        }
+        .toggle-switch.active::before {
+            transform: translateX(16px);
+        }
+        .upload-area.drag-over {
+            background-color: #e0e7ff;
+            border-color: #6c5ce7;
+        }
+        .url-input, .file-upload {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            color: #333;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .url-input:focus, .file-upload:focus {
+            border-color: #6c5ce7;
+            box-shadow: 0 0 8px rgba(108, 92, 231, 0.4);
+        }
+        .url-input::placeholder, .file-upload::placeholder {
+            color: #aaa;
+        }
+        .demo-overlay {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background-color: #6c5ce7;
+            color: #fff;
+            padding: 4px 10px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.95) translateY(-50%);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .input-section:hover .demo-overlay {
+            opacity: 1;
+            transform: scale(1) translateY(-50%);
+        }
+        .demo-overlay:hover {
+            background-color: #5a4cf5;
+        }
+        .input-section .url-input.demo-highlight {
+            border-color: #6c5ce7;
+            box-shadow: 0 0 8px rgba(108, 92, 231, 0.4);
+        }
+        .upload-area {
+            background-color: #f1f3f6;
+            border: 2px dashed #ddd;
+            padding: 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: background-color 0.3s ease;
+            position: relative;
+        }
+        .upload-area.drag-over {
+            background-color: #e0e7ff;
+            border-color: #6c5ce7;
+        }
+        .file-preview {
+            display: none;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            position: relative;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .file-preview span {
+            font-size: 1rem;
+            color: #555;
+        }
+        .remove-file {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #ff5c5c;
+            color: #fff;
+            font-size: 0.9rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+        }
+        .file-preview:hover .remove-file {
+            display: block;
+        }
+        .button {
+            background-color: #6c5ce7;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .button:hover:not(:disabled) {
+            background-color: #5a4cf5;
+        }
+        #status {
+            font-size: 1.2rem;
+            color: #555;
+            margin-top: 20px;
+        }
+        #videoPlayer {
+            display: none;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+    </style>
 </body>
 </html>
