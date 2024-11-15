@@ -4,43 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fast Music Remover</title>
-    <script>
-        function submitForm() {
-            const url = document.getElementById("url").value;
-            fetch("/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: `url=${encodeURIComponent(url)}`,
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "completed") {
-                    document.getElementById("videoPlayer").src = data.video_url;
-                    document.getElementById("status").textContent = "Processing completed!";
-                } else {
-                    document.getElementById("status").textContent = "An error occurred!";
-                }
-            })
-            .catch(error => {
-                document.getElementById("status").textContent = "An error occurred!";
-            });
-
-            document.getElementById("status").textContent = "Processing...";
-        }
-    </script>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>Fast Music Remover</h1>
-    <form onsubmit="event.preventDefault(); submitForm();">
-        <label for="url">Enter YouTube URL:</label>
-        <input type="text" id="url" name="url" placeholder="Enter YouTube URL">
-        <button type="submit">Process Video</button>
-    </form>
-    <p id="status"></p>
-    <video id="videoPlayer" controls style="display: block; width: 100%; max-width: 800px;">
-        Your browser does not support the video tag.
-    </video>
+    <div class="container">
+        <!-- Social Links Section with Icons Only -->
+        <div class="social-links">
+            <a href="https://github.com/omeryusufyagci/fast-music-remover" target="_blank" class="social-link" aria-label="GitHub">
+                <img src="/static/images/github-mark-white.png" alt="GitHub Logo">
+            </a>
+            <a href="https://discord.com/invite/xje3PQTEYp" target="_blank" class="social-link" aria-label="Discord">
+                <img src="/static/images/discord-mark-white.png" alt="Discord Logo">
+            </a>
+        </div>
+
+        <h1>Fast Music Remover</h1>
+        
+        <div class="input-section" id="urlSection">
+            <label for="url">Enter a video URL:</label>
+            <input type="text" id="url" class="url-input" placeholder="https://www.youtube.com/watch?v=is6dcedp4w0" oninput="handleSourceChange()" />
+            <div class="demo-overlay" onmouseenter="highlightDemoUrl()" onmouseleave="removeHighlightDemoUrl()" onclick="applyDemoUrl()">Use Demo Video</div>
+            <div class="toggle-container" style="display: none;" onclick="toggleActiveSource('url')">
+                <span>Active</span>
+                <div class="toggle-switch" id="urlToggle"></div>
+            </div>
+        </div>
+
+        <div class="input-section" id="fileSection">
+            <label for="fileInput">Or Upload a File:</label>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click();">
+                <input type="file" id="fileInput" class="file-upload" style="display: none;" onchange="handleFileUpload(this.files[0])" />
+                <span id="uploadText">Drag and drop a file here or click to browse</span>
+                <div id="fileNameContainer" style="display: none;">
+                    <span id="fileName"></span>
+                    <div class="remove-file" onclick="removeFile(event)">Remove</div>
+                </div>
+            </div>
+            <div class="file-preview" id="filePreview" onclick="toggleActiveSource('file')">
+                <span id="fileName"></span>
+                <div class="remove-file" onclick="removeFile(event)">Remove</div>
+            </div>
+            <div class="toggle-container" style="display: none;" onclick="toggleActiveSource('file')">
+                <span>Active</span>
+                <div class="toggle-switch" id="fileToggle"></div>
+            </div>
+        </div>
+
+        <button type="button" class="button" onclick="submitForm()">Process Video</button>
+        <p id="status"></p>
+        <video id="videoPlayer" controls>
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <script src="/static/js/scripts.js"></script>
 </body>
 </html>
