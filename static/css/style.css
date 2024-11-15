@@ -17,7 +17,7 @@ body {
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 30px;
+    padding: 35px;
     max-width: 600px;
     width: 100%;
     text-align: center;
@@ -26,15 +26,15 @@ body {
 h1 {
     color: #333;
     font-size: 2.5rem;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 .input-section {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     text-align: left;
     position: relative;
     border: 2px solid transparent;
     border-radius: 8px;
-    padding: 10px;
+    padding: 12px;
     transition: border-color 0.3s ease;
 }
 .input-section.active {
@@ -92,7 +92,7 @@ h1 {
     width: 100%;
     padding: 12px;
     font-size: 1rem;
-    margin: 10px 0;
+    margin: 12px 0;
     border: 2px solid #ddd;
     border-radius: 8px;
     background-color: #f9f9f9;
@@ -136,7 +136,7 @@ h1 {
 .upload-area {
     background-color: #f1f3f6;
     border: 2px dashed #ddd;
-    padding: 30px;
+    padding: 35px;
     border-radius: 8px;
     cursor: pointer;
     display: flex;
@@ -153,11 +153,11 @@ h1 {
 .file-preview {
     display: none;
     align-items: center;
-    padding: 10px;
+    padding: 12px;
     border-radius: 8px;
     background-color: #f9f9f9;
     position: relative;
-    margin-top: 10px;
+    margin-top: 12px;
     cursor: pointer;
 }
 .file-preview span {
@@ -188,6 +188,8 @@ h1 {
     font-size: 1.1rem;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    margin-top: 12px;
+    margin-bottom: 25px;
 }
 .button:disabled {
     background-color: #ccc;
@@ -196,15 +198,12 @@ h1 {
 .button:hover:not(:disabled) {
     background-color: #5a4cf5;
 }
-
-
 .social-links {
     display: flex;
     justify-content: center;
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 18px;
+    margin-bottom: 25px;
 }
-
 .social-link {
     display: inline-flex;
     width: 40px;
@@ -215,21 +214,18 @@ h1 {
     align-items: center;
     transition: background-color 0.3s ease;
 }
-
 .social-link img {
     width: 20px;
     height: 20px;
 }
-
 .social-link:hover {
     background-color: #5a4cf5;
 }
-
-
 #status {
     font-size: 1.2rem;
     color: #555;
-    margin-top: 20px;
+    margin-top: 15px;
+    margin-bottom: 20px;
 }
 #videoPlayer {
     display: none;
