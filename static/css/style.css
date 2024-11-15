@@ -136,7 +136,7 @@ h1 {
 .upload-area {
     background-color: #f1f3f6;
     border: 2px dashed #ddd;
-    padding: 35px;
+    padding: 30px;
     border-radius: 8px;
     cursor: pointer;
     display: flex;
@@ -146,9 +146,27 @@ h1 {
     transition: background-color 0.3s ease;
     position: relative;
 }
-.upload-area.drag-over {
-    background-color: #e0e7ff;
-    border-color: #6c5ce7;
+
+.upload-area.file-uploaded {
+    /* Styling for when a file is uploaded */
+    border: 2px solid #6c5ce7; 
+}
+
+.upload-area .remove-file {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #ff5c5c;
+    color: #fff;
+    font-size: 0.9rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: none;
+}
+
+.upload-area.file-uploaded:hover .remove-file {
+    display: block;
 }
 .file-preview {
     display: none;

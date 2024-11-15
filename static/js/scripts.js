@@ -28,19 +28,33 @@ function handleSourceChange() {
 function handleFileUpload(file) {
     if (file) {
         uploadedFile = file;
-        document.getElementById("fileName").textContent = file.name;
-        document.getElementById("filePreview").style.display = "flex";
+
+        const uploadArea = document.querySelector(".upload-area");
+        
+        uploadArea.innerHTML = `
+            <span>${file.name}</span>
+            <div class="remove-file" onclick="removeFile(event)">Remove</div>
+        `;
+        
+        uploadArea.classList.add("file-uploaded");
+
         activeSource = "file";
         setActiveSource("file");
-        handleSourceChange(); // needed to ensure active source is reflected properly
+        handleSourceChange();
     }
 }
 
 function removeFile(event) {
     event.stopPropagation();
     uploadedFile = null;
+
+    const uploadArea = document.querySelector(".upload-area");
+    
+    uploadArea.innerHTML = `<span>Drag and drop a file here or click to browse</span>`;
+    
+    uploadArea.classList.remove("file-uploaded");
     document.getElementById("fileInput").value = "";
-    document.getElementById("filePreview").style.display = "none";
+
     handleSourceChange();
 }
 
