@@ -1,4 +1,3 @@
-
 let uploadedFile = null;
 let activeSource = null;
 
@@ -31,11 +30,10 @@ function handleFileUpload(file) {
 
         const uploadArea = document.querySelector(".upload-area");
         
-        uploadArea.innerHTML = `
-            <span>${file.name}</span>
-            <div class="remove-file" onclick="removeFile(event)">Remove</div>
-        `;
-        
+        document.getElementById("fileName").textContent = file.name;
+        document.getElementById("uploadText").style.display = "none";
+        document.getElementById("fileNameContainer").style.display = "flex";
+
         uploadArea.classList.add("file-uploaded");
 
         activeSource = "file";
@@ -43,17 +41,20 @@ function handleFileUpload(file) {
         handleSourceChange();
     }
 }
-
 function removeFile(event) {
     event.stopPropagation();
     uploadedFile = null;
 
     const uploadArea = document.querySelector(".upload-area");
     
-    uploadArea.innerHTML = `<span>Drag and drop a file here or click to browse</span>`;
-    
-    uploadArea.classList.remove("file-uploaded");
+    document.getElementById("uploadText").style.display = "block";
+    document.getElementById("fileNameContainer").style.display = "none";
     document.getElementById("fileInput").value = "";
+
+    uploadArea.classList.remove("file-uploaded");
+
+    activeSource = document.getElementById("url").value.trim() ? "url" : null;
+    setActiveSource(activeSource);
 
     handleSourceChange();
 }
@@ -61,7 +62,7 @@ function removeFile(event) {
 function applyDemoUrl() {
     document.getElementById("url").value = "https://www.youtube.com/watch?v=is6dcedp4w0";
     activeSource = "url";
-    handleSourceChange(); // needed to ensure active source is reflected properly
+    handleSourceChange();
 }
 
 function toggleActiveSource(source) {
@@ -128,7 +129,7 @@ function submitForm() {
     });
 }
 
-const uploadArea = document.querySelector(".upload-area");
+const uploadArea = document.getElementById("uploadArea");
 
 uploadArea.addEventListener("dragenter", (event) => {
     event.preventDefault();
@@ -136,7 +137,7 @@ uploadArea.addEventListener("dragenter", (event) => {
 });
 
 uploadArea.addEventListener("dragover", (event) => {
-    event.preventDefault(); // This prevents the video file to be opened on a new tab which is the default behavior
+    event.preventDefault();
     uploadArea.classList.add("drag-over");
 });
 
@@ -145,7 +146,7 @@ uploadArea.addEventListener("dragleave", () => {
 });
 
 uploadArea.addEventListener("drop", (event) => {
-    event.preventDefault(); // This prevents the video file to be opened on a new tab which is the default behavior
+    event.preventDefault();
     uploadArea.classList.remove("drag-over");
     
     if (event.dataTransfer.files.length > 0) {

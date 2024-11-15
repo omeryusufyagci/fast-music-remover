@@ -32,9 +32,13 @@
 
         <div class="input-section" id="fileSection">
             <label for="fileInput">Or Upload a File:</label>
-            <div class="upload-area" onclick="document.getElementById('fileInput').click();">
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click();">
                 <input type="file" id="fileInput" class="file-upload" style="display: none;" onchange="handleFileUpload(this.files[0])" />
-                <span>Drag and drop a file here or click to browse</span>
+                <span id="uploadText">Drag and drop a file here or click to browse</span>
+                <div id="fileNameContainer" style="display: none;">
+                    <span id="fileName"></span>
+                    <div class="remove-file" onclick="removeFile(event)">Remove</div>
+                </div>
             </div>
             <div class="file-preview" id="filePreview" onclick="toggleActiveSource('file')">
                 <span id="fileName"></span>
