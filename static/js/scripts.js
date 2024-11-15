@@ -72,6 +72,7 @@ function removeHighlightDemoUrl() {
 
 function submitForm() {
     const status = document.getElementById("status");
+    const processButton = document.querySelector(".button");
 
     if (!activeSource) {
         status.textContent = "Please select a source (URL or File) to process.";
@@ -95,7 +96,15 @@ function submitForm() {
         if (data.status === "completed") {
             document.getElementById("videoPlayer").src = data.video_url;
             document.getElementById("videoPlayer").style.display = "block";
-            status.textContent = "Processing completed!";
+            status.textContent = "";
+
+            processButton.style.backgroundColor = "#28a745"; // Green
+            processButton.textContent = "Completed!";
+
+            setTimeout(() => {
+                processButton.style.backgroundColor = "#6c5ce7"; // Purple
+                processButton.textContent = "Process Video";
+            }, 3000);
         } else {
             status.textContent = data.message || "An error occurred!";
         }
