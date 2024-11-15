@@ -196,6 +196,36 @@ h1 {
 .button:hover:not(:disabled) {
     background-color: #5a4cf5;
 }
+
+
+.social-links {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.social-link {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #8e8d8f;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.social-link img {
+    width: 20px;
+    height: 20px;
+}
+
+.social-link:hover {
+    background-color: #5a4cf5;
+}
+
+
 #status {
     font-size: 1.2rem;
     color: #555;
