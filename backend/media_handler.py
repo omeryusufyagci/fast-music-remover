@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 import subprocess
 import json
 from pathlib import Path
@@ -14,11 +15,26 @@ class MediaHandler:
     @staticmethod
     def download_media(url: str, base_directory: Union[Path, str]) -> Optional[str]:
         try:
-            # Extract media info first to sanitize title
-            with yt_dlp.YoutubeDL() as ydl:
-                info_dict = ydl.extract_info(url, download=False)
-                base_title = info_dict["title"]
-                sanitized_title = Utils.sanitize_filename(base_title)
+
+            # Function to extract media info
+            def extract_info():
+                with yt_dlp.YoutubeDL() as ydl:
+                    return ydl.extract_info(url, download=False)                
+
+            # Use ThreadPoolExecutor to enforce timeout
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(extract_info)
+                try:
+                    info_dict = future.result(timeout=10)  # Timeout set to 10 seconds
+                except FuturesTimeoutError:
+                    logging.error("Timeout occurred while extracting video info")
+                    return None
+                except Exception as e:
+                    logging.error(f"Error extracting video info: {e}")
+                    return None
+
+            base_title = info_dict["title"]
+            sanitized_title = Utils.sanitize_filename(base_title)
 
             ydl_opts = {
                 "format": "bestvideo+bestaudio/best",
@@ -46,7 +62,7 @@ class MediaHandler:
             return None
 
     @staticmethod
-    def process_with_media_processor(video_path: str, base_directory:Union[Path, str], config_path:  str) -> Optional[str]:
+    def process_with_media_processor(video_path: str, base_directory:Union[Path, str]) -> Optional[str]:
         """Run the C++ MediaProcessor binary with the video path"""
         try:
             logging.info(f"Processing video at path: {video_path}")
@@ -54,7 +70,7 @@ class MediaHandler:
 
 
             result = subprocess.run(
-                [str(base_directory / "MediaProcessor/build/MediaProcessor"), str(video_path)], capture_output=True, text=True
+                [str(base_directory / "MediaProcessor/build/MediaProcessor"), str(video_path)], capture_output=True, text=True, cwd=str(base_directory)
             )
 
             if result.returncode != 0:

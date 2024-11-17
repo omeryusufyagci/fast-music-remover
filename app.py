@@ -58,7 +58,7 @@ def index()-> Union[Response, str]:
             if not video_path:
                 return ResponseHandler.generate_error_response("Failed to download video.", 500)
 
-            processed_video_path = MediaHandler.process_with_media_processor(video_path,BASE_DIR,config_path)
+            processed_video_path = MediaHandler.process_with_media_processor(video_path,BASE_DIR)
             #Since backend is in a different directory compared to config, am explicity passing the config_path
 
             if processed_video_path: 
@@ -93,4 +93,4 @@ def serve_video(filename: str) -> Response:
         return ResponseHandler.error("Failed to serve video.", 500)
 
 if __name__ == "__main__":
-    app.run(port=8080, debug=True)
+    app.run(port=9090, debug=True)

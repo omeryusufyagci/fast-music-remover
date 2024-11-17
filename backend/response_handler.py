@@ -10,7 +10,7 @@ class ResponseHandler:
         response = {
             "status": status,
             "message": message,
-            "data": data or {}
+            "payload": data or {}
         } 
         return jsonify(response), status_code
 

@@ -17,7 +17,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
-                    document.getElementById("videoPlayer").src = data.data.video_url;
+                    document.getElementById("videoPlayer").src = data.payload.video_url;
                     document.getElementById("status").textContent = "Processing completed!";
                 } else {
                     document.getElementById("status").textContent = "An error occurred!";

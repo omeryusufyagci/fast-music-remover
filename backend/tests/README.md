@@ -1,8 +1,5 @@
 ```
-cd /home/`whoami`/fast-music-remover
-
-PYTHONPATH=$(pwd)  python -m pytest -v
-
+PYTHONPATH=$(pwd) pytest
 ```
 
-Run the above two commands to test the code
+To test

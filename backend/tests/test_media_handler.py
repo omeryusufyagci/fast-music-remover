@@ -1,93 +1,57 @@
-import tempfile
-import unittest
-from unittest.mock import patch, MagicMock
+import pytest
+import os
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from pathlib import Path
 from backend.media_handler import MediaHandler
+import utils as utils
 
-class TestMediaHandler(unittest.TestCase):
 
-    def setUp(self):
-        """Set up base directory and mock paths for testing."""
-        self.base_directory = tempfile.mkdtemp()
-        self.video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-        self.config_path = "/path/to/config.json"
-        self.video_path = "/path/to/video.mp4"
-        self.input_data = {
-            "video_file_path": self.video_path,
-            "config_file_path": self.config_path
-        }
+def test_extract_metadata_with_timeout():
+    """Test metadata extraction with a timeout."""
+    # Known test URL
+    url = utils.DOWNLOAD_URL
 
-    @patch("backend.media_handler.yt_dlp.YoutubeDL")
-    def test_download_media(self, mock_yt_dlp):
-        # Mock YoutubeDL instance
-        mock_ydl_instance = MagicMock()
-        
-        # Mock extract_info for download=False and download=True
-        mock_ydl_instance.extract_info.side_effect = [
-            {"title": "Test Video", "ext": "mp4"},  # For download=False
-            {"ext": "mp4"}  # For download=True
-        ]
-        
-        # Set the return value when instantiating YoutubeDL
-        mock_yt_dl_context_manager = MagicMock()
-        mock_yt_dl_context_manager.__enter__.return_value = mock_ydl_instance
-        mock_yt_dlp.return_value = mock_yt_dl_context_manager
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(utils.extract_info, url)  
+        try:
+            metadata = future.result(timeout=10)  # Timeout set to 10 seconds
+        except FuturesTimeoutError:
+            pytest.fail("Timeout occurred while extracting video info")
+        except Exception as e:
+            pytest.fail(f"Error extracting video info: {e}")
 
-        # Test download_media method
-        result = MediaHandler.download_media(self.video_url, self.base_directory)
-        expected_file = Path(self.base_directory) / "Test_Video.mp4"
-        self.assertEqual(result, str(expected_file.resolve()))
-
-    @patch("backend.media_handler.subprocess.run")
-    def test_process_with_media_processor_success(self, mock_subprocess_run):
-        # Mock subprocess.run to simulate a successful response
-        mock_subprocess_run.return_value = MagicMock(
-            returncode=0,
-            stdout="Video processed successfully: /path/to/processed_video.mp4",
-            stderr=""
-            
-        )
-        # Test process_with_media_processor
-        result = MediaHandler.process_with_media_processor(
-            self.video_path, self.base_directory, self.config_path
-        )
-
-        self.assertEqual(result, "/path/to/processed_video.mp4")
+    # Assert that metadata is retrieved
+    assert metadata is not None, "Metadata extraction failed"
+    assert "title" in metadata, "Title missing in metadata"
+    assert "uploader" in metadata, "Uploader missing in metadata"
+    assert "duration" in metadata, "Duration missing in metadata"
+    assert metadata["duration"] > 0, "Invalid duration in metadata"
 
 
 
-    @patch("backend.media_handler.subprocess.run")
-    def test_process_with_media_processor_failure(self, mock_subprocess_run):
-        # Mock subprocess.run to simulate a failed response
-        mock_subprocess_run.return_value = MagicMock(
-            returncode=1,
-            stdout="",
-            stderr="Error processing video"
-        )
+def test_process_with_media_processor():
+    """Test video processing with MediaHandler."""
+    BASE_DIR = Path(__file__).resolve().parents[2]
+    TEST_DIR = Path(__file__).parent.resolve()
+    DEEPFILTERNET_PATH = str((BASE_DIR / utils.DEEP_FILTER_PATH).resolve())
+    os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
 
-        # Test process_with_media_processor with failure
-        result = MediaHandler.process_with_media_processor(
-            self.video_path, self.base_directory, self.config_path
-        )
+    test_video_path = str((TEST_DIR / utils.TEST_VIDEO_PATH).resolve())
+    expected_processed_video_path = str((TEST_DIR / utils.PROCESSED_VIDEO_PATH).resolve())
 
-        self.assertIsNone(result)
+    # Ensure the test video file exists
+    assert Path(test_video_path).exists(), "Test video file does not exist"
 
-    #These errors are not present as of yet, they are for future proofing
-    @patch("backend.media_handler.subprocess.run")
-    def test_process_with_media_processor_invalid_json(self, mock_subprocess_run):
-        # Mock subprocess.run to simulate invalid JSON output
-        mock_subprocess_run.return_value = MagicMock(
-            returncode=0,
-            stdout="Invalid JSON Output",
-            stderr=""
-        )
+    # Invoke the method
+    processed_video_path = MediaHandler.process_with_media_processor(test_video_path, BASE_DIR)
 
-        # Test process_with_media_processor with invalid JSON
-        result = MediaHandler.process_with_media_processor(
-            self.video_path, self.base_directory, self.config_path
-        )
+    # Assert that the video was processed
+    assert processed_video_path is not None, "process_with_media_processor returned None"
+    assert Path(processed_video_path).exists(), "Processed video file does not exist"
 
-        self.assertIsNone(result)
+    # Compare the processed video with the expected processed video
+    utils.compare_files(processed_video_path, expected_processed_video_path)
 
-if __name__ == "__main__":
-    unittest.main()
+    # Cleanup: Remove processed video file after the test
+    if Path(processed_video_path).exists():
+        os.remove(processed_video_path)
