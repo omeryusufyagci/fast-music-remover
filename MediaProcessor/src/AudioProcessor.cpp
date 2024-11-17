@@ -171,13 +171,13 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath) {
     ConfigManager& configManager = ConfigManager::getInstance();
     const fs::path deepFilterTarballPath = configManager.getDeepFilterTarballPath();
 
-    DFState* df_state = df_create(deepFilterTarballPath.c_str(), 100.0f, nullptr);
+    DFState* df_state = df_create(deepFilterTarballPath.string().c_str(), 100.0f, nullptr);
     size_t frameLength = df_get_frame_length(df_state);
 
     // Open the input file with SNDFILE
     // TODO: extract into a utility
     SF_INFO sfInfoIn;
-    SNDFILE* inputFile = sf_open(chunkPath.c_str(), SFM_READ, &sfInfoIn);
+    SNDFILE* inputFile = sf_open(chunkPath.string().c_str(), SFM_READ, &sfInfoIn);
     if (!inputFile) {
         std::cerr << "Error: Could not open input WAV file: " << chunkPath << std::endl;
         df_free(df_state);
@@ -188,7 +188,7 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath) {
     // TODO: extract into a utility
     SF_INFO sfInfoOut = sfInfoIn;
     fs::path processedChunkPath = m_processedChunksDir / chunkPath.filename();
-    SNDFILE* outputFile = sf_open(processedChunkPath.c_str(), SFM_WRITE, &sfInfoOut);
+    SNDFILE* outputFile = sf_open(processedChunkPath.string().c_str(), SFM_WRITE, &sfInfoOut);
     if (!outputFile) {
         std::cerr << "Error: Could not open output WAV file: " << processedChunkPath << std::endl;
         sf_close(inputFile);
@@ -224,8 +224,8 @@ bool AudioProcessor::filterChunks() {
         results.emplace_back(pool.enqueue([&, i]() {
             fs::path chunkPath = m_chunkPathCol[i];
 
-            invokeDeepFilter(chunkPath);
-            // invokeDeepFilterFFI(chunkPath);  // RT API still under validation
+            // invokeDeepFilter(chunkPath);
+            invokeDeepFilterFFI(chunkPath);  // RT API still under validation
         }));
     }
 

@@ -9,8 +9,6 @@ import time
 import webbrowser
 from pathlib import Path
 
-import distro
-
 CONFIG_FILE = os.path.join("config.json")
 venv_name = "virtual_env"  # For downloading python packages
 venv_dir = Path.cwd() / venv_name  # Create the path for the virtual environment
@@ -36,19 +34,19 @@ class Dependency:
     Attributes:
         name (str): The name of the dependency.
         package_name (dict): { platform: package_name }.
-        check_cmd (dict): { platform: command to check if the dependency is installed }.
-        install_cmd (dict): { platform: command to install the dependency }.
+        check_cmd (dict): { platform: list of command or function to check if the dependency is installed }.
+        install_cmd (dict): { platform: list of command or function to install the dependency }.
 
         if package_name is not provided, it will be set to the name.
 
         if check_cmd is not provided
-            package_name -version will be used to check if the dependency is installed
+            package_name --version will be used to check if the dependency is installed
 
         if install cmd is not provided
             for debian based: apt-get
             for fedora/rhel: dnf
             for macos: brew
-            for windwos: msys2
+            for windows: msys2
     """
 
     def __init__(self, name, package_name={}, check_cmd={}, install_cmd={}) -> None:
@@ -65,23 +63,27 @@ class Dependency:
             system (str): The operating system type.
             install (bool): Whether to install the dependency if not found.
         """
-        if "all" in self.check_cmd:
+        if system in self.check_cmd:
+            check_cmd = self.check_cmd[system]
+        elif "all" in self.check_cmd:
             check_cmd = self.check_cmd["all"]
-        elif system in self.check_cmd:
-            system in self.check_cmd[system]
         else:
-            check_cmd = self.package_name.get(system, self.name) + " -version"
+            check_cmd = [self.package_name.get(system, self.name) + " --version"]
 
         try:
-            execute_command(check_cmd)
+            for cmd in check_cmd:
+                if type(cmd) == str:
+                    execute_command(cmd)
+                else:
+                    cmd()
+
         except (FileNotFoundError, subprocess.CalledProcessError):
-            if install:
-                self.install_dependency(system)
-            else:
+            if not install:
                 print(
                     f"{self.name} is not installed. Use --install to install dependencies automatically or install manually."
                 )
                 sys.exit(1)
+            self.install_dependency(system)
 
     def install_dependency(self, system):
         """
@@ -90,12 +92,14 @@ class Dependency:
         Args:
             system (str): The operating system type.
         """
-        if "all" in self.install_cmd:
-            install_cmd = self.install_cmd["all"]
-        elif system in self.install_cmd:
+        if system in self.install_cmd:
             install_cmd = self.install_cmd[system]
+        elif "all" in self.install_cmd:
+            install_cmd = self.install_cmd["all"]
         else:
             if system == "Linux":
+                import distro
+
                 linux_distro = distro.id().lower()
                 if linux_distro in ["ubuntu", "debian", "kali"]:
                     install_cmd = [
@@ -112,32 +116,45 @@ class Dependency:
             elif system == "Windows":
                 if not check_msys2_installed():
                     install_msys2()
-                install_cmd = ["pacman -Syu", f"pacman -S --needed {self.package_name.get(system, self.name)}"]
+                install_cmd = [f"pacman -S --needed --noconfirm {self.package_name.get(system, self.name)}"]
             else:
                 print(f"Unsupported operating system: {system}. Please install {self.name} manually.")
                 sys.exit(1)
 
         print(f"Installing {self.name}...")
         try:
-            if type(install_cmd) == str:
-                execute_command(install_cmd)
-            else:
-                for cmd in install_cmd:
+            for cmd in install_cmd:
+                if type(cmd) == str:
                     execute_command(cmd)
+                else:
+                    cmd()
+
             print(f"{self.name} installed successfully.")
         except subprocess.CalledProcessError as e:
             print(f"Error installing {self.name}: {e}")
             sys.exit(1)
 
 
+# pkg-config should come before sndfie and nlohmann-json
 dependencies = [
-    Dependency("cmake"),
-    Dependency("pkg-config"),
-    Dependency("ffmpeg", {"Windows": "mingw-w64-x86_64-ffmpeg"}),
+    Dependency("cmake", {"Windows": "mingw-w64-x86_64-cmake"}, {"all": ["cmake --version"]}),
     Dependency(
-        "sndfile",
+        "g++",
+        {"Windows": "mingw-w64-x86_64-gcc", "Darwin": "gcc"},
+        {"all": ["g++ --version"]},
+        {"Windows": ["pacman -S --needed --noconfirm base-devel mingw-w64-x86_64-toolchain"]},
+    ),
+    Dependency("pkg-config"),
+    Dependency("ffmpeg", {"Windows": "mingw-w64-x86_64-ffmpeg"}, {"all": ["ffmpeg -version"]}),
+    Dependency(
+        "libsndfile",
         {"Windows": "mingw-w64-x86_64-libsndfile", "Linux": "libsndfile1-dev"},
-        {"all": "pkg-config --exists sndfile"},
+        {"all": ["pkg-config --exists sndfile"]},
+    ),
+    Dependency(
+        "nlohmann-json",
+        {"Windows": "mingw-w64-x86_64-nlohmann-json"},
+        {"all": ["pkg-config --exists nlohmann-json"]},
     ),
 ]
 
@@ -146,24 +163,49 @@ def check_msys2_installed():
     try:
         execute_command("pacman --version")
         return True
-    except subprocess.CalledProcessError:
+    except (FileNotFoundError, subprocess.CalledProcessError):
         return False
 
 
 def install_msys2():
     try:
-        installer_url = "https://repo.msys2.org/distrib/x86_64/msys2-x86_64-latest.exe"
+        global msys2_root_path
+        installer_url = (
+            "https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe"
+        )
         installer_name = "msys2-installer.exe"
+
+        msys2_root_path = "C:\\msys64"
+
         print("Downloading MSYS2 installer...")
         execute_command(f"curl -L -o {installer_name} {installer_url}")
 
         print("Running MSYS2 installer...")
-        execute_command(f"start /wait {installer_name} --quiet-mode --root C:\\msys64")
+        execute_command(f"{installer_name} -y -oC:\\")
 
         print("Updating MSYS2 packages...")
-        execute_command(f"C:\\msys64\\usr\\bin\\bash.exe -lc pacman -Syu --noconfirm")
+        execute_command(f"{msys2_root_path}\\usr\\bin\\bash.exe -lc 'pacman -Syu --noconfirm'")
+
+        print("Editing Environment Variables...")
+        # Set it permanently for the current user
+        commands = f"""
+        $oldPath = [Environment]::GetEnvironmentVariable("Path", "User")
+        $newPath = "{msys2_root_path}\\usr\\bin;{msys2_root_path}\\mingw64\\bin;{msys2_root_path}\\mingw32\\bin;" + $oldPath
+        [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+        """
+        # Run the PowerShell commands
+        subprocess.check_call(["powershell", "-Command", commands])
+
+        # Add MSYS2 paths to the PATH environment variable for the current session
+        current_path = os.environ.get("PATH", "")
+        new_path = (
+            f"{msys2_root_path}\\usr\\bin;{msys2_root_path}\\mingw64\\bin;{msys2_root_path}\\mingw32\\bin;"
+            + current_path
+        )
+        os.environ["PATH"] = new_path
 
         print("MSYS2 installed and updated successfully.")
+        print("Please restart your terminal before running this script again.")
 
     except subprocess.CalledProcessError as e:
         print(f"Error installing MSYS2: {e}")
@@ -184,27 +226,40 @@ def create_virtualenv():
     print("Virtual environment created successfully.")
 
 
-def install_python_dependencies():
+def install_python_dependencies(system):
     try:
         if not venv_dir.exists():
             create_virtualenv()
 
         print("Installing pip dependencies...")
-        execute_command(f"{str(venv_dir / 'bin' / 'pip')} install -r requirements.txt")
+        if system == "Windows":
+            execute_command(f"{str(venv_dir / 'Scripts' / 'pip.exe')} install -r requirements.txt")
+        else:
+            execute_command(f"{str(venv_dir / 'bin' / 'pip')} install -r requirements.txt")
         print("Python dependencies installed.")
     except subprocess.CalledProcessError as e:
         print(f"Failed to install Python dependencies: {e}")
         sys.exit(1)
 
 
-def build_cpp_dependencies():
+def build_cpp_dependencies(system):
     try:
         print("Building MediaProcessor...")
         build_dir = os.path.join("MediaProcessor", "build")
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
-        execute_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=build_dir)
+        if system == "Windows":
+            cmake_cmd = "cmake -G MSYS Makefiles -DCMAKE_BUILD_TYPE=Release .."
+            subprocess.check_call(
+                ["cmake", "-G", "MSYS Makefiles", "-DCMAKE_BUILD_TYPE=Release", ".."],
+                cwd=build_dir,
+                stdout=subprocess.DEVNULL,
+            )
+        else:
+            cmake_cmd = "cmake -DCMAKE_BUILD_TYPE=Release .."
+            execute_command(cmake_cmd, cwd=build_dir, split=False)
         execute_command("cmake --build . --config Release", cwd=build_dir)
+
         print("MediaProcessor built successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Failed to build MediaProcessor: {e}")
@@ -218,7 +273,8 @@ def update_config(system):
 
         if system == "Windows":
             for key, value in config.items():
-                config[key] = value.replace("/", "\\")
+                if type(value) == str:
+                    config[key] = value.replace("/", "\\")
             config["ffmpeg_path"] = "ffmpeg"
         elif system == "Darwin":
             config["ffmpeg_path"] = "/usr/local/bin/ffmpeg"
@@ -233,9 +289,14 @@ def update_config(system):
         sys.exit(1)
 
 
-def launch_web_application():
+def launch_web_application(system):
     try:
-        app_process = subprocess.Popen([str(venv_dir / "bin" / "python"), "app.py"])
+        if system == "Windows":
+            python_path = str(venv_dir / "Scripts" / "python.exe")
+        else:
+            python_path = str(venv_dir / "bin" / "python")
+
+        app_process = subprocess.Popen([python_path, "app.py"])
         atexit.register(app_process.terminate)
 
         time.sleep(0.5)
@@ -263,15 +324,15 @@ def main():
         dependency.check_dependency(system, args.install)
 
     if args.install:
-        install_python_dependencies()
+        install_python_dependencies(system)
 
     if not check_MediaProcessor() or args.rebuild:
-        build_cpp_dependencies()
+        build_cpp_dependencies(system)
 
     update_config(system)
 
     if args.mode == "web":
-        launch_web_application()
+        launch_web_application(system)
     else:
         print("Please specify an application mode like --mode=web")
 

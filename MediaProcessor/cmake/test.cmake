@@ -14,10 +14,22 @@ if(NOT GTEST_FOUND)
 endif()
 
 # Setup test media directory
-set(TEST_MEDIA_DIR "${CMAKE_SOURCE_DIR}/tests/TestMedia" CACHE PATH "Path to test media files")
+file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/tests/TestMedia" TEST_MEDIA_DIR)
+set(TEST_MEDIA_DIR "${TEST_MEDIA_DIR}" CACHE PATH "Path to test media files")
+
+# Set platform-specific dynamic library for df
+if(APPLE)
+    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)  # macOS dynamic library
+elseif(WIN32)
+    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/df.dll)  # Windows dynamic library
+elseif(UNIX)
+    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.so)  # Linux dynamic library
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
 
 # Common libraries for all test targets
-set(COMMON_LIBRARIES gtest_main ${CMAKE_SOURCE_DIR}/lib/libdf.so ${SNDFILE_LIBRARIES})
+set(COMMON_LIBRARIES gtest_main ${DF_LIBRARY} ${SNDFILE_LIBRARIES})
 
 # Macro for adding a test executable
 macro(add_test_executable name)
