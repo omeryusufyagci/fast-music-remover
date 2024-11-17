@@ -154,7 +154,7 @@ dependencies = [
     Dependency(
         "nlohmann-json",
         {"Windows": "mingw-w64-x86_64-nlohmann-json"},
-        {"all": ["pkg-config --exists nlohmann-json"]},
+        {"all": ["pkg-config --exists nlohmann_json"]},
     ),
 ]
 
@@ -231,11 +231,21 @@ def install_python_dependencies(system):
         if not venv_dir.exists():
             create_virtualenv()
 
-        print("Installing pip dependencies...")
+        print("Installing Python dependencies...")
+
         if system == "Windows":
-            execute_command(f"{str(venv_dir / 'Scripts' / 'pip.exe')} install -r requirements.txt")
+            # Check for both `Scripts` and `bin` folders.
+            pip_path = venv_dir / "Scripts" / "pip.exe"
+            if not pip_path.exists():
+                pip_path = venv_dir / "bin" / "pip.exe"
+            if not pip_path.exists():
+                raise FileNotFoundError("pip not found in either Scripts or bin folder.")
         else:
-            execute_command(f"{str(venv_dir / 'bin' / 'pip')} install -r requirements.txt")
+            pip_path = venv_dir / "bin" / "pip"
+            if not pip_path.exists():
+                raise FileNotFoundError("pip not found in the bin folder.")
+
+        execute_command(f"{str(pip_path)} install -r requirements.txt")
         print("Python dependencies installed.")
     except subprocess.CalledProcessError as e:
         print(f"Failed to install Python dependencies: {e}")
