@@ -115,4 +115,4 @@ def serve_video(filename: str) -> Response:
         return ResponseHandler.generate_error_response("Failed to serve video.", 500)
 
 if __name__ == "__main__":
-    app.run(port=9090, debug=True)
+    app.run(port=8080, debug=True)
