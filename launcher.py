@@ -205,7 +205,7 @@ def install_msys2():
         os.environ["PATH"] = new_path
 
         print("MSYS2 installed and updated successfully.")
-        print("Please restart your terminal before running this script again.")
+        print("NOTE: Please restart your terminal before running this script again.")
 
     except subprocess.CalledProcessError as e:
         print(f"Error installing MSYS2: {e}")
@@ -215,8 +215,11 @@ def install_msys2():
             os.remove(installer_name)
 
 
-def check_MediaProcessor():
-    MediaProcessor_path = Path("MediaProcessor") / "build" / "MediaProcessor"
+def check_MediaProcessor(system):
+    if system == "Windows":
+        MediaProcessor_path = Path("MediaProcessor") / "build" / "MediaProcessor.exe"
+    else:
+        MediaProcessor_path = Path("MediaProcessor") / "build" / "MediaProcessor"
     return MediaProcessor_path.exists()
 
 
@@ -258,16 +261,8 @@ def build_cpp_dependencies(system):
         build_dir = os.path.join("MediaProcessor", "build")
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
-        if system == "Windows":
-            cmake_cmd = "cmake -G MSYS Makefiles -DCMAKE_BUILD_TYPE=Release .."
-            subprocess.check_call(
-                ["cmake", "-G", "MSYS Makefiles", "-DCMAKE_BUILD_TYPE=Release", ".."],
-                cwd=build_dir,
-                stdout=subprocess.DEVNULL,
-            )
-        else:
-            cmake_cmd = "cmake -DCMAKE_BUILD_TYPE=Release .."
-            execute_command(cmake_cmd, cwd=build_dir, split=False)
+        
+        execute_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=build_dir)
         execute_command("cmake --build . --config Release", cwd=build_dir)
 
         print("MediaProcessor built successfully.")
@@ -306,7 +301,7 @@ def launch_web_application(system):
         else:
             python_path = str(venv_dir / "bin" / "python")
 
-        app_process = subprocess.Popen([python_path, "app.py"])
+        app_process = subprocess.Popen([python_path, "app.py"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         atexit.register(app_process.terminate)
 
         time.sleep(0.5)
@@ -336,7 +331,7 @@ def main():
     if args.install:
         install_python_dependencies(system)
 
-    if not check_MediaProcessor() or args.rebuild:
+    if args.rebuild or not check_MediaProcessor(system):
         build_cpp_dependencies(system)
 
     update_config(system)
