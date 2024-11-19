@@ -296,6 +296,9 @@ def update_config(system):
 
 def launch_web_application(system):
     try:
+        if not venv_dir.exists():
+            create_virtualenv()
+
         if system == "Windows":
             python_path = str(venv_dir / "Scripts" / "python.exe")
         else:
