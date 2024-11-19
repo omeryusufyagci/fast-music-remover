@@ -304,17 +304,29 @@ def launch_web_application(system):
         else:
             python_path = str(venv_dir / "bin" / "python")
 
-        app_process = subprocess.Popen([python_path, "app.py"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Start the backend and capture errors
+        app_process = subprocess.Popen(
+            [python_path, "app.py"],
+            stderr=subprocess.PIPE
+        )
         atexit.register(app_process.terminate)
 
+        # Give the process some time to initialize
         time.sleep(0.5)
+
+        # Check if the process is still running
+        if app_process.poll() is not None:
+            error_output = app_process.stderr.read().decode('utf-8')
+            print(f"Error starting the backend: {error_output}")
+            sys.exit(1)
+
         webbrowser.open("http://127.0.0.1:8080")
 
         print("Web application running. Press Enter to stop.")
         input()  # Block until the user presses Enter
 
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to start the web application: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
         sys.exit(1)
 
 
