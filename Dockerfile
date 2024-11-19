@@ -6,12 +6,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y build-essential cmake ffmpeg wget pkg-config \
                        libavcodec-dev libavformat-dev libavfilter-dev \
-                       libavdevice-dev libswscale-dev libsndfile-dev && \
+                       libavdevice-dev libswscale-dev libsndfile-dev git && \
     apt-get clean
-
-# pkg manager doesn't find this?
-RUN mkdir -p /usr/include/nlohmann && \
-    wget https://github.com/nlohmann/json/releases/download/v3.10.5/json.hpp -O /usr/include/nlohmann/json.hpp
 
 WORKDIR /app
 
@@ -21,15 +17,19 @@ COPY . /app
 # Compile the C++ project with a fresh CMakeCache (issues with cache not matching source)
 RUN mkdir -p MediaProcessor/build && \
     cd MediaProcessor/build && \
-    rm -rf CMakeCache.txt && \
+    rm -rf CMakeCache.txt CMakeFiles _deps && \
     cmake .. && \
     make
 
 # Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Set Flask environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=development
 
+# Expose the port for Flask
 EXPOSE 8080
+
+# Run Flask application
 CMD ["flask", "run", "--host=0.0.0.0", "--port=8080"]

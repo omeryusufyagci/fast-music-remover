@@ -36,9 +36,9 @@ class AudioProcessor {
     fs::path m_outputAudioPath;
     fs::path m_outputPath;
     fs::path m_chunksPath;
-    fs::path m_processedChunksDir;
-    std::vector<fs::path> m_chunkPathCol;
-    std::vector<fs::path> m_processedChunkCol;
+    fs::path m_processedChunksPath;
+    std::vector<fs::path> m_chunkColPath;
+    std::vector<fs::path> m_processedChunkColPath;
 
     int m_numChunks;
 

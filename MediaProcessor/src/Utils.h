@@ -2,6 +2,8 @@
 #define UTILS_H
 
 #include <filesystem>
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -11,11 +13,31 @@ namespace fs = std::filesystem;
 namespace MediaProcessor::Utils {
 
 /**
+ * @brief Macro to handle exceptions.
+ */
+#define TRY(expression)                                  \
+    try {                                                \
+        expression;                                      \
+    } catch (const std::exception &e) {                  \
+        std::cerr << "Error: " << e.what() << std::endl; \
+        return false;                                    \
+    }
+
+/**
  * @brief Executes a command in the system shell.
  *
  * @return true if the command executes successfully, false otherwise.
  */
 bool runCommand(const std::string &command);
+
+/**
+ * @brief Executes a shell command and optionally returns its output
+ *
+ * This is used when the output of the command is of interest, and not just a success state.
+ *
+ * @return std::optional<std::string> possibly containing the command output.
+ */
+std::optional<std::string> runCommand(const std::string &command, bool captureOutput);
 
 /**
  * @brief Ensures that a directory exists, making it if necessary.
@@ -44,6 +66,13 @@ bool containsWhitespace(const std::string &str);
  * @return A pair containing the output audio path and the output video path.
  */
 std::pair<fs::path, fs::path> prepareOutputPaths(const fs::path &videoPath);
+
+/**
+ * @brief Prepares the output path for audio processing only.
+ *
+ * @return A std::filesystem::path containing the output path for the processed audio.
+ */
+fs::path prepareAudioOutputPath(const fs::path &inputPath);
 
 /**
  * @brief Trims trailing whitespace from a string.
@@ -75,6 +104,7 @@ bool isWithinRange(T value, T lowerBound, T upperBound) {
  * @tparam T Enum type.
  * @param value The enum value.
  * @param valueMap Map of enum values to their string representations.
+ *
  * @return The string representation of the enum value.
  */
 template <typename T>

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 
 #include "CommandBuilder.h"
 #include "FFmpegSettingsManager.h"
@@ -36,6 +37,34 @@ bool runCommand(const std::string &command) {
     return true;
 }
 
+std::optional<std::string> runCommand(const std::string &command, bool captureOutput) {
+    if (!captureOutput) {
+        return runCommand(command) ? std::optional<std::string>{} : std::nullopt;
+    }
+
+    std::array<char, 128> buffer;
+    std::string result;
+    auto pipe = std::unique_ptr<FILE, decltype(&pclose)>(popen(command.c_str(), "r"), pclose);
+
+    if (!pipe) {
+        std::cerr << "Error: Failed to run command: " << command << std::endl;
+        return std::nullopt;
+    }
+
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+
+    int returnCode = pclose(pipe.release());
+    if (returnCode != 0) {
+        std::cerr << "Command failed with return code " << returnCode << ":" << std::endl;
+        std::cerr << result << std::endl;
+        return std::nullopt;
+    }
+
+    return result.empty() ? std::nullopt : std::make_optional(result);
+}
+
 std::pair<std::filesystem::path, std::filesystem::path> prepareOutputPaths(
     const std::filesystem::path &videoPath) {
     std::string baseFilename = videoPath.stem().string();
@@ -46,6 +75,10 @@ std::pair<std::filesystem::path, std::filesystem::path> prepareOutputPaths(
     std::filesystem::path processedVideoPath = outputDir / (baseFilename + "_processed_video.mp4");
 
     return {vocalsPath, processedVideoPath};
+}
+
+fs::path prepareAudioOutputPath(const fs::path &inputPath) {
+    return inputPath.parent_path() / (inputPath.stem().string() + "_processed.wav");
 }
 
 bool ensureDirectoryExists(const std::filesystem::path &path) {
