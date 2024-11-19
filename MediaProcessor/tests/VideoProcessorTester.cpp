@@ -36,18 +36,6 @@ class VideoProcessorTester : public ::testing::Test {
 
         testOutputDir = fs::current_path() / "test_output";
         fs::create_directories(testOutputDir);
-
-        nlohmann::json jsonObject = {
-            {"ffmpeg_path", "/usr/bin/ffmpeg"},
-            {"deep_filter_path", "MediaProcessor/res/deep-filter-0.5.6-x86_64-unknown-linux-musl"},
-            {"downloads_path", "downloads"},
-            {"uploads_path", "uploads"},
-            {"use_thread_cap", true},
-            {"max_threads_if_capped", 4}};
-        testConfigFile.generateConfigFile("testConfig.json", jsonObject);
-
-        ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
-            << "Failed to load test configuration file.";
     }
 
     void TearDown() override {
@@ -62,6 +50,10 @@ TEST_F(VideoProcessorTester, MergeMedia_MergesAudioAndVideoCorrectly) {
      * is already being checked within the audio tester.
      * Eventually we need check for sensible metrics here.
      */
+
+    ConfigManager &configManager = ConfigManager::getInstance();
+    ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
+        << "Unable to Load TestConfigFile";
 
     fs::path testOutputVideoPath = testOutputDir / "test_output_video.mp4";
     VideoProcessor videoProcessor(testVideoPath, testAudioPath, testOutputVideoPath);
