@@ -5,7 +5,7 @@ add_executable(MediaProcessor
     ${CMAKE_SOURCE_DIR}/src/ConfigManager.cpp
     ${CMAKE_SOURCE_DIR}/src/AudioProcessor.cpp
     ${CMAKE_SOURCE_DIR}/src/VideoProcessor.cpp
-    ${CMAKE_SOURCE_DIR}/src/MediaProcessor.cpp
+    ${CMAKE_SOURCE_DIR}/src/Processor.cpp
     ${CMAKE_SOURCE_DIR}/src/Utils.cpp
     ${CMAKE_SOURCE_DIR}/src/CommandBuilder.cpp
     ${CMAKE_SOURCE_DIR}/src/HardwareUtils.cpp
@@ -37,13 +37,21 @@ else()
 endif()
 
 
-target_link_libraries(MediaProcessor PRIVATE
+# Base libraries
+set(LIBRARIES
     Threads::Threads
-    ${SNDFILE_LIBRARIES}
     ${DF_LIBRARY}
     nlohmann_json::nlohmann_json
-
 )
+
+# macos-specific library fixes 
+if(APPLE)
+    list(APPEND LIBRARIES /opt/homebrew/lib/libsndfile.dylib)
+else()
+    list(APPEND LIBRARIES ${SNDFILE_LIBRARIES})
+endif()
+
+target_link_libraries(MediaProcessor PRIVATE ${LIBRARIES})
 
 # Copy the DLL to the output directory for Windows platform
 if(WIN32)

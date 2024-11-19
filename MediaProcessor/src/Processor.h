@@ -1,5 +1,5 @@
-#ifndef MEDIAPROCESSOR_H
-#define MEDIAPROCESSOR_H
+#ifndef PROCESSOR_H
+#define PROCESSOR_H
 
 #include <filesystem>
 
@@ -7,9 +7,9 @@ namespace MediaProcessor {
 
 enum class MediaType { Audio, Video, Unsupported };
 
-class MediaProcessor {
+class Processor {
    public:
-    explicit MediaProcessor(const std::filesystem::path& mediaPath);
+    explicit Processor(const std::filesystem::path& mediaPath);
 
     /**
      * @brief Processes a media file (audio or video) to isolate vocals.
@@ -50,4 +50,4 @@ class MediaProcessor {
 
 }  // namespace MediaProcessor
 
-#endif  // MEDIAPROCESSOR_H
+#endif  // PROCESSOR_H
