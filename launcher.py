@@ -261,7 +261,7 @@ def build_cpp_dependencies(system):
         build_dir = os.path.join("MediaProcessor", "build")
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
-        
+
         execute_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=build_dir)
         execute_command("cmake --build . --config Release", cwd=build_dir)
 
@@ -305,10 +305,7 @@ def launch_web_application(system):
             python_path = str(venv_dir / "bin" / "python")
 
         # Start the backend and capture errors
-        app_process = subprocess.Popen(
-            [python_path, "app.py"],
-            stderr=subprocess.PIPE
-        )
+        app_process = subprocess.Popen([python_path, "app.py"], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         atexit.register(app_process.terminate)
 
         # Give the process some time to initialize
@@ -316,7 +313,7 @@ def launch_web_application(system):
 
         # Check if the process is still running
         if app_process.poll() is not None:
-            error_output = app_process.stderr.read().decode('utf-8')
+            error_output = app_process.stderr.read().decode("utf-8")
             print(f"Error starting the backend: {error_output}")
             sys.exit(1)
 
