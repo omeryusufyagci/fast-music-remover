@@ -108,8 +108,8 @@ function submitForm() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.status === "completed") {
-            document.getElementById("videoPlayer").src = data.video_url;
+        if (data.status === "success") {
+            document.getElementById("videoPlayer").src = data.payload.video_url;
             document.getElementById("videoPlayer").style.display = "block";
             status.textContent = "";
 

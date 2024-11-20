@@ -20,7 +20,7 @@ VideoProcessor::VideoProcessor(const fs::path& videoPath, const fs::path& audioP
 bool VideoProcessor::mergeMedia() {
     Utils::removeFileIfExists(m_outputPath);  // to avoid interactive ffmpeg prompt
 
-    std::cout << "Merging video and audio..." << std::endl;
+    std::cerr << "Merging video and audio..." << std::endl;
 
     // Prepare FFmpeg command
     CommandBuilder cmd;
@@ -38,7 +38,7 @@ bool VideoProcessor::mergeMedia() {
 
     std::string ffmpegCommand = cmd.build();
 
-    std::cout << "Running FFmpeg command: " << ffmpegCommand << std::endl;
+    std::cerr << "Running FFmpeg command: " << ffmpegCommand << std::endl;
     bool success = Utils::runCommand(ffmpegCommand);
 
     if (!success) {
@@ -46,7 +46,7 @@ bool VideoProcessor::mergeMedia() {
         return false;
     }
 
-    std::cout << "Merging completed successfully." << std::endl;
+    std::cerr << "Merging completed successfully." << std::endl;
 
     return true;
 }
