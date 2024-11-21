@@ -74,7 +74,7 @@ FFmpegCommandBuilder& FFmpegCommandBuilder::addVideoCodec() {
 }
 
 FFmpegCommandBuilder& FFmpegCommandBuilder::addChunkPath() {
-    addArgument(m_ffmpegConfig.getChunksPath());
+    addArgument(m_ffmpegConfig.getOutputFilePath());
 
     return *this;
 }

@@ -76,14 +76,6 @@ void FFmpegConfigManager::setAudioChannels(int channels) {
     m_audioSettings.numChannels = channels;
 }
 
-void FFmpegConfigManager::setAudioStartTime(double startTime) {
-    m_audioSettings.audioStartTime = startTime;
-}
-
-void FFmpegConfigManager::setAudioDuration(double duration) {
-    m_audioSettings.audioDuration = duration;
-}
-
 void FFmpegConfigManager::setOverlapDuration(double overlapDuration) {
     m_audioSettings.overlapDuration = overlapDuration;
 }
@@ -107,14 +99,6 @@ int FFmpegConfigManager::getAudioSampleRate() const {
 
 int FFmpegConfigManager::getAudioChannels() const {
     return m_audioSettings.numChannels;
-}
-
-double FFmpegConfigManager::getAudioStartTime() const {
-    return m_audioSettings.audioStartTime;
-}
-
-double FFmpegConfigManager::getAudioDuration() const {
-    return m_audioSettings.audioDuration;
 }
 
 double FFmpegConfigManager::getOverlapDuration() const {

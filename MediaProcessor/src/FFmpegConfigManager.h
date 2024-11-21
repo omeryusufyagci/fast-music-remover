@@ -13,8 +13,8 @@ namespace fs = std::filesystem;
 namespace MediaProcessor {
 constexpr double DEFAULT_OVERLAP_DURATION = 0.5;
 
-enum class AudioCodec { AAC, MP3, FLAC, OPUS, UNKNOWN };
-enum class VideoCodec { H264, H265, VP8, VP9, UNKNOWN };
+enum class AudioCodec { AAC, MP3, FLAC, OPUS, COPY, UNKNOWN };
+enum class VideoCodec { H264, H265, VP8, VP9, COPY, UNKNOWN };
 enum class CodecStrictness { VERY, STRICT, NORMAL, UNOFFICIAL, EXPERIMENTAL };
 
 /**
@@ -36,11 +36,9 @@ class FFmpegConfigManager {
         AudioCodec codec = AudioCodec::AAC;
         fs::path chunksPath;
         std::vector<fs::path> processedChunkCol;
-        int chunkIndex = 0;
+        int numChunks;
         int sampleRate = 48000;
         int numChannels = 2;
-        double audioStartTime = 0;
-        double audioDuration = 0;
         double overlapDuration = DEFAULT_OVERLAP_DURATION;
     } m_audioSettings;
 
@@ -68,8 +66,6 @@ class FFmpegConfigManager {
     void setNumChunks(int numChunks);
     void setAudioSampleRate(int sampleRate);
     void setAudioChannels(int channels);
-    void setAudioStartTime(double startTime);
-    void setAudioDuration(double duration);
     void setOverlapDuration(double overlapDuration);
 
     // Audio Getters
@@ -78,8 +74,6 @@ class FFmpegConfigManager {
     int getNumChunks() const;
     int getAudioSampleRate() const;
     int getAudioChannels() const;
-    double getAudioStartTime() const;
-    double getAudioDuration() const;
     double getOverlapDuration() const;
 
     // Video Setters
