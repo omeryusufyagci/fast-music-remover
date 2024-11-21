@@ -23,14 +23,34 @@ bool FFmpegController::extractAudio() {
     return Utils::runCommand(m_ffmpegCmdBuilder.build());
 }
 
-bool FFmpegController::generateChunkFile() {
-    fs::path chunkPath = m_ffmpegConfig.getChunksPath() /
-                         ("chunk_" + std::to_string(m_ffmpegConfig.getChunkIndex()) + ".wav");
+std::vector<fs::path> FFmpegController::splitMedia() {
+    Utils::ensureDirectoryExists(m_ffmpegConfig.getOutputFilePath());
+    int numChunks = m_ffmpegConfig.getNumChunks();
+
+    std::vector<double> chunkStartTimes;
+    std::vector<double> chunkDurations;
+    std::vector<fs::path> chunkPathCol;
+    populateChunkDurations(chunkStartTimes, chunkDurations, numChunks);
+
+    for (int i = 0; i < numChunks; ++i) {
+        if (!generateChunkFile(i, chunkStartTimes[i], chunkDurations[i], chunkPathCol)) {
+            throw std::runtime_error("Failed to split audio into chunks.");
+        }
+    }
+
+    return chunkPathCol;
+}
+
+bool FFmpegController::generateChunkFile(const int chunkIndex, const double startTime,
+                                         const double duration,
+                                         std::vector<fs::path>& chunkPathCol) {
+    fs::path chunkPath =
+        m_ffmpegConfig.getOutputFilePath() / ("chunk_" + std::to_string(chunkIndex) + ".wav");
 
     // Set higher precision for chunk boundaries
     std::ostringstream ssStartTime, ssDuration;
-    ssStartTime << std::fixed << std::setprecision(6) << m_ffmpegConfig.getAudioStartTime();
-    ssDuration << std::fixed << std::setprecision(6) << m_ffmpegConfig.getAudioDuration();
+    ssStartTime << std::fixed << std::setprecision(6) << startTime;
+    ssDuration << std::fixed << std::setprecision(6) << duration;
 
     if (m_ffmpegConfig.getOverwrite()) {
         m_ffmpegCmdBuilder.addOverwrite();
@@ -42,6 +62,8 @@ bool FFmpegController::generateChunkFile() {
         .addAudioChannels()
         .addAudioCodec()
         .addChunkPath();
+
+    chunkPathCol.push_back(chunkPath);
 
     return Utils::runCommand(m_ffmpegCmdBuilder.build());
 }
@@ -80,6 +102,26 @@ bool FFmpegController::mergeMedia(const fs::path& videoPath, const fs::path& aud
         .addOutputFile();
 
     return Utils::runCommand(m_ffmpegCmdBuilder.build());
+}
+
+void FFmpegController::populateChunkDurations(std::vector<double>& startTimes,
+                                              std::vector<double>& durations, int numChunks) {
+    double totalDuration = Utils::getMediaDuration(m_ffmpegConfig.getInputFilePath());
+    double overlapDuration = m_ffmpegConfig.getOverlapDuration();
+    double chunkDuration = totalDuration / numChunks;
+
+    for (int i = 0; i < numChunks; ++i) {
+        double startTime = i * chunkDuration;
+        double duration = chunkDuration + overlapDuration;
+
+        // Handle duration for the last chunk
+        if (startTime + duration > totalDuration) {
+            duration = totalDuration - startTime;
+        }
+
+        startTimes.push_back(startTime);
+        durations.push_back(duration);
+    }
 }
 
 }  // namespace MediaProcessor

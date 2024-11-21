@@ -31,13 +31,13 @@ class FFmpegController {
     bool extractAudio();
 
     /**
-     * @brief Generates the chunk file with FFmpeg
+     * @brief Splits the audio into chunk files
      *
-     * @return True if successful, otherwise false
+     * @return A vector of the chunk file paths
      */
-    bool generateChunkFile();
+    std::vector<fs::path> splitMedia();
 
-        /**
+    /**
      * @brief Merges media chunks with FFmpeg
      *
      * @return True if successful, otherwise false
@@ -54,6 +54,11 @@ class FFmpegController {
    private:
     const FFmpegConfigManager& m_ffmpegConfig;
     FFmpegCommandBuilder m_ffmpegCmdBuilder;
+
+    void populateChunkDurations(std::vector<double>& startTimes, std::vector<double>& durations,
+                                int numChunks);
+    bool generateChunkFile(const int chunkIndex, const double startTime, const double duration,
+                           std::vector<fs::path>& chunkPathCol);
 };
 
 }  // namespace MediaProcessor
