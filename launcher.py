@@ -13,6 +13,13 @@ CONFIG_FILE = os.path.join("config.json")
 venv_name = "virtual_env"  # For downloading python packages
 venv_dir = Path.cwd() / venv_name  # Create the path for the virtual environment
 
+class DebugLevel:
+    """Enum for debug levels"""
+    NONE = 0
+    APP = 1
+    ALL = 2
+
+debug = DebugLevel.NONE
 
 def execute_command(command, cwd=None):
     """
@@ -24,7 +31,13 @@ def execute_command(command, cwd=None):
     Raises:
         subprocess.CalledProcessError: If any command fails.
     """
-    subprocess.check_call(command.split(), cwd=cwd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if debug == DebugLevel.ALL:
+        print(f"Executing command: {command}")
+    subprocess.check_call(
+        command.split(), cwd=cwd, 
+        stdout=None if debug == DebugLevel.ALL else subprocess.DEVNULL, 
+        stderr=None if debug == DebugLevel.ALL else subprocess.DEVNULL
+    )
 
 
 class Dependency:
@@ -304,8 +317,12 @@ def launch_web_application(system):
         else:
             python_path = str(venv_dir / "bin" / "python")
 
-        # Start the backend and capture errors
-        app_process = subprocess.Popen([python_path, "app.py"], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        # Start the backend
+        app_process = subprocess.Popen(
+            [python_path, "app.py"],
+            stdout= None if debug >= DebugLevel.APP else subprocess.DEVNULL,
+            stderr=subprocess.PIPE
+        )
         atexit.register(app_process.terminate)
 
         # Give the process some time to initialize
@@ -332,10 +349,17 @@ def main():
     parser.add_argument("--mode", choices=["web"], help="Specify mode to launch")
     parser.add_argument("--install", action="store_true", help="Install dependencies if not found")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild MediaProcessor")
+    parser.add_argument("--debug", choices=["all", "app"], help= "Set the debug output level.")
     args = parser.parse_args()
 
     system = platform.system()
     print("Starting setup...")
+
+    global debug
+    if args.debug == "all":
+        debug = DebugLevel.ALL
+    elif args.debug == "app":
+        debug = DebugLevel.APP
 
     for dependency in dependencies:
         dependency.check_dependency(system, args.install)
