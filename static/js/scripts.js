@@ -109,8 +109,16 @@ function submitForm() {
     .then(response => response.json())
     .then(data => {
         if (data.status === "completed") {
-            document.getElementById("videoPlayer").src = data.video_url;
-            document.getElementById("videoPlayer").style.display = "block";
+            const fileType = data.file_type
+            const mediaUrl = data.media_url;
+
+            const activePlayer = fileType === "audio" ? document.getElementById("audioPlayer") : document.getElementById("videoPlayer");
+            const inactivePlayer = fileType === "audio" ? document.getElementById("videoPlayer") : document.getElementById("audioPlayer");
+
+            activePlayer.src = mediaUrl;
+            activePlayer.style.display = "block";
+            inactivePlayer.style.display = "none";
+
             status.textContent = "";
 
             processButton.style.backgroundColor = "#28a745"; // Green
@@ -118,13 +126,14 @@ function submitForm() {
 
             setTimeout(() => {
                 processButton.style.backgroundColor = "#6c5ce7"; // Purple
-                processButton.textContent = "Process Video";
+                processButton.textContent = "Process Media";
             }, 3000);
         } else {
             status.textContent = data.message || "An error occurred!";
         }
     })
-    .catch(() => {
+    .catch((error) => {
+        console.error("Error while connecting to the server:", error);
         status.textContent = "An error occurred while connecting to the server.";
     });
 }
