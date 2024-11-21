@@ -113,6 +113,39 @@ class MediaHandler:
             return None
 
     @staticmethod
+    def detect_media_type(file_path):
+        """
+        Uses ffprobe to detect whether the media is audio or video.
+
+        # TODO:
+        # This functionality already exists in the core, and we should expose it in the future.
+        # This is to be revised when that happens.
+        """
+        try:
+            command = [
+                "ffprobe",
+                "-loglevel",
+                "error",
+                "-show_entries",
+                "stream=codec_type",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                file_path,
+            ]
+            result = subprocess.run(command, capture_output=True, text=True, check=True)
+            output = result.stdout.strip()
+
+            if "video" in output:
+                return "video"
+            elif "audio" in output:
+                return "audio"
+            else:
+                return None
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Error detecting media type: {e.stderr}")
+            return None
+
+    @staticmethod
     def process_with_media_processor(media_path):
         """Process the given file with the MediaProcessor (C++ binary)."""
         try:
@@ -189,10 +222,15 @@ def index():
         if not processed_video_path:
             return jsonify({"status": "error", "message": "Failed to process video."})
 
+        media_type = MediaHandler.detect_media_type(processed_video_path)
+        if not media_type:
+            return jsonify({"status": "error", "message": "Unsupported or unknown media type."})
+
         return jsonify(
             {
                 "status": "completed",
-                "video_url": url_for("serve_video", filename=os.path.basename(processed_video_path)),
+                "media_url": url_for("serve_video", filename=os.path.basename(processed_video_path)),
+                "file_type": media_type,
             }
         )
 
