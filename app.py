@@ -113,34 +113,41 @@ class MediaHandler:
             return None
 
     @staticmethod
-    def process_with_media_processor(video_path):
-        """Run the C++ MediaProcessor binary with the video path"""
+    def process_with_media_processor(media_path):
+        """Process the given file with the MediaProcessor (C++ binary)."""
         try:
-            logging.info(f"Processing video at path: {video_path}")
+            logging.info(f"Processing media file with path: {media_path}")
 
             result = subprocess.run(
-                ["./MediaProcessor/build/MediaProcessor", str(video_path)], capture_output=True, text=True
+                ["./MediaProcessor/build/MediaProcessor", str(media_path)], capture_output=True, text=True
             )
 
+            # Propagate MediaProcessor outputs
+            logging.debug(f"MediaProcessor stdout: {result.stdout}")
+            logging.error(f"MediaProcessor stderr: {result.stderr}")
+
             if result.returncode != 0:
-                logging.error(f"Error processing video: {result.stderr}")
+                logging.error("MediaProcessor returned a non-zero exit code.")
                 return None
 
-            # Parse the output to get the processed video path
+            # Parse output
             for line in result.stdout.splitlines():
-                if "Video processed successfully" in line:
-                    processed_video_path = line.split(": ", 1)[1].strip()
+                if "Video processed successfully" in line or "Audio processed successfully" in line:
+                    processed_media_path = line.split(": ", 1)[1].strip()
 
                     # Remove any surrounding quotes
-                    if processed_video_path.startswith('"') and processed_video_path.endswith('"'):
-                        processed_video_path = processed_video_path[1:-1]
-                    processed_video_path = os.path.abspath(processed_video_path)
-                    logging.info(f"Processed video path returned: {processed_video_path}")
-                    return processed_video_path
+                    if processed_media_path.startswith('"') and processed_media_path.endswith('"'):
+                        processed_media_path = processed_media_path[1:-1]
 
+                    processed_media_path = os.path.abspath(processed_media_path)
+                    logging.info(f"Processed media path returned: {processed_media_path}")
+                    return processed_media_path
+
+            logging.error("No processed file path found in MediaProcessor output.")
             return None
+
         except Exception as e:
-            logging.error(f"Error running C++ binary: {e}")
+            logging.error(f"Error running MediaProcessor binary: {e}")
             return None
 
 
