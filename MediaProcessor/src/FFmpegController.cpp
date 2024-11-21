@@ -48,8 +48,8 @@ bool FFmpegController::generateChunkFile(const int chunkIndex, const double star
 
     // Set higher precision for chunk boundaries
     std::ostringstream ssStartTime, ssDuration;
-    ssStartTime << std::fixed << std::setprecision(6) << m_ffmpegConfig.getAudioStartTime();
-    ssDuration << std::fixed << std::setprecision(6) << m_ffmpegConfig.getAudioDuration();
+    ssStartTime << std::fixed << std::setprecision(6) << startTime;
+    ssDuration << std::fixed << std::setprecision(6) << duration;
 
     if (m_ffmpegConfig.getOverwrite()) {
         m_ffmpegCmdBuilder.addOverwrite();
@@ -61,6 +61,8 @@ bool FFmpegController::generateChunkFile(const int chunkIndex, const double star
         .addAudioChannels()
         .addAudioCodec()
         .addChunkPath();
+
+    chunkPathCol.push_back(chunkPath);
 
     return Utils::runCommand(m_ffmpegCmdBuilder.build());
 }
@@ -101,13 +103,10 @@ bool FFmpegController::mergeMedia(const fs::path& videoPath, const fs::path& aud
     return Utils::runCommand(m_ffmpegCmdBuilder.build());
 }
 
-<<<<<<< HEAD
-=======
 void FFmpegController::populateChunkDurations(std::vector<double>& startTimes,
                                               std::vector<double>& durations, int numChunks,
                                               double overlapDuration) {
     double totalDuration = Utils::getMediaDuration(m_ffmpegConfig.getInputFilePath());
-    // double overlapDuration = m_ffmpegConfig.getOverlapDuration();
     double chunkDuration = totalDuration / numChunks;
 
     for (int i = 0; i < numChunks; ++i) {
@@ -124,5 +123,4 @@ void FFmpegController::populateChunkDurations(std::vector<double>& startTimes,
     }
 }
 
->>>>>>> 98a5aaa (squash into controller)
 }  // namespace MediaProcessor

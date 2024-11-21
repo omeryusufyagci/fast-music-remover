@@ -31,9 +31,9 @@ class FFmpegController {
     bool extractAudio();
 
     /**
-     * @brief Generates the chunk file with FFmpeg
+     * @brief Splits the audio into chunk files
      *
-     * @return True if successful, otherwise false
+     * @return A vector of the chunk file paths
      */
     std::vector<fs::path> splitMedia(int numChunks, double overlapDuration);
 
