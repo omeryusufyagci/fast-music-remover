@@ -11,36 +11,41 @@ from pathlib import Path
 
 CONFIG_FILE = os.path.join("config.json")
 venv_name = "virtual_env"  # For downloading python packages
-venv_dir = Path.cwd() / venv_name  # Create the path for the virtual environment
+venv_dir = Path.cwd() / venv_name  # Generate the path for the virtual environment
+
 
 class DebugLevel:
     """Enum for debug levels"""
+
     NONE = 0
     APP = 1
     ALL = 2
 
-debug = DebugLevel.NONE
 
-def execute_command(command, cwd=None):
+current_debug_level = DebugLevel.NONE
+
+
+def run_command(command, cwd=None):
     """
     Executes a shell command.
 
     Args:
-        commands (str): The command to execute.
+        commands (str): The command to run.
 
     Raises:
         subprocess.CalledProcessError: If any command fails.
     """
-    if debug == DebugLevel.ALL:
+    if current_debug_level == DebugLevel.ALL:
         print(f"Executing command: {command}")
     subprocess.check_call(
-        command.split(), cwd=cwd, 
-        stdout=None if debug == DebugLevel.ALL else subprocess.DEVNULL, 
-        stderr=None if debug == DebugLevel.ALL else subprocess.DEVNULL
+        command.split(),
+        cwd=cwd,
+        stdout=None if current_debug_level == DebugLevel.ALL else subprocess.DEVNULL,
+        stderr=None if current_debug_level == DebugLevel.ALL else subprocess.DEVNULL,
     )
 
 
-class Dependency:
+class DependencyHandler:
     """
     Represents a dependency with methods for checking and installing it.
 
@@ -68,7 +73,7 @@ class Dependency:
         self.check_cmd = check_cmd
         self.install_cmd = install_cmd
 
-    def check_dependency(self, system, install):
+    def check_dependency(self, system, install: bool):
         """
         Checks if the dependency is installed. If not, installs it if `install` is True.
 
@@ -86,7 +91,7 @@ class Dependency:
         try:
             for cmd in check_cmd:
                 if type(cmd) == str:
-                    execute_command(cmd)
+                    run_command(cmd)
                 else:
                     cmd()
 
@@ -138,7 +143,7 @@ class Dependency:
         try:
             for cmd in install_cmd:
                 if type(cmd) == str:
-                    execute_command(cmd)
+                    run_command(cmd)
                 else:
                     cmd()
 
@@ -150,21 +155,21 @@ class Dependency:
 
 # pkg-config should come before sndfie and nlohmann-json
 dependencies = [
-    Dependency("cmake", {"Windows": "mingw-w64-x86_64-cmake"}, {"all": ["cmake --version"]}),
-    Dependency(
+    DependencyHandler("cmake", {"Windows": "mingw-w64-x86_64-cmake"}, {"all": ["cmake --version"]}),
+    DependencyHandler(
         "g++",
         {"Windows": "mingw-w64-x86_64-gcc", "Darwin": "gcc"},
         {"all": ["g++ --version"]},
         {"Windows": ["pacman -S --needed --noconfirm base-devel mingw-w64-x86_64-toolchain"]},
     ),
-    Dependency("pkg-config"),
-    Dependency("ffmpeg", {"Windows": "mingw-w64-x86_64-ffmpeg"}, {"all": ["ffmpeg -version"]}),
-    Dependency(
+    DependencyHandler("pkg-config"),
+    DependencyHandler("ffmpeg", {"Windows": "mingw-w64-x86_64-ffmpeg"}, {"all": ["ffmpeg -version"]}),
+    DependencyHandler(
         "libsndfile",
         {"Windows": "mingw-w64-x86_64-libsndfile", "Linux": "libsndfile1-dev"},
         {"all": ["pkg-config --exists sndfile"]},
     ),
-    Dependency(
+    DependencyHandler(
         "nlohmann-json",
         {"Windows": "mingw-w64-x86_64-nlohmann-json"},
         {"all": ["pkg-config --exists nlohmann_json"]},
@@ -174,7 +179,7 @@ dependencies = [
 
 def check_msys2_installed():
     try:
-        execute_command("pacman --version")
+        run_command("pacman --version")
         return True
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
@@ -191,13 +196,13 @@ def install_msys2():
         msys2_root_path = "C:\\msys64"
 
         print("Downloading MSYS2 installer...")
-        execute_command(f"curl -L -o {installer_name} {installer_url}")
+        run_command(f"curl -L -o {installer_name} {installer_url}")
 
         print("Running MSYS2 installer...")
-        execute_command(f"{installer_name} -y -oC:\\")
+        run_command(f"{installer_name} -y -oC:\\")
 
         print("Updating MSYS2 packages...")
-        execute_command(f"{msys2_root_path}\\usr\\bin\\bash.exe -lc 'pacman -Syu --noconfirm'")
+        run_command(f"{msys2_root_path}\\usr\\bin\\bash.exe -lc 'pacman -Syu --noconfirm'")
 
         print("Editing Environment Variables...")
         # Set it permanently for the current user
@@ -238,7 +243,7 @@ def check_MediaProcessor(system):
 
 def create_virtualenv():
     print(f"Creating virtual environment at: {venv_dir}")
-    execute_command(f"{sys.executable} -m venv {str(venv_dir)} --system-site-packages")
+    run_command(f"{sys.executable} -m venv {str(venv_dir)} --system-site-packages")
     print("Virtual environment created successfully.")
 
 
@@ -261,7 +266,7 @@ def install_python_dependencies(system):
             if not pip_path.exists():
                 raise FileNotFoundError("pip not found in the bin folder.")
 
-        execute_command(f"{str(pip_path)} install -r requirements.txt")
+        run_command(f"{str(pip_path)} install -r requirements.txt")
         print("Python dependencies installed.")
     except subprocess.CalledProcessError as e:
         print(f"Failed to install Python dependencies: {e}")
@@ -275,8 +280,8 @@ def build_cpp_dependencies(system):
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
 
-        execute_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=build_dir)
-        execute_command("cmake --build . --config Release", cwd=build_dir)
+        run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=build_dir)
+        run_command("cmake --build . --config Release", cwd=build_dir)
 
         print("MediaProcessor built successfully.")
     except subprocess.CalledProcessError as e:
@@ -320,8 +325,8 @@ def launch_web_application(system):
         # Start the backend
         app_process = subprocess.Popen(
             [python_path, "app.py"],
-            stdout= None if debug >= DebugLevel.APP else subprocess.DEVNULL,
-            stderr=subprocess.PIPE
+            stdout=None if current_debug_level >= DebugLevel.APP else subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
         )
         atexit.register(app_process.terminate)
 
@@ -349,17 +354,17 @@ def main():
     parser.add_argument("--mode", choices=["web"], help="Specify mode to launch")
     parser.add_argument("--install", action="store_true", help="Install dependencies if not found")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild MediaProcessor")
-    parser.add_argument("--debug", choices=["all", "app"], help= "Set the debug output level.")
+    parser.add_argument("--debug", choices=["all", "app"], help="Set the debug output level.")
     args = parser.parse_args()
 
     system = platform.system()
     print("Starting setup...")
 
-    global debug
+    global current_debug_level
     if args.debug == "all":
-        debug = DebugLevel.ALL
+        current_debug_level = DebugLevel.ALL
     elif args.debug == "app":
-        debug = DebugLevel.APP
+        current_debug_level = DebugLevel.APP
 
     for dependency in dependencies:
         dependency.check_dependency(system, args.install)
