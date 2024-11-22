@@ -9,17 +9,23 @@ on:
       - main
 
 jobs:
-  test:
+  test-linux:
+    name: Linux Test
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install Dependencies
+      - name: Install Dependencies on Linux
         run: |
           sudo apt update
           sudo apt install -y ffmpeg cmake nlohmann-json3-dev libsndfile1-dev g++
+
+      - name: Update Config Paths for Linux
+        run: |
+          sed -i 's|"deep_filter_path": ".*"|"deep_filter_path": "MediaProcessor/lib/libdf.so"|' config.json
+          sed -i 's|"ffmpeg_path": ".*"|"ffmpeg_path": "/usr/bin/ffmpeg"|' config.json
 
       - name: Build with Tests Enabled
         run: |
@@ -33,7 +39,69 @@ jobs:
           cd build
           ctest --output-on-failure
 
+  test-windows:
+    name: Windows Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies on Windows
+        run: |
+          choco install ffmpeg cmake -y
+          curl -L -o nlohmann-json.zip https://github.com/nlohmann/json/releases/download/v3.10.5/json.hpp.zip
+          tar -xf nlohmann-json.zip
+
+      - name: Update Config Paths for Windows
+        run: |
+          sed -i 's|"deep_filter_path": ".*"|"deep_filter_path": "MediaProcessor/lib/df.dll"|' config.json
+          sed -i 's|"ffmpeg_path": ".*"|"ffmpeg_path": "ffmpeg"|' config.json
+
+      - name: Build with Tests Enabled
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release ../MediaProcessor
+          cmake --build . --config Release
+
+      - name: Run Tests
+        run: |
+          cd build
+          ctest --output-on-failure
+
+  test-macos:
+    name: macOS ARM Test
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies on macOS ARM
+        run: |
+          brew update
+          brew install ffmpeg cmake nlohmann-json libsndfile
+
+      - name: Update Config Paths for macOS ARM
+        run: |
+          sed -i '' 's|"deep_filter_path": ".*"|"deep_filter_path": "MediaProcessor/lib/libdf.dylib"|' config.json
+          sed -i '' 's|"ffmpeg_path": ".*"|"ffmpeg_path": "/usr/local/bin/ffmpeg"|' config.json
+
+      - name: Build with Tests Enabled
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release ../MediaProcessor
+          cmake --build . --config Release
+
+      - name: Run Tests
+        run: |
+          cd build
+          ctest --output-on-failure
+
   format:
+    name: Format Check
     runs-on: ubuntu-latest
 
     steps:

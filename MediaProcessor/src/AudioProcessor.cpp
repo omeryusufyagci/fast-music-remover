@@ -224,8 +224,8 @@ bool AudioProcessor::filterChunks() {
         results.emplace_back(pool.enqueue([&, i]() {
             fs::path chunkPath = m_chunkColPath[i];
 
-            invokeDeepFilter(chunkPath);
-            // invokeDeepFilterFFI(chunkPath);  // RT API still under validation
+            // invokeDeepFilter(chunkPath);
+            invokeDeepFilterFFI(chunkPath);
         }));
     }
 
