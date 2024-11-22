@@ -30,7 +30,7 @@ def run_command(command, cwd=None):
     Executes a shell command.
 
     Args:
-        commands (str): The command to run.
+        command (str): The command to run.
 
     Raises:
         subprocess.CalledProcessError: If any command fails.
@@ -67,29 +67,48 @@ class DependencyHandler:
             for windows: msys2
     """
 
-    def __init__(self, name, package_name={}, check_cmd={}, install_cmd={}) -> None:
+    def __init__(self, name, package_name=None, check_cmd=None, install_cmd=None):
         self.name = name
-        self.package_name = package_name
-        self.check_cmd = check_cmd
-        self.install_cmd = install_cmd
+        self.package_name = package_name or {}
+        self.check_cmd = check_cmd or {}
+        self.install_cmd = install_cmd or {}
+        self._installers = {
+            "Linux": self._get_install_commands_linux,
+            "Darwin": self._get_install_commands_darwin,
+            "Windows": self._get_install_commands_windows,
+        }
+        # Mapping of Linux distributions to package managers
+        self._linux_distro_map = {
+            "ubuntu": "sudo apt-get install -y",
+            "debian": "sudo apt-get install -y",
+            "kali": "sudo apt-get install -y ",
+            "pop": "sudo apt-get install -y ",
+            "elementary": "sudo apt-get install -y ",
+            "mint": "sudo apt-get install -y",
+            "fedora": "sudo dnf install -y",
+            "rhel": "sudo dnf install -y",
+            "centos": "sudo dnf install -y",
+            "rocky": "sudo dnf install -y",
+            "alma": "sudo dnf install -y",
+            "arch": "sudo pacman -S --needed --noconfirm",
+            "manjaro": "sudo pacman -S --needed --noconfirm",
+            "endeavouros": "sudo pacman -S --needed --noconfirm",
+            "garuda": "sudo pacman -S --noconfirm",
+            "opensuse": "sudo zypper install -y",
+            "suse": "sudo zypper install -y",
+            "alpine": "sudo apk add",
+            "solus": "sudo eopkg install -y",
+            "void": "sudo xbps-install -y",
+            "clearlinux": "sudo swupd bundle-add",
+        }
 
-    def check_dependency(self, system, install: bool):
+    def check_dependency(self, system, install=False):
         """
         Checks if the dependency is installed. If not, installs it if `install` is True.
-
-        Args:
-            system (str): The operating system type.
-            install (bool): Whether to install the dependency if not found.
         """
-        if system in self.check_cmd:
-            check_cmd = self.check_cmd[system]
-        elif "all" in self.check_cmd:
-            check_cmd = self.check_cmd["all"]
-        else:
-            check_cmd = [self.package_name.get(system, self.name) + " --version"]
-
+        commands = self._get_check_commands(system)
         try:
-            for cmd in check_cmd:
+            for cmd in commands:
                 if type(cmd) == str:
                     run_command(cmd)
                 else:
@@ -110,47 +129,52 @@ class DependencyHandler:
         Args:
             system (str): The operating system type.
         """
-        if system in self.install_cmd:
-            install_cmd = self.install_cmd[system]
-        elif "all" in self.install_cmd:
-            install_cmd = self.install_cmd["all"]
-        else:
-            if system == "Linux":
-                import distro
-
-                linux_distro = distro.id().lower()
-                if linux_distro in ["ubuntu", "debian", "kali"]:
-                    install_cmd = [
-                        "sudo apt-get update",
-                        f"sudo apt-get install -y {self.package_name.get(system, self.name)}",
-                    ]
-                elif linux_distro in ["fedora", "centos", "rhel"]:
-                    install_cmd = [f"sudo dnf install -y {self.package_name.get(system, self.name)}"]
-                else:
-                    print(f"Unsupported Linux distribution. Please install {self.name} manually.")
-                    sys.exit(1)
-            elif system == "Darwin":
-                install_cmd = [f"brew install {self.package_name.get(system, self.name)}"]
-            elif system == "Windows":
-                if not check_msys2_installed():
-                    install_msys2()
-                install_cmd = [f"pacman -S --needed --noconfirm {self.package_name.get(system, self.name)}"]
-            else:
-                print(f"Unsupported operating system: {system}. Please install {self.name} manually.")
-                sys.exit(1)
-
-        print(f"Installing {self.name}...")
         try:
-            for cmd in install_cmd:
+            commands = self._get_install_commands(system)
+            for cmd in commands:
                 if type(cmd) == str:
                     run_command(cmd)
                 else:
                     cmd()
-
-            print(f"{self.name} installed successfully.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error installing {self.name}: {e}")
+        except Exception as e:
+            print(f"Error: {e}.\n\nInstall {self.name} manually.")
             sys.exit(1)
+
+    def _get_check_commands(self, system):
+        if system in self.check_cmd:
+            return self.check_cmd[system]
+        if "all" in self.check_cmd:
+            return self.check_cmd["all"]
+        return [f"{self.package_name.get(system, self.name)} --version"]
+
+    def _get_install_commands(self, system):
+        if system in self.install_cmd:
+            return self.install_cmd[system]
+        if "all" in self.install_cmd:
+            return self.install_cmd["all"]
+        if system not in self._installers:
+            print(f"Unspported sytem {system}. Please Install {self.name} manually.")
+            sys.exit(1)
+
+        return self._installers[system]()
+
+    def _get_install_commands_linux(self):
+        import distro
+
+        distro = distro.id().lower()
+        if distro not in self._linux_distro_map:
+            print(f"Unsupported linux distro {distro}. Please Install {self.name} manually.")
+            sys.exit(1)
+
+        return [f"{self._linux_distro_map[distro]} {{self.package_name.get(system, self.name)}}"]
+
+    def _get_install_commands_darwin(self):
+        return [f"brew install {{self.package_name.get(system, self.name)}}"]
+
+    def _get_install_commands_windows(self):
+        if not check_msys2_installed():
+            install_msys2()
+        return [f"pacman -S --needed --noconfirm {{self.package_name.get(system, self.name)}}"]
 
 
 # pkg-config should come before sndfie and nlohmann-json
@@ -171,7 +195,7 @@ dependencies = [
     ),
     DependencyHandler(
         "nlohmann-json",
-        {"Windows": "mingw-w64-x86_64-nlohmann-json"},
+        {"Windows": "mingw-w64-x86_64-nlohmann-json", "Linux": "nlohmann-json3-dev"},
         {"all": ["pkg-config --exists nlohmann_json"]},
     ),
 ]
@@ -273,7 +297,7 @@ def install_python_dependencies(system):
         sys.exit(1)
 
 
-def build_cpp_dependencies(system):
+def build_cpp_dependencies():
     try:
         print("Building MediaProcessor...")
         build_dir = os.path.join("MediaProcessor", "build")
@@ -373,7 +397,7 @@ def main():
         install_python_dependencies(system)
 
     if args.rebuild or not check_MediaProcessor(system):
-        build_cpp_dependencies(system)
+        build_cpp_dependencies()
 
     update_config(system)
 
