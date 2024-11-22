@@ -324,11 +324,6 @@ def update_config(system):
             for key, value in config.items():
                 if type(value) == str:
                     config[key] = value.replace("/", "\\")
-            config["ffmpeg_path"] = "ffmpeg"
-        elif system == "Darwin":
-            config["ffmpeg_path"] = "/usr/local/bin/ffmpeg"
-        elif system == "Linux":
-            config["ffmpeg_path"] = "/usr/bin/ffmpeg"
 
         with open(CONFIG_FILE, "w") as config_file:
             json.dump(config, config_file, indent=4)
