@@ -93,7 +93,7 @@ class DependencyHandler:
             "arch": "sudo pacman -S --needed --noconfirm",
             "manjaro": "sudo pacman -S --needed --noconfirm",
             "endeavouros": "sudo pacman -S --needed --noconfirm",
-            "garuda": "sudo pacman -S --noconfirm",
+            "garuda": "sudo pacman -S --needed --noconfirm",
             "opensuse": "sudo zypper install -y",
             "suse": "sudo zypper install -y",
             "alpine": "sudo apk add",
