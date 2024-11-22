@@ -21,6 +21,8 @@ class DebugLevel:
     APP = 1
     ALL = 2
 
+    _string_to_debug_level = {"none": NONE, "app": APP, "all": ALL}
+
 
 current_debug_level = DebugLevel.NONE
 
@@ -378,17 +380,14 @@ def main():
     parser.add_argument("--mode", choices=["web"], help="Specify mode to launch")
     parser.add_argument("--install", action="store_true", help="Install dependencies if not found")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild MediaProcessor")
-    parser.add_argument("--debug", choices=["all", "app"], help="Set the debug output level.")
+    parser.add_argument("--debug", choices=["all", "app"], default="none", help="Set the debug output level.")
     args = parser.parse_args()
 
     system = platform.system()
     print("Starting setup...")
 
     global current_debug_level
-    if args.debug == "all":
-        current_debug_level = DebugLevel.ALL
-    elif args.debug == "app":
-        current_debug_level = DebugLevel.APP
+    current_debug_level = DebugLevel._string_to_debug_level[args.debug]
 
     for dependency in dependencies:
         dependency.check_dependency(system, args.install)
