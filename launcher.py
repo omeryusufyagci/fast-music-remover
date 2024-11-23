@@ -171,7 +171,7 @@ class DependencyHandler:
         return [f"{self._linux_distro_map[distro]} {{self.package_name.get(system, self.name)}}"]
 
     def _get_install_commands_darwin(self):
-        return [f"brew install {{self.package_name.get(system, self.name)}}"]
+        return [f"brew install {self.package_name.get('Darwin', self.name)}"]
 
     def _get_install_commands_windows(self):
         if not check_msys2_installed():
