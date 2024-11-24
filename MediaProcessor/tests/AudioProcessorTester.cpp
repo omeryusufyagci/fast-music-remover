@@ -45,7 +45,7 @@ class AudioProcessorTester : public ::testing::Test {
 
 // ClassName_MethodName_StateUnderTest_ExpectedBehavior gtest std naming convention
 TEST_F(AudioProcessorTester, IsolateVocals_FiltersAudioCorrectly) {
-    ConfigManager &configManager = ConfigManager::getInstance();
+    ConfigManager& configManager = ConfigManager::getInstance();
     ASSERT_TRUE(configManager.loadConfig(testConfigFile.getFilePath()))
         << "Unable to Load TestConfigFile";
 
