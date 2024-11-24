@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "DeepFilterNetFFI.h"
+
 namespace fs = std::filesystem;
 
 namespace MediaProcessor {
@@ -52,7 +54,9 @@ class AudioProcessor {
     bool filterChunks();
     bool mergeChunks();
     bool invokeDeepFilter(fs::path chunkPath);
-    bool invokeDeepFilterFFI(fs::path chunkPath);
+
+    bool invokeDeepFilterFFI(fs::path chunkPath, DFState *df_state, std::vector<float> &inputBuffer,
+                             std::vector<float> &outputBuffer);
 
     std::string buildFilterComplex() const;
 
