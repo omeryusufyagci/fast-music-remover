@@ -9,7 +9,6 @@
 #include <thread>
 
 #include "CommandBuilder.h"
-#include "ConfigManager.h"
 #include "ThreadPool.h"
 #include "Utils.h"
 
@@ -20,12 +19,13 @@ namespace MediaProcessor {
 AudioProcessor::AudioProcessor(const fs::path& inputVideoPath, const fs::path& outputAudioPath)
     : m_inputVideoPath(inputVideoPath),
       m_outputAudioPath(outputAudioPath),
-      m_overlapDuration(DEFAULT_OVERLAP_DURATION) {
+      m_overlapDuration(DEFAULT_OVERLAP_DURATION),
+      m_configManager(ConfigManager::getInstance()) {
     m_outputPath = m_outputAudioPath.parent_path();
     m_chunksPath = m_outputPath / "chunks";
     m_processedChunksPath = m_outputPath / "processed_chunks";
 
-    m_numChunks = ConfigManager::getInstance().getOptimalThreadCount();
+    m_numChunks = m_configManager.getOptimalThreadCount();
     std::cout << "INFO: using " << m_numChunks << " threads." << std::endl;
 }
 
@@ -33,8 +33,6 @@ bool AudioProcessor::isolateVocals() {
     /*
      * Extracts vocals from a video by chunking, parallel processing, and merging the audio.
      */
-
-    ConfigManager& configManager = ConfigManager::getInstance();
 
     // Ensure output directory exists and remove output file if it exists
     Utils::ensureDirectoryExists(m_outputPath);
@@ -73,8 +71,7 @@ bool AudioProcessor::isolateVocals() {
 }
 
 bool AudioProcessor::extractAudio() {
-    ConfigManager& configManager = ConfigManager::getInstance();
-    fs::path ffmpegPath = configManager.getFFmpegPath();
+    fs::path ffmpegPath = m_configManager.getFFmpegPath();
 
     // Extract the audio with FFmpeg
     CommandBuilder cmd;
@@ -96,8 +93,7 @@ bool AudioProcessor::extractAudio() {
 }
 
 bool AudioProcessor::splitAudioIntoChunks() {
-    ConfigManager& configManager = ConfigManager::getInstance();
-    fs::path ffmpegPath = configManager.getFFmpegPath();
+    fs::path ffmpegPath = m_configManager.getFFmpegPath();
 
     Utils::ensureDirectoryExists(m_chunksPath);
 
@@ -143,9 +139,8 @@ bool AudioProcessor::generateChunkFile(int index, const double startTime, const 
 }
 
 bool AudioProcessor::invokeDeepFilter(fs::path chunkPath) {
-    ConfigManager& configManager = ConfigManager::getInstance();
-    const fs::path deepFilterPath = configManager.getDeepFilterPath();
-    const fs::path deepFilterTarballPath = configManager.getDeepFilterTarballPath();
+    const fs::path deepFilterPath = m_configManager.getDeepFilterPath();
+    const fs::path deepFilterTarballPath = m_configManager.getDeepFilterTarballPath();
 
     // TODO: implement with DeepFilterCommandBuilder once base class is updated (#51)
     // `--compensate-delay` ensures the audio remains in sync after filtering
@@ -199,8 +194,7 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath, DFState* df_state,
 bool AudioProcessor::filterChunks() {
     Utils::ensureDirectoryExists(m_processedChunksPath);
 
-    ConfigManager& configManager = ConfigManager::getInstance();
-    const fs::path deepFilterTarballPath = configManager.getDeepFilterTarballPath();
+    const fs::path deepFilterTarballPath = m_configManager.getDeepFilterTarballPath();
 
     ThreadPool pool(m_numChunks);
     std::vector<std::future<bool>> results;
@@ -294,8 +288,7 @@ std::string AudioProcessor::buildFilterComplex() const {
 }
 
 bool AudioProcessor::mergeChunks() {
-    ConfigManager& configManager = ConfigManager::getInstance();
-    fs::path ffmpegPath = configManager.getFFmpegPath();
+    fs::path ffmpegPath = m_configManager.getFFmpegPath();
 
     // Merge processed chunks with `crossfade`
     CommandBuilder cmd;

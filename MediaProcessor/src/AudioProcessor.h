@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "ConfigManager.h"
 #include "DeepFilterNetFFI.h"
 
 namespace fs = std::filesystem;
@@ -46,6 +47,8 @@ class AudioProcessor {
 
     double m_totalDuration;
     double m_overlapDuration;
+
+    ConfigManager &m_configManager;
 
     bool extractAudio();
     bool splitAudioIntoChunks();
