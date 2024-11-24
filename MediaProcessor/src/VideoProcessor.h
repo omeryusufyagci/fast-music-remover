@@ -15,8 +15,8 @@ class VideoProcessor {
     /**
      * @brief Initializes the VideoProcessor with paths for the video, audio, and output.
      */
-    VideoProcessor(const fs::path &videoPath, const fs::path &audioPath,
-                   const fs::path &outputPath);
+    VideoProcessor(const fs::path& videoPath, const fs::path& audioPath,
+                   const fs::path& outputPath);
 
     /**
      * @brief Merges the audio and video files into a single output file.
