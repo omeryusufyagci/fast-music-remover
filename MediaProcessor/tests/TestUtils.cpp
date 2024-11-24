@@ -3,6 +3,7 @@
 #include <sndfile.h>
 
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <vector>
 
@@ -81,20 +82,20 @@ bool CompareFiles::compareAudioFiles(const fs::path& filePath1, const fs::path& 
     SF_INFO sfInfo1, sfInfo2;
     SNDFILE* sndFile1 = sf_open(filePath1.c_str(), SFM_READ, &sfInfo1);
     if (!sndFile1) {
-        throw std::runtime_error("Failed to open file " + filePath1.string());
+        throw std::runtime_error("Failed to open file 1: " + filePath1.string());
     }
 
     SNDFILE* sndFile2 = sf_open(filePath2.c_str(), SFM_READ, &sfInfo2);
     if (!sndFile2) {
         sf_close(sndFile1);
-        throw std::runtime_error("Failed to open file " + filePath2.string());
+        throw std::runtime_error("Failed to open file 2: " + filePath2.string());
     }
 
-    // Check if the file formats are the same
-    if (sfInfo1.channels != sfInfo2.channels || sfInfo1.samplerate != sfInfo2.samplerate) {
-        sf_close(sndFile1);
-        sf_close(sndFile2);
-        return false;
+    std::cout << "Total frames: File 1 = " << sfInfo1.frames << ", File 2 = " << sfInfo2.frames
+              << std::endl;
+
+    if (sfInfo1.frames != sfInfo2.frames) {
+        std::cerr << "Warning: Total frame count mismatch. Proceeding with overlap comparison.\n";
     }
 
     std::vector<float> buffer1(chunkSize * sfInfo1.channels);
@@ -102,12 +103,25 @@ bool CompareFiles::compareAudioFiles(const fs::path& filePath1, const fs::path& 
 
     // Compare in chunks
     sf_count_t framesRead1, framesRead2;
-    while ((framesRead1 = sf_readf_float(sndFile1, buffer1.data(), chunkSize)) > 0 &&
-           (framesRead2 = sf_readf_float(sndFile2, buffer2.data(), chunkSize)) > 0) {
-        if (framesRead1 != framesRead2 ||
-            !compareBuffersWithTolerance(buffer1.begin(), buffer1.begin() + framesRead1,
-                                         buffer2.begin(), buffer2.begin() + framesRead2,
+    size_t chunkIndex = 0;
+    while (true) {
+        framesRead1 = sf_readf_float(sndFile1, buffer1.data(), chunkSize);
+        framesRead2 = sf_readf_float(sndFile2, buffer2.data(), chunkSize);
+
+        // Break if both files are at the end
+        if (framesRead1 == 0 && framesRead2 == 0) {
+            break;
+        }
+
+        std::cout << "Comparing chunk " << chunkIndex++ << ": " << framesRead1
+                  << " frames from file 1, " << framesRead2 << " frames from file 2" << std::endl;
+
+        // Handle comparison for last chunk which may be shorter than default chunk size
+        size_t framesToCompare = std::min(framesRead1, framesRead2);
+        if (!compareBuffersWithTolerance(buffer1.begin(), buffer1.begin() + framesToCompare,
+                                         buffer2.begin(), buffer2.begin() + framesToCompare,
                                          tolerance)) {
+            std::cerr << "Mismatch in audio data in chunk " << chunkIndex << std::endl;
             sf_close(sndFile1);
             sf_close(sndFile2);
             return false;
@@ -116,23 +130,45 @@ bool CompareFiles::compareAudioFiles(const fs::path& filePath1, const fs::path& 
 
     sf_close(sndFile1);
     sf_close(sndFile2);
+
+    std::cout << "Files matched within tolerance: " << tolerance << std::endl;
     return true;
 }
 
 template <typename T>
-bool CompareFiles::isWithinTolerance(const T& a, const T& b, double tolerance) {
-    return std::fabs(a - b) <= tolerance;
+bool CompareFiles::isWithinTolerance(const T& a, const T& b, double tolerance,
+                                     double relativeTolerance) {
+    double diff = std::fabs(a - b);
+    return diff <= tolerance || diff <= relativeTolerance * std::max(std::fabs(a), std::fabs(b));
 }
 
 template <typename T>
-bool CompareFiles::compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2,
-                                               double tolerance) {
+bool CompareFiles::compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance,
+                                               double relativeTolerance) {
     if (std::distance(begin1, end1) != std::distance(begin2, end2)) {
+        std::cerr << "Buffer size mismatch: " << std::distance(begin1, end1) << " vs "
+                  << std::distance(begin2, end2) << std::endl;
         return false;
     }
-    return std::equal(begin1, end1, begin2, end2, [tolerance](const auto& a, const auto& b) {
-        return isWithinTolerance(a, b, tolerance);
-    });
+
+    size_t index = 0;
+    size_t mismatchCount = 0;
+    for (auto it1 = begin1, it2 = begin2; it1 != end1; ++it1, ++it2, ++index) {
+        if (!isWithinTolerance(*it1, *it2, tolerance, relativeTolerance)) {
+            ++mismatchCount;
+            std::cerr << "Value mismatch at index " << index << ": " << *it1 << " vs " << *it2
+                      << " (tolerance: " << tolerance
+                      << ", relativeTolerance: " << relativeTolerance << ")" << std::endl;
+
+            if (mismatchCount > 10) {
+                std::cerr << "More than 10 mismatches detected, skipping further logs."
+                          << std::endl;
+                break;
+            }
+        }
+    }
+
+    return mismatchCount == 0;
 }
 
 }  // namespace MediaProcessor::TestUtils

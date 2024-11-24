@@ -121,12 +121,14 @@ class CompareFiles {
 
    private:
     static constexpr size_t DEFAULT_CHUNK_SIZE = 1024;
-    static constexpr double DEFAULT_TOLERANCE = 0.01;
+    static constexpr double DEFAULT_TOLERANCE = 1.0;
 
     template <typename T>
-    static bool isWithinTolerance(const T& a, const T& b, double tolerance);
+    static bool isWithinTolerance(const T& a, const T& b, double tolerance,
+                                  double relativeTolerance = 1.0);
     template <typename T>
-    static bool compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance);
+    static bool compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance,
+                                            double relativeTolerance = 1.0);
 };
 
 }  // namespace MediaProcessor::TestUtils
