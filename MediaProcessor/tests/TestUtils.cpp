@@ -79,6 +79,10 @@ bool CompareFiles::compareFilesByteByByte(const fs::path& filePath1, const fs::p
 bool CompareFiles::compareAudioFiles(const fs::path& filePath1, const fs::path& filePath2,
                                      double tolerance, size_t chunkSize) {
     SF_INFO sfInfo1, sfInfo2;
+
+    // Convert file paths to standard C++ strings.
+    // Note: On Windows, converting a file path to a C-style string (c_str) may produce 
+    // a wchar_t string, which is incompatible with the sf_open function.
     SNDFILE* sndFile1 = sf_open(filePath1.string().c_str(), SFM_READ, &sfInfo1);
     if (!sndFile1) {
         throw std::runtime_error("Failed to open file " + filePath1.string());

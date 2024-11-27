@@ -63,8 +63,7 @@ class DependencyHandler:
             package_name --version will be used to check if the dependency is installed
 
         if install cmd is not provided
-            for debian based: apt-get
-            for fedora/rhel: dnf
+            for linux: package manager based on distro
             for macos: brew
             for windows: msys2
     """
