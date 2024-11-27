@@ -19,11 +19,11 @@ set(TEST_MEDIA_DIR "${TEST_MEDIA_DIR}" CACHE PATH "Path to test media files")
 
 # Set platform-specific dynamic library for df
 if(APPLE)
-    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)  # macOS dynamic library
+    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)
 elseif(WIN32)
-    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/df.dll)  # Windows dynamic library
+    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/df.dll)
 elseif(UNIX)
-    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.so)  # Linux dynamic library
+    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.so)
 else()
     message(FATAL_ERROR "Unsupported platform")
 endif()

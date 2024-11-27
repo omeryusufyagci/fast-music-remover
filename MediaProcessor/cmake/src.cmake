@@ -29,6 +29,11 @@ if(APPLE)
 elseif(WIN32)
     set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dll.a) # .dll.a for linking, .dll for runtime
     set(DF_DLL_PATH ${CMAKE_SOURCE_DIR}/lib/df.dll)   # Path for the actual DLL
+    # Copy the DLL to the output directory for Windows platform
+    add_custom_command(TARGET MediaProcessor POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${DF_DLL_PATH}
+            $<TARGET_FILE_DIR:MediaProcessor>)
 
 elseif(UNIX)
     set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.so)
@@ -52,14 +57,6 @@ else()
 endif()
 
 target_link_libraries(MediaProcessor PRIVATE ${LIBRARIES})
-
-# Copy the DLL to the output directory for Windows platform
-if(WIN32)
-    add_custom_command(TARGET MediaProcessor POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${DF_DLL_PATH}
-            $<TARGET_FILE_DIR:MediaProcessor>)
-endif()
 
 # Some of this was for macOS try to remove if possible
 set_target_properties(MediaProcessor PROPERTIES
