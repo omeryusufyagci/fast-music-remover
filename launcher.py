@@ -103,9 +103,9 @@ class DependencyHandler:
             "clearlinux": "sudo swupd bundle-add",
         }
 
-    def check_dependency(self, system, install=False):
+    def ensure_dependency_installed(self, system, install=False):
         """
-        Checks if the dependency is installed. If not, installs it if `install` is True.
+        Checks if the dependency is installed. If not, installs it.
         """
         commands = self._get_check_commands(system)
         try:
@@ -372,7 +372,7 @@ def launch_web_application(system):
 def main():
     parser = argparse.ArgumentParser(description="Setup for MediaProcessor Application")
     parser.add_argument("--app", choices=["web", "none"], default="web", help="Specify launch mode")
-    parser.add_argument("--install", action="store_true", help="Install dependencies if not found")
+    parser.add_argument("--install-dependencies", action="store_true", default=True, help="Install dependencies.")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild MediaProcessor")
     parser.add_argument("--debug", choices=["verbose", "app"], default="none", help="Set the debug output level.")
     args = parser.parse_args()
@@ -384,9 +384,9 @@ def main():
     current_debug_level = DebugLevel._string_to_debug_level[args.debug]
 
     for dependency in dependencies:
-        dependency.check_dependency(system, args.install)
+        dependency.ensure_dependency_installed(system, args.install_dependencies)
 
-    if args.install:
+    if args.install_dependencies:
         install_python_dependencies(system)
 
     if args.rebuild or not check_MediaProcessor(system):
