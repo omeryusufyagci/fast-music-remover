@@ -19,9 +19,9 @@ class DebugLevel:
 
     NONE = 0
     APP = 1
-    ALL = 2
+    VERBOSE = 2
 
-    _string_to_debug_level = {"none": NONE, "app": APP, "all": ALL}
+    _string_to_debug_level = {"none": NONE, "app": APP, "verbose": VERBOSE}
 
 
 current_debug_level = DebugLevel.NONE
@@ -37,13 +37,13 @@ def run_command(command, cwd=None):
     Raises:
         subprocess.CalledProcessError: If any command fails.
     """
-    if current_debug_level == DebugLevel.ALL:
+    if current_debug_level == DebugLevel.VERBOSE:
         print(f"Executing command: {command}")
     subprocess.check_call(
         command.split(),
         cwd=cwd,
-        stdout=None if current_debug_level == DebugLevel.ALL else subprocess.DEVNULL,
-        stderr=None if current_debug_level == DebugLevel.ALL else subprocess.DEVNULL,
+        stdout=None if current_debug_level == DebugLevel.VERBOSE else subprocess.DEVNULL,
+        stderr=None if current_debug_level == DebugLevel.VERBOSE else subprocess.DEVNULL,
     )
 
 
@@ -371,10 +371,10 @@ def launch_web_application(system):
 
 def main():
     parser = argparse.ArgumentParser(description="Setup for MediaProcessor Application")
-    parser.add_argument("--mode", choices=["web"], help="Specify mode to launch")
+    parser.add_argument("--app", choices=["web"], help="Specify launch mode")
     parser.add_argument("--install", action="store_true", help="Install dependencies if not found")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild MediaProcessor")
-    parser.add_argument("--debug", choices=["all", "app"], default="none", help="Set the debug output level.")
+    parser.add_argument("--debug", choices=["verbose", "app"], default="none", help="Set the debug output level.")
     args = parser.parse_args()
 
     system = platform.system()
@@ -394,10 +394,10 @@ def main():
 
     update_config(system)
 
-    if args.mode == "web":
+    if args.app == "web":
         launch_web_application(system)
     else:
-        print("Please specify an application mode like --mode=web")
+        print("Please specify how you would like to launch the application, like --app=web.")
 
 
 if __name__ == "__main__":
