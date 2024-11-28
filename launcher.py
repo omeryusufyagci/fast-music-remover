@@ -371,7 +371,7 @@ def launch_web_application(system):
 
 def main():
     parser = argparse.ArgumentParser(description="Setup for MediaProcessor Application")
-    parser.add_argument("--app", choices=["web"], help="Specify launch mode")
+    parser.add_argument("--app", choices=["web", "none"], default="web", help="Specify launch mode")
     parser.add_argument("--install", action="store_true", help="Install dependencies if not found")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild MediaProcessor")
     parser.add_argument("--debug", choices=["verbose", "app"], default="none", help="Set the debug output level.")
