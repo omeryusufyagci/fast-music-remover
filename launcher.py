@@ -266,16 +266,16 @@ def check_MediaProcessor(system):
     return MediaProcessor_path.exists()
 
 
-def create_virtualenv():
+def generate_virtualenv():
     print(f"Creating virtual environment at: {venv_dir}")
     run_command(f"{sys.executable} -m venv {str(venv_dir)} --system-site-packages")
-    print("Virtual environment created successfully.")
+    print("Successfully generated Virtual environment.")
 
 
 def install_python_dependencies(system):
     try:
         if not venv_dir.exists():
-            create_virtualenv()
+            generate_virtualenv()
 
         print("Installing Python dependencies...")
 
@@ -335,7 +335,7 @@ def update_config(system):
 def launch_web_application(system):
     try:
         if not venv_dir.exists():
-            create_virtualenv()
+            generate_virtualenv()
 
         if system == "Windows":
             python_path = str(venv_dir / "Scripts" / "python.exe")
