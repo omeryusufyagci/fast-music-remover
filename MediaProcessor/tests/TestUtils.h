@@ -87,7 +87,8 @@ class TestConfigFile {
         {"downloads_path", "downloads"},
         {"uploads_path", "uploads"},
         {"use_thread_cap", false},
-        {"max_threads_if_capped", 6}};
+        {"max_threads_if_capped", 6},
+        {"filter_attenuation_limit", 100.0f}};
 };
 
 /**
