@@ -15,13 +15,15 @@ namespace MediaProcessor::Utils {
 /**
  * @brief Macro to handle exceptions.
  */
-#define TRY(expression)                                  \
-    try {                                                \
-        expression;                                      \
-    } catch (const std::exception& e) {                  \
-        std::cerr << "Error: " << e.what() << std::endl; \
-        return false;                                    \
-    }
+#define TRY(expression)                                      \
+    ([&]() -> decltype(auto) {                               \
+        try {                                                \
+            return (expression);                             \
+        } catch (const std::exception& e) {                  \
+            std::cerr << "Error: " << e.what() << std::endl; \
+            throw;                                           \
+        }                                                    \
+    }())
 
 /**
  * @brief Executes a command in the system shell.

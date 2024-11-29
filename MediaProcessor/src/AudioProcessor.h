@@ -47,6 +47,7 @@ class AudioProcessor {
 
     double m_totalDuration;
     double m_overlapDuration;
+    float m_filterAttenuationLimit;
 
     ConfigManager& m_configManager;
 

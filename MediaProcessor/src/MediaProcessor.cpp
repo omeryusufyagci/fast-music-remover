@@ -20,7 +20,7 @@ bool MediaProcessor::process() {
     }
 
     MediaType mediaType;
-    TRY(mediaType = getMediaType());
+    mediaType = TRY(getMediaType());
 
     switch (mediaType) {
         case MediaType::Audio:

@@ -26,6 +26,14 @@ pkg_check_modules(SNDFILE REQUIRED sndfile)
 include_directories(${SNDFILE_INCLUDE_DIRS})
 
 FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG 11.0.0
+)
+FetchContent_MakeAvailable(fmt)
+
+# JSON library
+FetchContent_Declare(
   nlohmann_json
   GIT_REPOSITORY https://github.com/nlohmann/json.git
   GIT_TAG v3.11.3
@@ -37,4 +45,3 @@ include(cmake/src.cmake)
 if(BUILD_TESTING)
     include(cmake/test.cmake)
 endif()
-

@@ -15,8 +15,15 @@ endif()
 # Setup test media directory
 set(TEST_MEDIA_DIR "${CMAKE_SOURCE_DIR}/tests/TestMedia" CACHE PATH "Path to test media files")
 
+FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 11.0.0
+)
+FetchContent_MakeAvailable(fmt)
+
 # Common libraries for all test targets
-set(COMMON_LIBRARIES gtest_main ${CMAKE_SOURCE_DIR}/lib/libdf.so ${SNDFILE_LIBRARIES})
+set(COMMON_LIBRARIES gtest_main ${CMAKE_SOURCE_DIR}/lib/libdf.so ${SNDFILE_LIBRARIES} fmt::fmt)
 
 # Macro for adding a test executable
 macro(add_test_executable name)

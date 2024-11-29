@@ -30,7 +30,9 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile_Succeeds) {
         {"downloads_path", "downloads"},
         {"uploads_path", "uploads"},
         {"use_thread_cap", true},
-        {"max_threads_if_capped", 1}};
+        {"max_threads_if_capped", 1},
+        {"filter_attenuation_limit", 100.0f},
+    };
 
     testConfigFile.generateConfigFile("testConfig.json", jsonObject);
 
@@ -47,6 +49,8 @@ TEST_F(ConfigManagerTest, LoadValidConfigFile_Succeeds) {
     EXPECT_EQ(configManager.getFFmpegPath(), jsonObject["ffmpeg_path"].get<std::string>());
     EXPECT_EQ(configManager.getOptimalThreadCount(),
               jsonObject["max_threads_if_capped"].get<unsigned int>());
+    EXPECT_EQ(configManager.getFilterAttenuationLimit(),
+              jsonObject["filter_attenuation_limit"].get<float>());
 }
 
 TEST_F(ConfigManagerTest, LoadInvalidConfigFile) {
@@ -68,7 +72,8 @@ TEST_F(ConfigManagerTest, LoadInvalidConfigOptions) {
                                  {"downloads_path", false},
                                  {"uploads_path", false},
                                  {"use_thread_cap", "true"},
-                                 {"max_threads_if_capped", -1}};
+                                 {"max_threads_if_capped", -1},
+                                 {"filter_attenuation_limit", 100.0f}};
 
     testConfigFile.generateConfigFile("testConfig.json", jsonObject);
 

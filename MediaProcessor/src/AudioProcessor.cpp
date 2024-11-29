@@ -27,6 +27,10 @@ AudioProcessor::AudioProcessor(const fs::path& inputVideoPath, const fs::path& o
 
     m_numChunks = m_configManager.getOptimalThreadCount();
     std::cout << "INFO: using " << m_numChunks << " threads." << std::endl;
+
+    m_filterAttenuationLimit = m_configManager.getFilterAttenuationLimit();
+    std::cout << "INFO: using " << m_filterAttenuationLimit << " as filter attenaution limit."
+              << std::endl;
 }
 
 bool AudioProcessor::isolateVocals() {
@@ -194,7 +198,14 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath, DFState* df_state,
 bool AudioProcessor::filterChunks() {
     Utils::ensureDirectoryExists(m_processedChunksPath);
 
-    const fs::path deepFilterTarballPath = m_configManager.getDeepFilterTarballPath();
+    const auto deepFilterTarballPath = m_configManager.getDeepFilterTarballPath();
+
+    try {
+        m_filterAttenuationLimit = m_configManager.getFilterAttenuationLimit();
+    } catch (std::runtime_error& ex) {
+        std::cout << "Error while getting filter_attenuation_limit: " << ex.what() << std::endl;
+        return false;
+    }
 
     ThreadPool pool(m_numChunks);
     std::vector<std::future<bool>> results;
@@ -202,7 +213,8 @@ bool AudioProcessor::filterChunks() {
     for (int i = 0; i < m_numChunks; ++i) {
         results.emplace_back(pool.enqueue([&, i]() {
             // Per-thread DFState instance
-            DFState* df_state = df_create(deepFilterTarballPath.c_str(), 100.0f, nullptr);
+            DFState* df_state =
+                df_create(deepFilterTarballPath.c_str(), m_filterAttenuationLimit, nullptr);
             if (!df_state) {
                 std::cerr << "Error: Failed to insantiate DFState in thread." << std::endl;
                 return false;
