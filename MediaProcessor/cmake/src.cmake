@@ -40,8 +40,10 @@ target_link_libraries(MediaProcessor PRIVATE
     ${SNDFILE_LIBRARIES}
     ${DF_LIBRARY}
     nlohmann_json::nlohmann_json
-
+    fmt::fmt
 )
+
+target_compile_options(MediaProcessor PRIVATE -D_GLIBCXX_USE_CXX23_ABI)
 
 # Some of this was for macOS try to remove if possible
 set_target_properties(MediaProcessor PROPERTIES
