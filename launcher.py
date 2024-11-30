@@ -3,11 +3,11 @@ import atexit
 import json
 import logging
 import logging.config
-import threading
 import os
 import platform
 import subprocess
 import sys
+import threading
 import time
 import webbrowser
 from pathlib import Path
@@ -38,7 +38,7 @@ def setup_logging(log_level, log_file=False):
         DEFAULT_CONFIG["handlers"]["file"] = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "detailed",
-            "filename":f"logfile_{time.strftime("%Y%m%d_%H%M%S")}.log",
+            "filename": f"logfile_{time.strftime("%Y%m%d_%H%M%S")}.log",
             "maxBytes": 1024 * 1024 * 5,  # 5MB
             "backupCount": 3,
         }
@@ -65,7 +65,7 @@ def run_command(command, cwd=None):
         stderr=subprocess.PIPE,
         text=True,
     )
-    stdout, stderr = process.communicate() # wait for process to terminate
+    stdout, stderr = process.communicate()  # wait for process to terminate
     if stdout:
         logging.debug(f"Command output: {stdout}")
     if stderr:
@@ -250,15 +250,20 @@ def install_msys2():
         msys2_root_path = "C:\\msys64"
 
         logging.info("Downloading MSYS2 installer...")
+        logging.debug(f"Installer URL: {installer_url}")
         run_command(f"curl -L -o {installer_name} {installer_url}")
 
         logging.info("Running MSYS2 installer...")
+        logging.debug(f"Installing MSYS2 at {msys2_root_path}")
         run_command(f"{installer_name} -y -oC:\\")
 
         logging.info("Updating MSYS2 packages...")
         run_command(f"{msys2_root_path}\\usr\\bin\\bash.exe -lc 'pacman -Syu --noconfirm'")
 
         logging.info("Editing Environment Variables...")
+        logging.debug(
+            f"Adding {msys2_root_path}\\usr\\bin, {msys2_root_path}\\mingw64\\bin, {msys2_root_path}\\mingw32\\bin to PATH"
+        )
         # Set it permanently for the current user
         commands = f"""
         $oldPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -269,6 +274,9 @@ def install_msys2():
         subprocess.check_call(["powershell", "-Command", commands])
 
         # Add MSYS2 paths to the PATH environment variable for the current session
+        logging.debug(
+            f"Addiing {msys2_root_path}\\usr\\bin, {msys2_root_path}\\mingw64\\bin, {msys2_root_path}\\mingw32\\bin to current enviornment."
+        )
         current_path = os.environ.get("PATH", "")
         new_path = (
             f"{msys2_root_path}\\usr\\bin;{msys2_root_path}\\mingw64\\bin;{msys2_root_path}\\mingw32\\bin;"
@@ -321,7 +329,7 @@ def install_python_dependencies(system):
                 pip_path = pip_bin_path
             else:
                 pip_path = pip_scripts_path
-            
+
         else:
             pip_path = venv_dir / "bin" / "pip"
             if not pip_path.exists():
