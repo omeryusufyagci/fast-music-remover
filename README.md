@@ -166,15 +166,36 @@ Ensure Docker is installed by running:
 docker --version
 ```
 
-If Docker is installed, you can quickly try `Fast Music Remover` by running the following command:
+If Docker is installed, you have two ways to quickly try `Fast Music Remover`:
+
+#### **Using the Pre-Built Image**:
+Pull the prebuilt image from the registry:
+
+```sh
+docker pull ghcr.io/omeryusufyagci/fast-music-remover:latest
+```
+Run the container:
+```sh
+docker run -p 8080:8080 ghcr.io/omeryusufyagci/fast-music-remover:latest
+```
+
+#### **Building the Image Locally**:
+
 ```sh
 docker-compose up --build
 ```
 > **Note**: You may need `sudo` to run this command, depending on how your system is setup.
 
-Once it's up, open `http://localhost:8080` in your browser, and you can test the service right away by submitting a URL.
+Once the container is running, open `http://localhost:8080` on your browser, and you can test it right away by submitting a URL or uploading a file from your local machine.
 
-This Docker setup will spin up a containerized version of the tool with everything set up: the Flask backend, the C++ MediaProcessor, and the frontend. Once processing is done, a playback of the processed media will be available on the frontend.
+#### What this Docker Setup Includes:
+Whether you use the prebuilt image or build it locally, the containerized setup includes:
+
+* A Flask backend to manage requests.
+* The MediaProcessor (C++ binary).
+* A minimalistic frontend for submitting and testing media -audio or video, both supported!
+
+Once processing is complete, the frontend will provide a playback of the processed media.
 
 ### Option 2: Manual Installation
 

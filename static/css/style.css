@@ -259,9 +259,15 @@ h1 {
     margin-top: 15px;
     margin-bottom: 20px;
 }
-#videoPlayer {
+#videoPlayer, #audioPlayer {
     display: none;
-    margin-top: 20px;
+    margin: 0;
+    padding: 0;
     width: 100%;
-    max-width: 800px;
+    max-width: 800px
 }
+
+#videoPlayer.active, #audioPlayer.active {
+    display: block;
+}
+

@@ -1,5 +1,7 @@
 #include "ConfigManager.h"
 
+#include <fmt/format.h>
+
 #include <fstream>
 #include <iostream>
 
@@ -45,6 +47,22 @@ fs::path ConfigManager::getDeepFilterDecoderPath() const {
 
 fs::path ConfigManager::getFFmpegPath() const {
     return getConfigValue<std::string>("ffmpeg_path");
+}
+
+float ConfigManager::getFilterAttenuationLimit() const {
+    auto candidateLimit = getConfigValue<float>("filter_attenuation_limit");
+    validateFilterAttenuationLimit(candidateLimit);
+
+    return candidateLimit;
+}
+
+void ConfigManager::validateFilterAttenuationLimit(float candidateLimit) const {
+    if (not Utils::isWithinRange(candidateLimit, 0.0f, 100.0f)) {
+        throw std::runtime_error(
+            fmt::format("Filter attenuation limit {}"
+                        " is not valid. Limit must be within [0.0, 100.0]",
+                        candidateLimit));
+    }
 }
 
 unsigned int ConfigManager::getOptimalThreadCount() {

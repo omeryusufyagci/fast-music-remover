@@ -1,13 +1,12 @@
 include(FetchContent)
-cmake_policy(SET CMP0135 NEW)  # Use the latest policy for FetchContent consistency
 
 find_package(GTest QUIET)
 if(NOT GTEST_FOUND)
     # Fetch GTest if not found
     FetchContent_Declare(
         googletest
-        URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG release-1.12.1
     )
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
@@ -16,6 +15,13 @@ endif()
 # Setup test media directory
 file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/tests/TestMedia" TEST_MEDIA_DIR)
 set(TEST_MEDIA_DIR "${TEST_MEDIA_DIR}" CACHE PATH "Path to test media files")
+
+FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 11.0.0
+)
+FetchContent_MakeAvailable(fmt)
 
 # Set platform-specific dynamic library for df
 if(APPLE)
@@ -29,7 +35,7 @@ else()
 endif()
 
 # Common libraries for all test targets
-set(COMMON_LIBRARIES gtest_main ${DF_LIBRARY} ${SNDFILE_LIBRARIES})
+set(COMMON_LIBRARIES gtest_main ${DF_LIBRARY} ${SNDFILE_LIBRARIES} fmt::fmt)
 
 # Macro for adding a test executable
 macro(add_test_executable name)

@@ -47,6 +47,7 @@ set(LIBRARIES
     Threads::Threads
     ${DF_LIBRARY}
     nlohmann_json::nlohmann_json
+    fmt::fmt
 )
 
 # macos-specific library fixes 
@@ -58,10 +59,13 @@ endif()
 
 target_link_libraries(MediaProcessor PRIVATE ${LIBRARIES})
 
+target_compile_options(MediaProcessor PRIVATE -D_GLIBCXX_USE_CXX23_ABI)
+
 # Some of this was for macOS try to remove if possible
 set_target_properties(MediaProcessor PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
     INSTALL_RPATH "${CMAKE_SOURCE_DIR}/lib"
     BUILD_RPATH "${CMAKE_SOURCE_DIR}/lib"
     INSTALL_RPATH_USE_LINK_PATH TRUE
+    INTERPROCEDURAL_OPTIMIZATION TRUE
 )

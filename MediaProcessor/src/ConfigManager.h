@@ -32,6 +32,15 @@ class ConfigManager {
     fs::path getFFmpegPath() const;
 
     /**
+     * @brief Validates and returns the attenuation value or throws!
+     *
+     * @returns the attenaution value if it's between [0.0f, 100.0f]
+     *
+     * @throws std::runtime_error if the value provided is not within [0.0f, 100.0f]
+     */
+    float getFilterAttenuationLimit() const;
+
+    /**
      * @brief Gets the optimal number of threads for processing.
      *
      * @return The optimal thread count based on configuration and hardware.
@@ -53,6 +62,13 @@ class ConfigManager {
      */
     unsigned int determineNumThreads(unsigned int configNumThreads,
                                      unsigned int hardwareNumThreads);
+
+    /**
+     * @brief Ensures the provided filter attenuation parameter is valid
+     *
+     * @throws std::runtime_error if the value provided is not within [0.0f, 100.0f]
+     */
+    void validateFilterAttenuationLimit(float candidate) const;
 
     template <typename T>
     T getConfigValue(const std::string& optionName) const;
