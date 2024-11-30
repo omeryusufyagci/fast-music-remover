@@ -167,15 +167,15 @@ class DependencyHandler:
             print(f"Unsupported linux distro {distro}. Please Install {self.name} manually.")
             sys.exit(1)
 
-        return [f"{self._linux_distro_map[distro]} {{self.package_name.get(system, self.name)}}"]
+        return [f"{self._linux_distro_map[distro]} {self.package_name.get("Linux", self.name)}"]
 
     def _get_install_commands_darwin(self):
-        return [f"brew install {self.package_name.get('Darwin', self.name)}"]
+        return [f"brew install {self.package_name.get("Darwin", self.name)}"]
 
     def _get_install_commands_windows(self):
         if not check_msys2_installed():
             install_msys2()
-        return [f"pacman -S --needed --noconfirm {{self.package_name.get(system, self.name)}}"]
+        return [f"pacman -S --needed --noconfirm {self.package_name.get("Windows", self.name)}"]
 
 
 # pkg-config should come before sndfie and nlohmann-json
