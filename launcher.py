@@ -240,6 +240,22 @@ def check_msys2_installed():
         return False
 
 
+def check_internet_connectivity():
+    """For Windows check internet connectivity"""
+    try:
+        logging.debug("Checking internet connectivity... ")
+        # Ping Google's public DNS server
+        subprocess.check_call(
+            ["ping", "-n", "1", "8.8.8.8"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        logging.debug("Internet connectivity OK")
+    except subprocess.CalledProcessError:
+        logging.error("No internet connection detected.")
+        sys.exit(1)
+
+
 def install_msys2():
     try:
         installer_url = (
@@ -248,6 +264,8 @@ def install_msys2():
         installer_name = "msys2-installer.exe"
 
         msys2_root_path = "C:\\msys64"
+
+        check_internet_connectivity()
 
         logging.info("Downloading MSYS2 installer...")
         logging.debug(f"Installer URL: {installer_url}")
