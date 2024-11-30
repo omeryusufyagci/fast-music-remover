@@ -1,6 +1,9 @@
 import argparse
 import atexit
 import json
+import logging
+import logging.config
+import threading
 import os
 import platform
 import subprocess
@@ -12,19 +15,36 @@ from pathlib import Path
 CONFIG_FILE = os.path.join("config.json")
 venv_name = "virtual_env"  # For downloading python packages
 venv_dir = Path.cwd() / venv_name  # Generate the path for the virtual environment
+DEFAULT_CONFIG = {
+    "version": 1,
+    "formatters": {
+        "detailed": {"format": "%(asctime)s [%(levelname)s] [%(funcName)s(), %(lineno)d]: %(message)s"},
+        "simple": {"format": "[%(levelname)s] %(message)s"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "root": {"level": "ERROR", "handlers": ["console"]},
+}
 
 
-class DebugLevel:
-    """Enum for debug levels"""
+def setup_logging(log_level, log_file=False):
+    DEFAULT_CONFIG["root"]["level"] = log_level
+    if log_file:
+        DEFAULT_CONFIG["handlers"]["file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "detailed",
+            "filename":f"logfile_{time.strftime("%Y%m%d_%H%M%S")}.log",
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 3,
+        }
+        DEFAULT_CONFIG["root"]["handlers"].append("file")
 
-    NONE = 0
-    APP = 1
-    VERBOSE = 2
-
-    _string_to_debug_level = {"none": NONE, "app": APP, "verbose": VERBOSE}
-
-
-current_debug_level = DebugLevel.NONE
+    logging.config.dictConfig(DEFAULT_CONFIG)
 
 
 def run_command(command, cwd=None):
@@ -37,14 +57,22 @@ def run_command(command, cwd=None):
     Raises:
         subprocess.CalledProcessError: If any command fails.
     """
-    if current_debug_level == DebugLevel.VERBOSE:
-        print(f"Executing command: {command}")
-    subprocess.check_call(
+    logging.debug(f"Executing command: {command}")
+    process = subprocess.Popen(
         command.split(),
         cwd=cwd,
-        stdout=None if current_debug_level == DebugLevel.VERBOSE else subprocess.DEVNULL,
-        stderr=None if current_debug_level == DebugLevel.VERBOSE else subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
     )
+    stdout, stderr = process.communicate() # wait for process to terminate
+    if stdout:
+        logging.debug(f"Command output: {stdout}")
+    if stderr:
+        logging.error(f"Command error: {stderr}")
+
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, command)
 
 
 class DependencyHandler:
@@ -103,9 +131,9 @@ class DependencyHandler:
             "clearlinux": "sudo swupd bundle-add",
         }
 
-    def ensure_dependency_installed(self, system, install=False):
+    def ensure_dependency_installed(self, system, install=True):
         """
-        Checks if the dependency is installed. If not, installs it.
+        Checks if the dependency is installed. If not installs it if install arg is True.
         """
         commands = self._get_check_commands(system)
         try:
@@ -117,11 +145,13 @@ class DependencyHandler:
 
         except (FileNotFoundError, subprocess.CalledProcessError):
             if not install:
-                print(
-                    f"{self.name} is not installed. Use --install to install dependencies automatically or install manually."
-                )
+                logging.info(f"{self.name} is not installed.")
                 sys.exit(1)
             self.install_dependency(system)
+
+        except Exception as e:
+            logging.error(f"While Checking Dependency: {e}", exc_info=True)
+            sys.exit(1)
 
     def install_dependency(self, system):
         """
@@ -138,7 +168,7 @@ class DependencyHandler:
                 else:
                     cmd()
         except Exception as e:
-            print(f"Error: {e}.\n\nInstall {self.name} manually.")
+            logging.error(f"While Installing: {e}.", exc_info=True)
             sys.exit(1)
 
     def _get_check_commands(self, system):
@@ -154,7 +184,7 @@ class DependencyHandler:
         if "all" in self.install_cmd:
             return self.install_cmd["all"]
         if system not in self._installers:
-            print(f"Unspported sytem {system}. Please Install {self.name} manually.")
+            logging.error(f"Unspported sytem {system}.")
             sys.exit(1)
 
         return self._installers[system]()
@@ -164,7 +194,7 @@ class DependencyHandler:
 
         distro = distro.id().lower()
         if distro not in self._linux_distro_map:
-            print(f"Unsupported linux distro {distro}. Please Install {self.name} manually.")
+            logging.error(f"Unsupported linux distro {distro}.")
             sys.exit(1)
 
         return [f"{self._linux_distro_map[distro]} {self.package_name.get("Linux", self.name)}"]
@@ -212,7 +242,6 @@ def check_msys2_installed():
 
 def install_msys2():
     try:
-        global msys2_root_path
         installer_url = (
             "https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe"
         )
@@ -220,16 +249,16 @@ def install_msys2():
 
         msys2_root_path = "C:\\msys64"
 
-        print("Downloading MSYS2 installer...")
+        logging.info("Downloading MSYS2 installer...")
         run_command(f"curl -L -o {installer_name} {installer_url}")
 
-        print("Running MSYS2 installer...")
+        logging.info("Running MSYS2 installer...")
         run_command(f"{installer_name} -y -oC:\\")
 
-        print("Updating MSYS2 packages...")
+        logging.info("Updating MSYS2 packages...")
         run_command(f"{msys2_root_path}\\usr\\bin\\bash.exe -lc 'pacman -Syu --noconfirm'")
 
-        print("Editing Environment Variables...")
+        logging.info("Editing Environment Variables...")
         # Set it permanently for the current user
         commands = f"""
         $oldPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -247,11 +276,11 @@ def install_msys2():
         )
         os.environ["PATH"] = new_path
 
-        print("MSYS2 installed and updated successfully.")
-        print("NOTE: Please restart your terminal before running this script again.")
+        logging.info("MSYS2 installed and updated successfully.")
+        logging.info("NOTE: Please restart your terminal before running this script again.")
 
     except subprocess.CalledProcessError as e:
-        print(f"Error installing MSYS2: {e}")
+        logging.error(f"Error installing MSYS2: {e}", exc_info=True)
         sys.exit(1)
     finally:
         if os.path.exists(installer_name):
@@ -267,9 +296,9 @@ def check_MediaProcessor(system):
 
 
 def generate_virtualenv():
-    print(f"Creating virtual environment at: {venv_dir}")
+    logging.info(f"Generating virtual environment at: {venv_dir}")
     run_command(f"{sys.executable} -m venv {str(venv_dir)} --system-site-packages")
-    print("Successfully generated Virtual environment.")
+    logging.info("Successfully generated Virtual environment.")
 
 
 def install_python_dependencies(system):
@@ -277,30 +306,38 @@ def install_python_dependencies(system):
         if not venv_dir.exists():
             generate_virtualenv()
 
-        print("Installing Python dependencies...")
+        logging.info("Installing Python dependencies...")
 
         if system == "Windows":
             # Check for both `Scripts` and `bin` folders.
-            pip_path = venv_dir / "Scripts" / "pip.exe"
-            if not pip_path.exists():
-                pip_path = venv_dir / "bin" / "pip.exe"
-            if not pip_path.exists():
-                raise FileNotFoundError("pip not found in either Scripts or bin folder.")
+            pip_scripts_path = venv_dir / "Scripts" / "pip.exe"
+            pip_bin_path = venv_dir / "bin" / "pip.exe"
+
+            if not pip_scripts_path.exists() and not pip_bin_path.exists():
+                logging.error(f"pip not found. Searched paths: [{pip_scripts_path}] and [{pip_bin_path}]")
+                sys.exit(1)
+
+            if pip_bin_path.exists():
+                pip_path = pip_bin_path
+            else:
+                pip_path = pip_scripts_path
+            
         else:
             pip_path = venv_dir / "bin" / "pip"
             if not pip_path.exists():
-                raise FileNotFoundError("pip not found in the bin folder.")
+                logging.error(f"pip not found. Searched paths: [{pip_path}]")
+                sys.exit(1)
 
         run_command(f"{str(pip_path)} install -r requirements.txt")
-        print("Python dependencies installed.")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to install Python dependencies: {e}")
+        logging.info("Python dependencies installed.")
+    except Exception as e:
+        logging.error(f"Failed to install Python dependencies: {e}", exc_info=True)
         sys.exit(1)
 
 
 def build_cpp_dependencies():
     try:
-        print("Building MediaProcessor...")
+        logging.info("Building MediaProcessor...")
         build_dir = os.path.join("MediaProcessor", "build")
         if not os.path.exists(build_dir):
             os.makedirs(build_dir)
@@ -308,9 +345,9 @@ def build_cpp_dependencies():
         run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=build_dir)
         run_command("cmake --build . --config Release", cwd=build_dir)
 
-        print("MediaProcessor built successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to build MediaProcessor: {e}")
+        logging.info("MediaProcessor built successfully.")
+    except Exception as e:
+        logging.error(f"Failed to build MediaProcessor: {e}", exc_info=True)
         sys.exit(1)
 
 
@@ -328,8 +365,18 @@ def update_config(system):
             json.dump(config, config_file, indent=4)
 
     except FileNotFoundError:
-        print(f"{CONFIG_FILE} not found. Please create a default config.json file.")
+        logging.error(f"{CONFIG_FILE} not found. Please create a default config.json file.")
         sys.exit(1)
+    except Exception as e:
+        logging.error(f"Failed to update config: {e}", exc_info=True)
+        sys.exit(1)
+
+
+def log_stream(stream, log_function):
+    """Logs output from a stream."""
+    for line in iter(stream.readline, ""):
+        log_function(line.strip())
+    stream.close()
 
 
 def launch_web_application(system):
@@ -345,27 +392,32 @@ def launch_web_application(system):
         # Start the backend
         app_process = subprocess.Popen(
             [python_path, "app.py"],
-            stdout=None if current_debug_level >= DebugLevel.APP else subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            text=True,
         )
         atexit.register(app_process.terminate)
+
+        # Threads to handle stdout and stderr asynchronously
+        threading.Thread(target=log_stream, args=(app_process.stdout, logging.debug), daemon=True).start()
+        threading.Thread(target=log_stream, args=(app_process.stderr, logging.debug), daemon=True).start()
 
         # Give the process some time to initialize
         time.sleep(0.5)
 
         # Check if the process is still running
         if app_process.poll() is not None:
-            error_output = app_process.stderr.read().decode("utf-8")
-            print(f"Error starting the backend: {error_output}")
+            error_output = app_process.stderr.read()
+            logging.error(f"Error starting the backend: {error_output}")
             sys.exit(1)
 
         webbrowser.open("http://127.0.0.1:8080")
 
-        print("Web application running. Press Enter to stop.")
+        logging.info("Web application running. Press Enter to stop.")
         input()  # Block until the user presses Enter
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}", exc_info=True)
         sys.exit(1)
 
 
@@ -374,14 +426,15 @@ def main():
     parser.add_argument("--app", choices=["web", "none"], default="web", help="Specify launch mode")
     parser.add_argument("--install-dependencies", action="store_true", default=True, help="Install dependencies.")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild MediaProcessor")
-    parser.add_argument("--debug", choices=["verbose", "app"], default="none", help="Set the debug output level.")
+    parser.add_argument(
+        "--debug-level", choices=["DEBUG", "INFO", "ERROR"], default="INFO", help="Set the debug output level."
+    )
+    parser.add_argument("--debug-file", action="store_true", help="Set the debug file.")
     args = parser.parse_args()
 
     system = platform.system()
-    print("Starting setup...")
-
-    global current_debug_level
-    current_debug_level = DebugLevel._string_to_debug_level[args.debug]
+    setup_logging(args.debug_level, args.debug_file)
+    logging.info("Starting setup...")
 
     for dependency in dependencies:
         dependency.ensure_dependency_installed(system, args.install_dependencies)
@@ -397,7 +450,7 @@ def main():
     if args.app == "web":
         launch_web_application(system)
     else:
-        print("Please specify how you would like to launch the application, like --app=web.")
+        logging.info("Please specify how you would like to launch the application, like --app=web.")
 
 
 if __name__ == "__main__":
