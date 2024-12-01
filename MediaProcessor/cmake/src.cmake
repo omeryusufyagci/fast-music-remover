@@ -5,7 +5,7 @@ add_executable(MediaProcessor
     ${CMAKE_SOURCE_DIR}/src/ConfigManager.cpp
     ${CMAKE_SOURCE_DIR}/src/AudioProcessor.cpp
     ${CMAKE_SOURCE_DIR}/src/VideoProcessor.cpp
-    ${CMAKE_SOURCE_DIR}/src/Processor.cpp
+    ${CMAKE_SOURCE_DIR}/src/Engine.cpp
     ${CMAKE_SOURCE_DIR}/src/Utils.cpp
     ${CMAKE_SOURCE_DIR}/src/CommandBuilder.cpp
     ${CMAKE_SOURCE_DIR}/src/HardwareUtils.cpp

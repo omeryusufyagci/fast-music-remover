@@ -1,5 +1,5 @@
-#ifndef PROCESSOR_H
-#define PROCESSOR_H
+#ifndef ENGINE_H
+#define ENGINE_H
 
 #include <filesystem>
 
@@ -7,19 +7,22 @@ namespace MediaProcessor {
 
 enum class MediaType { Audio, Video, Unsupported };
 
-class Processor {
+/**
+ * @brief Media processing engine that supports audio and video files. 
+*/
+class Engine {
    public:
-    explicit Processor(const std::filesystem::path& mediaPath);
-
+    explicit Engine(const std::filesystem::path& mediaPath);
+    
     /**
      * @brief Processes a media file (audio or video) to isolate vocals.
      *
-     * Processes the media file located at m_mediaPath. Processing is dynamically
-     * adjusted by detecting file type, i.e. audio or video.
+     * Processes the media file located at m_mediaPath. 
+     * Processing pipeline is selected dynamically by determining media type.
      *
      * @return true if processing was successful, false otherwise.
      */
-    bool process();
+    bool processMedia();
 
    private:
     std::filesystem::path m_mediaPath;
@@ -50,4 +53,4 @@ class Processor {
 
 }  // namespace MediaProcessor
 
-#endif  // PROCESSOR_H
+#endif  // ENGINE_H
