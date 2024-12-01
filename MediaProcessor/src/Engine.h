@@ -8,16 +8,16 @@ namespace MediaProcessor {
 enum class MediaType { Audio, Video, Unsupported };
 
 /**
- * @brief Media processing engine that supports audio and video files. 
-*/
+ * @brief Media processing engine that supports audio and video files.
+ */
 class Engine {
    public:
     explicit Engine(const std::filesystem::path& mediaPath);
-    
+
     /**
      * @brief Processes a media file (audio or video) to isolate vocals.
      *
-     * Processes the media file located at m_mediaPath. 
+     * Processes the media file located at m_mediaPath.
      * Processing pipeline is selected dynamically by determining media type.
      *
      * @return true if processing was successful, false otherwise.
