@@ -1,5 +1,6 @@
 uploads/
 downloads/
+.DS_Store*
 
 # virtual environment
 virtual_env/
