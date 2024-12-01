@@ -38,7 +38,7 @@ def setup_logging(log_level, log_file=False):
         DEFAULT_CONFIG["handlers"]["file"] = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "detailed",
-            "filename": f"logfile_{time.strftime("%Y%m%d_%H%M%S")}.log",
+            "filename": f"logfile_{time.strftime('%Y%m%d_%H%M%S')}.log",
             "maxBytes": 1024 * 1024 * 5,  # 5MB
             "backupCount": 3,
         }
@@ -197,15 +197,15 @@ class DependencyHandler:
             logging.error(f"Unsupported linux distro {distro}.")
             sys.exit(1)
 
-        return [f"{self._linux_distro_map[distro]} {self.package_name.get("Linux", self.name)}"]
+        return [f"{self._linux_distro_map[distro]} {self.package_name.get('Linux', self.name)}"]
 
     def _get_install_commands_darwin(self):
-        return [f"brew install {self.package_name.get("Darwin", self.name)}"]
+        return [f"brew install {self.package_name.get('Darwin', self.name)}"]
 
     def _get_install_commands_windows(self):
         if not check_msys2_installed():
             install_msys2()
-        return [f"pacman -S --needed --noconfirm {self.package_name.get("Windows", self.name)}"]
+        return [f"pacman -S --needed --noconfirm {self.package_name.get('Windows', self.name)}"]
 
 
 # pkg-config should come before sndfie and nlohmann-json
@@ -245,11 +245,7 @@ def check_internet_connectivity():
     try:
         logging.debug("Checking internet connectivity... ")
         # Ping Google's public DNS server
-        subprocess.check_call(
-            ["ping", "-n", "1", "8.8.8.8"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        run_command("ping -n 1 8.8.8.8")
         logging.debug("Internet connectivity OK")
     except subprocess.CalledProcessError:
         logging.error("No internet connection detected.")
