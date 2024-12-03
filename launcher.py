@@ -135,6 +135,7 @@ class DependencyHandler:
         """
         Checks if the dependency is installed. If not installs it if install arg is True.
         """
+        logging.info('Resolving project dependencies...')
         commands = self._get_check_commands(system)
         try:
             for cmd in commands:
@@ -288,7 +289,7 @@ def install_msys2():
         $newPath = "{msys2_root_path}\\usr\\bin;{msys2_root_path}\\mingw64\\bin;{msys2_root_path}\\mingw32\\bin;" + $oldPath
         [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
         """
-        # Run the PowerShell commands
+
         subprocess.check_call(["powershell", "-Command", commands])
 
         # Add MSYS2 paths to the PATH environment variable for the current session
@@ -303,7 +304,8 @@ def install_msys2():
         os.environ["PATH"] = new_path
 
         logging.info("MSYS2 installed and updated successfully.")
-        logging.info("NOTE: Please restart your terminal before running this script again.")
+        logging.info("NOTE: Environment variables have been permanently updated.\n")
+        logging.info("Please restart your terminal before running this script again.")
 
     except subprocess.CalledProcessError as e:
         logging.error(f"Error installing MSYS2: {e}", exc_info=True)
@@ -313,7 +315,7 @@ def install_msys2():
             os.remove(installer_name)
 
 
-def check_MediaProcessor(system):
+def check_core_binary(system):
     if system == "Windows":
         MediaProcessor_path = Path("MediaProcessor") / "build" / "MediaProcessor.exe"
     else:
@@ -361,7 +363,7 @@ def install_python_dependencies(system):
         sys.exit(1)
 
 
-def build_cpp_dependencies():
+def build_core():
     try:
         logging.info("Building MediaProcessor...")
         build_dir = os.path.join("MediaProcessor", "build")
@@ -391,7 +393,7 @@ def update_config(system):
             json.dump(config, config_file, indent=4)
 
     except FileNotFoundError:
-        logging.error(f"{CONFIG_FILE} not found. Please create a default config.json file.")
+        logging.error(f"{CONFIG_FILE} not found. Please check a config file exists in project root.")
         sys.exit(1)
     except Exception as e:
         logging.error(f"Failed to update config: {e}", exc_info=True)
@@ -468,15 +470,15 @@ def main():
     if args.install_dependencies:
         install_python_dependencies(system)
 
-    if args.rebuild or not check_MediaProcessor(system):
-        build_cpp_dependencies()
+    if args.rebuild or not check_core_binary(system):
+        build_core()
 
     update_config(system)
 
     if args.app == "web":
         launch_web_application(system)
     else:
-        logging.info("Please specify how you would like to launch the application, like --app=web.")
+        logging.info("Please specify a launch option, e.g. `--app=web`. Start with `--help` to see all options.")
 
 
 if __name__ == "__main__":
