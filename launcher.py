@@ -13,8 +13,8 @@ import webbrowser
 from pathlib import Path
 
 CONFIG_FILE = os.path.join("config.json")
-venv_name = "virtual_env"  # For downloading python packages
-venv_dir = Path.cwd() / venv_name  # Generate the path for the virtual environment
+venv_name = "venv_fmr"  # venv dedicated to fast music remover (fmr)
+venv_dir = Path.cwd() / venv_name
 DEFAULT_CONFIG = {
     "version": 1,
     "formatters": {
@@ -208,7 +208,7 @@ class DependencyHandler:
         return [f"pacman -S --needed --noconfirm {self.package_name.get('Windows', self.name)}"]
 
 
-# pkg-config should come before sndfie and nlohmann-json
+# pkg-config should come before sndfile and nlohmann-json
 dependencies = [
     DependencyHandler("cmake", {"Windows": "mingw-w64-x86_64-cmake"}, {"all": ["cmake --version"]}),
     DependencyHandler(
@@ -241,14 +241,18 @@ def check_msys2_installed():
 
 
 def check_internet_connectivity():
-    """For Windows check internet connectivity"""
     try:
-        logging.debug("Checking internet connectivity... ")
-        # Ping Google's public DNS server
-        run_command("ping -n 1 8.8.8.8")
+        logging.debug("Checking internet connectivity...")
+        os_name = platform.system()
+
+        if os_name == "Windows":
+            run_command("ping -n 1 8.8.8.8")
+        else:
+            run_command("ping -c 1 8.8.8.8")
+
         logging.debug("Internet connectivity OK")
     except subprocess.CalledProcessError:
-        logging.error("No internet connection detected.")
+        logging.error("Internet connection is required. Check your connection and restart.")
         sys.exit(1)
 
 
