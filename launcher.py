@@ -135,7 +135,6 @@ class DependencyHandler:
         """
         Checks if the dependency is installed. If not installs it if install arg is True.
         """
-        logging.info('Resolving project dependencies...')
         commands = self._get_check_commands(system)
         try:
             for cmd in commands:
@@ -417,12 +416,17 @@ def launch_web_application(system):
         else:
             python_path = str(venv_dir / "bin" / "python")
 
+        # Prepare a scoped (non-persistent) env var for the backend
+        env = os.environ.copy()
+        env["EXECUTED_BY_LAUNCHER"] = "1"
+
         # Start the backend
         app_process = subprocess.Popen(
             [python_path, "app.py"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            env=env,
         )
         atexit.register(app_process.terminate)
 
@@ -464,7 +468,8 @@ def main():
     setup_logging(args.debug_level, args.debug_file)
     logging.info("Starting setup...")
 
-    for dependency in dependencies:
+    logging.info('Resolving project dependencies...')
+    for dependency in dependencies:    
         dependency.ensure_dependency_installed(system, args.install_dependencies)
 
     if args.install_dependencies:
