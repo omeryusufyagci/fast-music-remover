@@ -23,9 +23,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fmt)
 
-# Set platform-specific dynamic library for df
+# Set platform-specific dynamic library for deepfilter
 if(APPLE)
-    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)
+    include(CheckCXXCompilerFlag)
+
+    # This fixes arch detection on macOS
+    check_cxx_compiler_flag("-arch arm64" COMPILER_SUPPORTS_ARM64)
+
+    if(COMPILER_SUPPORTS_ARM64 AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+        set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)
+    else()
+        message(FATAL_ERROR "Unsupported macOS architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+    endif()
 elseif(WIN32)
     set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/df.dll)
 elseif(UNIX)
