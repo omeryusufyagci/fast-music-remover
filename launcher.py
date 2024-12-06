@@ -406,15 +406,28 @@ def log_stream(stream, log_function):
     stream.close()
 
 
+def get_python_path():
+    """Find the Python executable path for the virtual environment wrt platform."""
+    paths_to_check = [
+        venv_dir / "Scripts" / "python.exe",  # win
+        venv_dir / "bin" / "python.exe",  # win
+        venv_dir / "bin" / "python",  # unix
+    ]
+
+    for path in paths_to_check:
+        if path.exists():
+            return str(path)
+
+    logging.error(f"Python executable not found in expected paths: {paths_to_check}")
+    sys.exit(1)
+
+
 def launch_web_application(system):
     try:
         if not venv_dir.exists():
             generate_virtualenv()
 
-        if system == "Windows":
-            python_path = str(venv_dir / "Scripts" / "python.exe")
-        else:
-            python_path = str(venv_dir / "bin" / "python")
+        python_path = get_python_path()
 
         # Prepare a scoped (non-persistent) env var for the backend
         env = os.environ.copy()
@@ -468,8 +481,8 @@ def main():
     setup_logging(args.debug_level, args.debug_file)
     logging.info("Starting setup...")
 
-    logging.info('Resolving project dependencies...')
-    for dependency in dependencies:    
+    logging.info("Resolving project dependencies...")
+    for dependency in dependencies:
         dependency.ensure_dependency_installed(system, args.install_dependencies)
 
     if args.install_dependencies:
