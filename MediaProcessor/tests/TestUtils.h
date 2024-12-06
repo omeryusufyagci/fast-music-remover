@@ -77,13 +77,13 @@ class TestConfigFile {
     fs::path m_rootPath = fs::path(TEST_MEDIA_DIR).parent_path().parent_path();
     nlohmann::json jsonObject = {
         {"deep_filter_path",
-         (m_rootPath / "res/deep-filter-0.5.6-x86_64-unknown-linux-musl").string()},
-        {"deep_filter_tarball_path", (m_rootPath / "res/DeepFilterNet3_ll_onnx.tar.gz")},
+         (m_rootPath / "res" / "deep-filter-0.5.6-x86_64-unknown-linux-musl").string()},
+        {"deep_filter_tarball_path", (m_rootPath / "res" / "DeepFilterNet3_ll_onnx.tar.gz").string()},
         {"deep_filter_encoder_path",
-         (m_rootPath / "res/DeepFilterNet3_ll_onnx/tmp/export/enc.onnx")},
+         (m_rootPath / "res" / "DeepFilterNet3_ll_onnx/tmp/export/enc.onnx").string()},
         {"deep_filter_decoder_path",
-         (m_rootPath / "res/DeepFilterNet3_ll_onnx/tmp/export/df_dec.onnx")},
-        {"ffmpeg_path", "/usr/bin/ffmpeg"},
+         (m_rootPath / "res" / "DeepFilterNet3_ll_onnx/tmp/export/df_dec.onnx").string()},
+        {"ffmpeg_path", "ffmpeg"},
         {"downloads_path", "downloads"},
         {"uploads_path", "uploads"},
         {"use_thread_cap", false},

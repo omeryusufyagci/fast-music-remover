@@ -13,7 +13,8 @@ if(NOT GTEST_FOUND)
 endif()
 
 # Setup test media directory
-set(TEST_MEDIA_DIR "${CMAKE_SOURCE_DIR}/tests/TestMedia" CACHE PATH "Path to test media files")
+file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/tests/TestMedia" TEST_MEDIA_DIR)
+set(TEST_MEDIA_DIR "${TEST_MEDIA_DIR}" CACHE PATH "Path to test media files")
 
 FetchContent_Declare(
     fmt
@@ -22,8 +23,28 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fmt)
 
+# Set platform-specific dynamic library for deepfilter
+if(APPLE)
+    include(CheckCXXCompilerFlag)
+
+    # This fixes arch detection on macOS
+    check_cxx_compiler_flag("-arch arm64" COMPILER_SUPPORTS_ARM64)
+
+    if(COMPILER_SUPPORTS_ARM64 AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+        set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)
+    else()
+        message(FATAL_ERROR "Unsupported macOS architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+    endif()
+elseif(WIN32)
+    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/df.dll)
+elseif(UNIX)
+    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.so)
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
+
 # Common libraries for all test targets
-set(COMMON_LIBRARIES gtest_main ${CMAKE_SOURCE_DIR}/lib/libdf.so ${SNDFILE_LIBRARIES} fmt::fmt)
+set(COMMON_LIBRARIES gtest_main ${DF_LIBRARY} ${SNDFILE_LIBRARIES} fmt::fmt)
 
 # Macro for adding a test executable
 macro(add_test_executable name)

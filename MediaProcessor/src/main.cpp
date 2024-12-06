@@ -1,8 +1,6 @@
 #include <iostream>
 
-#include "MediaProcessor.h"
-
-using namespace MediaProcessor;
+#include "Engine.h"
 
 int main(int argc, char* argv[]) {
     /**
@@ -38,8 +36,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    MediaProcessor::MediaProcessor processor(argv[1]);
-    if (!processor.process()) {
+    MediaProcessor::Engine engine(argv[1]);
+    if (!engine.processMedia()) {
         std::cerr << "Media processing failed." << std::endl;
         return 1;
     }

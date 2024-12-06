@@ -9,20 +9,22 @@ import yt_dlp
 from flask import Flask, jsonify, render_template, request, send_from_directory, url_for
 
 """
-This is the backend of the Fast Music Remover tool.
+This is the backend service for the Web application to provide seamless access to MediaProcessor's core features.
 
 Workflow:
-1) Accept a video URL or an uploaded video file from the user.
-   - If a URL is provided, download the video via `yt-dlp` and sanitize the filename.
-   - If a file is uploaded, save it directly to the configured upload directory after sanitizing the filename.
-
-2) Send a processing request to the `MediaProcessor` C++ binary.
-   - The `MediaProcessor` filters input file saves it in the same directory with a unique name.
-
+1) Handle the user-provided URL or file upload.
+2) Send a processing request to core, the `MediaProcessor` C++ binary.
 3) Serve the processed video on the frontend.
-   - A JSON response with the URL to the processed video is returned to the frontend, allowing the user to view or download the final output.
 """
 
+# Check immediately if the backend is launched via the official launcher
+if os.getenv("EXECUTED_BY_LAUNCHER") != "1":
+    logging.warning(
+        "It looks like app.py was not launched via the official launcher. "
+        "This may cause unexpected issues. It is highly recommended to use `launcher.py` to run the application."
+    )
+else:
+    logging.info("Backend service started by launcher.")
 
 app = Flask(__name__)
 
