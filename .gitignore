@@ -1,5 +1,8 @@
 uploads/
 downloads/
+venv*
+virtual*
+.DS_Store*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -5,7 +5,7 @@ add_executable(MediaProcessor
     ${CMAKE_SOURCE_DIR}/src/ConfigManager.cpp
     ${CMAKE_SOURCE_DIR}/src/AudioProcessor.cpp
     ${CMAKE_SOURCE_DIR}/src/VideoProcessor.cpp
-    ${CMAKE_SOURCE_DIR}/src/MediaProcessor.cpp
+    ${CMAKE_SOURCE_DIR}/src/Engine.cpp
     ${CMAKE_SOURCE_DIR}/src/Utils.cpp
     ${CMAKE_SOURCE_DIR}/src/CommandBuilder.cpp
     ${CMAKE_SOURCE_DIR}/src/HardwareUtils.cpp
@@ -27,7 +27,15 @@ if(APPLE)
         # set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dylib)
     endif()
 elseif(WIN32)
-    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dll.a) # .dll.a for linking, .dll for runtime
+    set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.dll.a) # for linktime
+    set(DF_DLL_PATH ${CMAKE_SOURCE_DIR}/lib/df.dll)     # for runtime
+    
+    # Ensure the dll is present with the binary
+    add_custom_command(TARGET MediaProcessor POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${DF_DLL_PATH}
+            $<TARGET_FILE_DIR:MediaProcessor>)
+
 elseif(UNIX)
     set(DF_LIBRARY ${CMAKE_SOURCE_DIR}/lib/libdf.so)
 else()
@@ -35,13 +43,22 @@ else()
 endif()
 
 
-target_link_libraries(MediaProcessor PRIVATE
+# Base libraries
+set(LIBRARIES
     Threads::Threads
-    ${SNDFILE_LIBRARIES}
     ${DF_LIBRARY}
     nlohmann_json::nlohmann_json
     fmt::fmt
 )
+
+# macos-specific library fixes 
+if(APPLE)
+    list(APPEND LIBRARIES /opt/homebrew/lib/libsndfile.dylib)
+else()
+    list(APPEND LIBRARIES ${SNDFILE_LIBRARIES})
+endif()
+
+target_link_libraries(MediaProcessor PRIVATE ${LIBRARIES})
 
 target_compile_options(MediaProcessor PRIVATE -D_GLIBCXX_USE_CXX23_ABI)
 
@@ -51,5 +68,4 @@ set_target_properties(MediaProcessor PROPERTIES
     INSTALL_RPATH "${CMAKE_SOURCE_DIR}/lib"
     BUILD_RPATH "${CMAKE_SOURCE_DIR}/lib"
     INSTALL_RPATH_USE_LINK_PATH TRUE
-    INTERPROCEDURAL_OPTIMIZATION TRUE
 )
