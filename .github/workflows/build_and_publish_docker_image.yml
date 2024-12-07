@@ -45,6 +45,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           docker buildx build \
+            --no-cache \
             --platform linux/amd64 \
             --tag ghcr.io/${{ github.repository_owner }}/fast-music-remover:macos-test \
             --load .
