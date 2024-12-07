@@ -1,4 +1,4 @@
-#include "MediaProcessor.h"
+#include "Engine.h"
 
 #include <iostream>
 
@@ -9,10 +9,10 @@
 
 namespace MediaProcessor {
 
-MediaProcessor::MediaProcessor(const std::filesystem::path& mediaPath)
+Engine::Engine(const std::filesystem::path& mediaPath)
     : m_mediaPath(std::filesystem::absolute(mediaPath)) {}
 
-bool MediaProcessor::process() {
+bool Engine::processMedia() {
     ConfigManager& configManager = ConfigManager::getInstance();
     if (!configManager.loadConfig("config.json")) {
         std::cerr << "Error: Could not load configuration." << std::endl;
@@ -33,7 +33,7 @@ bool MediaProcessor::process() {
     }
 }
 
-bool MediaProcessor::processAudio() {
+bool Engine::processAudio() {
     AudioProcessor audioProcessor(m_mediaPath, Utils::prepareAudioOutputPath(m_mediaPath));
     if (!audioProcessor.isolateVocals()) {
         std::cerr << "Failed to process audio." << std::endl;
@@ -44,7 +44,7 @@ bool MediaProcessor::processAudio() {
     return true;
 }
 
-bool MediaProcessor::processVideo() {
+bool Engine::processVideo() {
     auto [extractedVocalsPath, processedMediaPath] = Utils::prepareOutputPaths(m_mediaPath);
     AudioProcessor audioProcessor(m_mediaPath, extractedVocalsPath);
 
@@ -63,7 +63,7 @@ bool MediaProcessor::processVideo() {
     return true;
 }
 
-MediaType MediaProcessor::getMediaType() const {
+MediaType Engine::getMediaType() const {
     const std::string command =
         "ffprobe -loglevel error -show_entries stream=codec_type "
         "-of default=noprint_wrappers=1:nokey=1 \"" +
