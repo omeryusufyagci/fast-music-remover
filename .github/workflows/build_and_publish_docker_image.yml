@@ -29,6 +29,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker Image for Linux (amd64)
+        if: github.event_name == 'push'
         run: |
           docker build -t ghcr.io/${{ github.repository_owner }}/fast-music-remover:latest .
 
@@ -37,11 +38,18 @@ jobs:
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/fast-music-remover:latest
 
-      - name: Build Docker Image for macOS (amd64 workaround)
-        run: |
-          docker build --platform linux/amd64 -t ghcr.io/${{ github.repository_owner }}/fast-music-remover:macos-latest .
+      - name: Enable Buildx for Multi-Platform
+        uses: docker/setup-buildx-action@v2
 
-      - name: Push Docker Image for macOS (amd64 workaround)
-        if: github.event_name == 'push'
+      - name: Build Docker Image for macOS Test (amd64 workaround)
+        if: github.event_name == 'pull_request'
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/fast-music-remover:macos-latest
+          docker buildx build \
+            --platform linux/amd64 \
+            --tag ghcr.io/${{ github.repository_owner }}/fast-music-remover:macos-test \
+            --load .
+
+      - name: Push Docker Image for macOS Test (amd64 workaround)
+        if: github.event_name == 'pull_request'
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/fast-music-remover:macos-test
