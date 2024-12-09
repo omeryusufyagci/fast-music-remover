@@ -2,6 +2,7 @@
 #define FFMPEGCOMMANDBUILDER_H
 
 #include <filesystem>
+#include <sstream>
 
 #include "CommandBuilder.h"
 #include "FFmpegConfigManager.h"
@@ -21,7 +22,7 @@ class FFmpegCommandBuilder : public CommandBuilder {
      *
      * @param ffmpegConfig A reference to an instance of FFmpegConfigManager
      */
-    FFmpegCommandBuilder(FFmpegConfigManager& ffmpegConfig);
+    FFmpegCommandBuilder(const FFmpegConfigManager& ffmpegConfig);
 
     /**
      * @brief Adds overwrite flag
@@ -31,25 +32,29 @@ class FFmpegCommandBuilder : public CommandBuilder {
     FFmpegCommandBuilder& addOverwrite();
 
     /**
-     * @brief Adds input flag and input file path
+     * @brief Adds input flag and the input file path from FFmpegConfigManager
      *
      * @return A reference to the current object for method chaining
      */
-    FFmpegCommandBuilder& addInputFile(const fs::path& inputFile);
+    FFmpegCommandBuilder& addInputFile();
 
+    /**
+     * @brief Adds input flag and the given input file path
+     *
+     * @return A reference to the current object for method chaining
+     */
+    FFmpegCommandBuilder& addInputFile(const fs::path& inputFilePath);
     /**
      * @brief Adds output file path
      *
      * @return A reference to the current object for method chaining
      */
-    FFmpegCommandBuilder& addOutputFile(const fs::path& outputFile);
+    FFmpegCommandBuilder& addOutputFile();
 
     /**
      * @brief Adds audio codec flag and codec type
      *
      * @return A reference to the current object for method chaining
-     *
-     * @throws std::runtime_error If the audio codec is unknown
      */
     FFmpegCommandBuilder& addAudioCodec();
 
@@ -57,8 +62,6 @@ class FFmpegCommandBuilder : public CommandBuilder {
      * @brief Adds audio sample rate flag and sample rate
      *
      * @return A reference to the current object for method chaining
-     *
-     * @throws std::runtime_error If the rate is too low (rate <= 40000)
      */
     FFmpegCommandBuilder& addAudioSampleRate();
 
@@ -66,35 +69,72 @@ class FFmpegCommandBuilder : public CommandBuilder {
      * @brief Adds audio channels flag and number of channels
      *
      * @return A reference to the current object for method chaining
-     *
-     * @throws std::runtime_error If number of channels is less than 1
      */
     FFmpegCommandBuilder& addAudioChannels();
 
     /**
+     * @brief Adds position flag and the given start time
+     *
+     * @return A reference to the current object for method chaining
+     */
+    FFmpegCommandBuilder& addStartTime(const std::ostringstream& startTime);
+
+    /**
+     * @brief Adds duration flag and the given duration
+     *
+     * @return A reference to the current object for method chaining
+     */
+    FFmpegCommandBuilder& addDuration(const std::ostringstream& duration);
+    /**
+
      * @brief Adds video codec flag and codec type
      *
      * @return A reference to the current object for method chaining
-     *
-     * @throws std::runtime_error If the video codec is unknown
      */
     FFmpegCommandBuilder& addVideoCodec();
 
     /**
-     * @brief Constructs the command string from the added arguments and flags
+     * @brief Adds the chunk path
      *
-     * @return The FFmpeg command as a string
-     *
-     * @throws std::runtime_error If input or output file path is missing
+     * @return A reference to the current object for method chaining
      */
-    std::string build() const override;
+    FFmpegCommandBuilder& addChunkPath();
+
+    /**
+     * @brief Adds "-strict" flag with the configured strictness
+     *
+     * @return A reference to the current object for method chaining
+     */
+    FFmpegCommandBuilder& addCodecStrictness();
+
+    /**
+     * @brief Adds the stream with the given mapping
+     *
+     * @return A reference to the current object for method chaining
+     */
+    FFmpegCommandBuilder& addStream(const std::string map);
+
+    /**
+     * @brief Adds the -shortest flag
+     *
+     * @return A reference to the current object for method chaining
+     */
+    FFmpegCommandBuilder& addShortest();
+
+    /**
+     * @brief Adds the -shortest flag
+     *
+     * @return A reference to the current object for method chaining
+     */
+    FFmpegCommandBuilder& addFilterComplex(const std::vector<fs::path> processedChunkCol,
+                                           double overlapDuration);
 
    private:
-    FFmpegConfigManager& m_ffmpegConfig;
+    const FFmpegConfigManager& m_ffmpegConfig;
 
-    fs::path m_ffmpegPath;
-    fs::path m_inputFilePath;
-    fs::path m_outputFilePath;
+    std::string buildCrossfade(int chunkColSize, double overlapDuration) const;
+    std::string buildFilterComplex(const std::vector<fs::path> processedChunkCol,
+                                   double overlapDuration) const;
 };
 
 }  // namespace MediaProcessor

@@ -4,6 +4,9 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#include "ConfigManager.h"
 
 namespace fs = std::filesystem;
 
@@ -11,6 +14,7 @@ namespace MediaProcessor {
 
 enum class AudioCodec { AAC, MP3, FLAC, OPUS, UNKNOWN };
 enum class VideoCodec { H264, H265, VP8, VP9, UNKNOWN };
+enum class CodecStrictness { VERY, STRICT, NORMAL, UNOFFICIAL, EXPERIMENTAL };
 
 /**
  * @brief Manages FFmpeg-specific configurations and user settings
@@ -24,11 +28,13 @@ class FFmpegConfigManager {
 
     // Global Setters
     void setOverwrite(bool overwrite);
+    void setCodecStrictness(CodecStrictness strictness);
     void setInputFilePath(const fs::path inputFilePath);
     void setOutputFilePath(const fs::path outputFilePath);
 
     // Global Getters
     bool getOverwrite() const;
+    CodecStrictness getCodecStrictness() const;
     fs::path getInputFilePath() const;
     fs::path getOutputFilePath() const;
 
@@ -49,28 +55,45 @@ class FFmpegConfigManager {
     VideoCodec getVideoCodec() const;
 
     // Value Map Getters
-    std::unordered_map<AudioCodec, std::string>& getAudioCodecAsString();
-    std::unordered_map<VideoCodec, std::string>& getVideoCodecAsString();
+    const std::unordered_map<AudioCodec, std::string>& getAudioCodecAsString() const;
+    const std::unordered_map<VideoCodec, std::string>& getVideoCodecAsString() const;
+    const std::unordered_map<CodecStrictness, std::string>& getCodecStrictnessAsString() const;
+
+    friend class FFmpegController;
+
+   protected:
+    struct FFmpegGlobalSettings {
+        bool overwrite;
+        CodecStrictness strictness;
+        fs::path inputFilePath;
+        fs::path outputFilePath;
+
+        FFmpegGlobalSettings() : overwrite(false), strictness(CodecStrictness::EXPERIMENTAL) {}
+    } m_globalSettings;
+
+    struct FFmpegAudioSettings {
+        AudioCodec codec;
+        int sampleRate;
+        int numChannels;
+
+        FFmpegAudioSettings() : codec(AudioCodec::AAC), sampleRate(48000), numChannels(2) {}
+    } m_audioSettings;
+
+    struct FFmpegVideoSettings {
+        VideoCodec codec;
+
+        FFmpegVideoSettings() : codec(VideoCodec::H264) {}
+    } m_videoSettings;
+
+    // Update Global, Audio, or Video Settings
+    void updateSettings(const struct FFmpegGlobalSettings& globalSettings = FFmpegGlobalSettings(),
+                        const struct FFmpegAudioSettings& audioSettings = FFmpegAudioSettings(),
+                        const struct FFmpegVideoSettings& videoSettings = FFmpegVideoSettings());
 
    private:
     std::unordered_map<AudioCodec, std::string> m_audioCodecAsString;
     std::unordered_map<VideoCodec, std::string> m_videoCodecAsString;
-
-    struct FFmpegGlobalSettings {
-        bool overwrite = false;
-        fs::path inputFilePath;
-        fs::path outputFilePath;
-    } m_globalSettings;
-
-    struct FFmpegAudioSettings {
-        AudioCodec codec = AudioCodec::AAC;
-        int sampleRate = 48000;
-        int numChannels = 2;
-    } m_audioSettings;
-
-    struct FFmpegVideoSettings {
-        VideoCodec codec = VideoCodec::H264;
-    } m_videoSettings;
+    std::unordered_map<CodecStrictness, std::string> m_codecStrictnessAsString;
 };
 
 }  // namespace MediaProcessor
