@@ -28,32 +28,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Required for cross-platform builds with buildx to emulate foreign archs
       - name: Enable QEMU Emulation
         uses: docker/setup-qemu-action@v2
 
+      # Required for multi-arch image
       - name: Enable Buildx for Multi-Platform
         uses: docker/setup-buildx-action@v2
 
-      - name: Verify Buildx and QEMU
-        run: |
-          docker buildx version
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-          uname -m
-
-      - name: Build and Push Docker Image for Linux (amd64)
-        if: github.event_name == 'push'
+      # Build and Push Multi-Arch Image:
+      # Thanks to buildx, this image works for both archs (amd64/arm64)
+      # Docker resolves the arch per platform for us, via the manifest
+      - name: Build and Push Multi-Arch Image
         run: |
           docker buildx build \
-            --platform linux/amd64 \
+            --platform linux/amd64,linux/arm64 \
+            --no-cache \
             --tag ghcr.io/${{ github.repository_owner }}/fast-music-remover:latest \
             --push \
-            .
-
-      - name: Build Docker Image for macOS Test (amd64 workaround)
-        if: github.event_name == 'pull_request'
-        run: |
-          docker buildx build \
-            --platform linux/amd64 \
-            --tag ghcr.io/${{ github.repository_owner }}/fast-music-remover:macos-test \
-            --output=type=docker \
             .
