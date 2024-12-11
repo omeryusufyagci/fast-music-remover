@@ -1,7 +1,6 @@
 version: '3'
 services:
   fast_music_remover:
-    platform: linux/amd64
     build: .
     ports:
       - "8080:8080"
