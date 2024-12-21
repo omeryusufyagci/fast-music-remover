@@ -12,11 +12,17 @@ from flask import Flask, jsonify, render_template, request, send_from_directory,
 This is the backend of the Fast Music Remover tool.
 
 Workflow:
-1) Download YouTube video via `yt-dlp`
-2) Send a processing request to the `MediaProcessor` C++ binary, which uses DeepFilterNet for fast filtering
-3) Serve the processed video on the frontend
+1) Accept a video URL or an uploaded video file from the user.
+   - If a URL is provided, download the video via `yt-dlp` and sanitize the filename.
+   - If a file is uploaded, save it directly to the configured upload directory after sanitizing the filename.
 
+2) Send a processing request to the `MediaProcessor` C++ binary.
+   - The `MediaProcessor` filters input file saves it in the same directory with a unique name.
+
+3) Serve the processed video on the frontend.
+   - A JSON response with the URL to the processed video is returned to the frontend, allowing the user to view or download the final output.
 """
+
 
 app = Flask(__name__)
 
@@ -26,13 +32,11 @@ with open("config.json") as config_file:
 
 # Define base paths using absolute references
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
 DOWNLOADS_PATH = os.path.abspath(config["downloads_path"])
-UPLOADS_PATH = os.path.abspath(config.get("uploads_path", os.path.join(BASE_DIR, "uploads")))  # Defaults to uploads/
+UPLOADS_PATH = os.path.abspath(config.get("uploads_path", os.path.join(BASE_DIR, "uploads")))
 
 DEEPFILTERNET_PATH = os.path.abspath(config["deep_filter_path"])
 FFMPEG_PATH = os.path.abspath(config["ffmpeg_path"])
-
 
 os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
 app.config["UPLOAD_FOLDER"] = UPLOADS_PATH
@@ -63,7 +67,7 @@ class Utils:
 
     @staticmethod
     def validate_url(url):
-        """Basic URL validation"""
+        """Basic URL validation."""
         parsed_url = urlparse(url)
         return all([parsed_url.scheme, parsed_url.netloc])
 
@@ -109,63 +113,126 @@ class MediaHandler:
             return None
 
     @staticmethod
-    def process_with_media_processor(video_path):
-        """Run the C++ MediaProcessor binary with the video path"""
+    def detect_media_type(file_path):
+        """
+        Uses ffprobe to detect whether the media is audio or video.
 
+        # TODO:
+        # This functionality already exists in the core, and we should expose it in the future.
+        # This is to be revised when that happens.
+        """
         try:
-            logging.info(f"Processing video at path: {video_path}")
+            command = [
+                "ffprobe",
+                "-loglevel",
+                "error",
+                "-show_entries",
+                "stream=codec_type",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                file_path,
+            ]
+            result = subprocess.run(command, capture_output=True, text=True, check=True)
+            output = result.stdout.strip()
+
+            if "video" in output:
+                return "video"
+            elif "audio" in output:
+                return "audio"
+            else:
+                return None
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Error detecting media type: {e.stderr}")
+            return None
+
+    @staticmethod
+    def process_with_media_processor(media_path):
+        """Process the given file with the MediaProcessor (C++ binary)."""
+        try:
+            logging.info(f"Processing media file with path: {media_path}")
 
             result = subprocess.run(
-                ["./MediaProcessor/build/MediaProcessor", str(video_path)], capture_output=True, text=True
+                ["./MediaProcessor/build/MediaProcessor", str(media_path)], capture_output=True, text=True
             )
 
+            # Propagate MediaProcessor outputs
+            logging.debug(f"MediaProcessor stdout: {result.stdout}")
+            logging.error(f"MediaProcessor stderr: {result.stderr}")
+
             if result.returncode != 0:
-                logging.error(f"Error processing video: {result.stderr}")
+                logging.error("MediaProcessor returned a non-zero exit code.")
                 return None
 
-            # Parse the output to get the processed video path (TODO: encapsulate)
+            # Parse output
             for line in result.stdout.splitlines():
-                if "Video processed successfully" in line:
-                    processed_video_path = line.split(": ", 1)[1].strip()
+                if "Video processed successfully" in line or "Audio processed successfully" in line:
+                    processed_media_path = line.split(": ", 1)[1].strip()
 
-                    # Remove any surrounding quotes (TODO: encapsulate)
-                    if processed_video_path.startswith('"') and processed_video_path.endswith('"'):
-                        processed_video_path = processed_video_path[1:-1]
-                    processed_video_path = os.path.abspath(processed_video_path)
-                    logging.info(f"Processed video path returned: {processed_video_path}")
-                    return processed_video_path
+                    # Remove any surrounding quotes
+                    if processed_media_path.startswith('"') and processed_media_path.endswith('"'):
+                        processed_media_path = processed_media_path[1:-1]
 
+                    processed_media_path = os.path.abspath(processed_media_path)
+                    logging.info(f"Processed media path returned: {processed_media_path}")
+                    return processed_media_path
+
+            logging.error("No processed file path found in MediaProcessor output.")
             return None
+
         except Exception as e:
-            logging.error(f"Error running C++ binary: {e}")
+            logging.error(f"Error running MediaProcessor binary: {e}")
             return None
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        url = request.form["url"]
+        url = request.form.get("url")
+        file = request.files.get("file")
 
-        if not Utils.validate_url(url):
-            return jsonify({"status": "error", "message": "Invalid URL provided."})
+        # Ensure only one of URL or file is provided
+        if not url and not file:
+            return jsonify({"status": "error", "message": "Please provide a URL or upload a file."})
+        if url and file:
+            return jsonify({"status": "error", "message": "Please provide only one input: either a URL or a file."})
 
+        # Handle URL case
         if url:
+            if not Utils.validate_url(url):
+                return jsonify({"status": "error", "message": "Invalid URL provided."})
+
             video_path = MediaHandler.download_media(url)
-
             if not video_path:
-                return jsonify({"status": "error", "message": "Failed to download video."})
-
-            processed_video_path = MediaHandler.process_with_media_processor(video_path)
-
-            if processed_video_path:
                 return jsonify(
-                    {
-                        "status": "completed",
-                        "video_url": url_for("serve_video", filename=os.path.basename(processed_video_path)),
-                    }
+                    {"status": "error", "message": "Failed to download video: URL may be invalid or restricted."}
                 )
-            else:
-                return jsonify({"status": "error", "message": "Failed to process video."})
+
+        # Handle file upload case
+        elif file:
+            sanitized_filename = Utils.sanitize_filename(file.filename)
+            video_path = os.path.join(app.config["UPLOAD_FOLDER"], sanitized_filename)
+            try:
+                file.save(video_path)
+            except Exception as e:
+                logging.error(f"Error saving uploaded file: {e}")
+                return jsonify({"status": "error", "message": "Failed to save uploaded file."})
+
+        # Process video
+        processed_video_path = MediaHandler.process_with_media_processor(video_path)
+        if not processed_video_path:
+            return jsonify({"status": "error", "message": "Failed to process video."})
+
+        media_type = MediaHandler.detect_media_type(processed_video_path)
+        if not media_type:
+            return jsonify({"status": "error", "message": "Unsupported or unknown media type."})
+
+        return jsonify(
+            {
+                "status": "completed",
+                "media_url": url_for("serve_video", filename=os.path.basename(processed_video_path)),
+                "file_type": media_type,
+            }
+        )
 
     return render_template("index.html")
 
@@ -173,7 +240,6 @@ def index():
 @app.route("/video/<filename>")
 def serve_video(filename):
     try:
-        # Construct the abs path for the file to be served (TODO: encapsulate)
         file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         abs_file_path = os.path.abspath(file_path)
         logging.debug(f"Attempting to serve video from path: {abs_file_path}")
@@ -182,7 +248,6 @@ def serve_video(filename):
             logging.error(f"File does not exist: {abs_file_path}")
             return jsonify({"status": "error", "message": "File not found."}), 404
 
-        # Serve the file from the uploads directory
         return send_from_directory(directory=app.config["UPLOAD_FOLDER"], path=filename, mimetype="video/mp4")
     except Exception as e:
         logging.error(f"Error serving video: {e}")

@@ -6,30 +6,40 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y build-essential cmake ffmpeg wget pkg-config \
                        libavcodec-dev libavformat-dev libavfilter-dev \
-                       libavdevice-dev libswscale-dev libsndfile-dev && \
+                       libavdevice-dev libswscale-dev libsndfile-dev git && \
     apt-get clean
-
-# pkg manager doesn't find this?
-RUN mkdir -p /usr/include/nlohmann && \
-    wget https://github.com/nlohmann/json/releases/download/v3.10.5/json.hpp -O /usr/include/nlohmann/json.hpp
 
 WORKDIR /app
 
-# Copy the project into the container/app
+# Copy the project into the container
 COPY . /app
 
-# Compile the C++ project with a fresh CMakeCache (issues with cache not matching source)
+# Handle library wrt arch
+# This is used in CI to avoid having separate images per arch
+ARG TARGETPLATFORM
+RUN echo "Detected platform: ${TARGETPLATFORM}" && \
+    case "${TARGETPLATFORM}" in \
+      "linux/amd64") cp /app/MediaProcessor/lib/libdf-linux-amd64.so /app/MediaProcessor/lib/libdf.so ;; \
+      "linux/arm64") cp /app/MediaProcessor/lib/libdf-linux-arm64.so /app/MediaProcessor/lib/libdf.so ;; \
+      *) echo "Unsupported platform: ${TARGETPLATFORM}" && exit 1 ;; \
+    esac
+
+# Compile the C++ project with a fresh CMakeCache
 RUN mkdir -p MediaProcessor/build && \
     cd MediaProcessor/build && \
-    rm -rf CMakeCache.txt && \
+    rm -rf CMakeCache.txt CMakeFiles _deps && \
     cmake .. && \
     make
 
 # Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Set Flask environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=development
 
+# Expose the port for Flask
 EXPOSE 8080
+
+# Run Flask application
 CMD ["flask", "run", "--host=0.0.0.0", "--port=8080"]

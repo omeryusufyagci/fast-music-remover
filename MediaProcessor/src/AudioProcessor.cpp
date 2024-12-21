@@ -9,8 +9,6 @@
 #include <thread>
 
 #include "CommandBuilder.h"
-#include "ConfigManager.h"
-#include "DeepFilterNetFFI.h"
 #include "ThreadPool.h"
 #include "Utils.h"
 
@@ -21,21 +19,24 @@ namespace MediaProcessor {
 AudioProcessor::AudioProcessor(const fs::path& inputVideoPath, const fs::path& outputAudioPath)
     : m_inputVideoPath(inputVideoPath),
       m_outputAudioPath(outputAudioPath),
-      m_overlapDuration(DEFAULT_OVERLAP_DURATION) {
+      m_overlapDuration(DEFAULT_OVERLAP_DURATION),
+      m_configManager(ConfigManager::getInstance()) {
     m_outputPath = m_outputAudioPath.parent_path();
     m_chunksPath = m_outputPath / "chunks";
-    m_processedChunksDir = m_outputPath / "processed_chunks";
+    m_processedChunksPath = m_outputPath / "processed_chunks";
 
-    m_numChunks = ConfigManager::getInstance().getOptimalThreadCount();
+    m_numChunks = m_configManager.getOptimalThreadCount();
     std::cout << "INFO: using " << m_numChunks << " threads." << std::endl;
+
+    m_filterAttenuationLimit = m_configManager.getFilterAttenuationLimit();
+    std::cout << "INFO: using " << m_filterAttenuationLimit << " as filter attenaution limit."
+              << std::endl;
 }
 
 bool AudioProcessor::isolateVocals() {
     /*
      * Extracts vocals from a video by chunking, parallel processing, and merging the audio.
      */
-
-    ConfigManager& configManager = ConfigManager::getInstance();
 
     // Ensure output directory exists and remove output file if it exists
     Utils::ensureDirectoryExists(m_outputPath);
@@ -68,14 +69,13 @@ bool AudioProcessor::isolateVocals() {
 
     // Intermediary files
     fs::remove_all(m_chunksPath);
-    fs::remove_all(m_processedChunksDir);
+    fs::remove_all(m_processedChunksPath);
 
     return true;
 }
 
 bool AudioProcessor::extractAudio() {
-    ConfigManager& configManager = ConfigManager::getInstance();
-    fs::path ffmpegPath = configManager.getFFmpegPath();
+    fs::path ffmpegPath = m_configManager.getFFmpegPath();
 
     // Extract the audio with FFmpeg
     CommandBuilder cmd;
@@ -97,8 +97,7 @@ bool AudioProcessor::extractAudio() {
 }
 
 bool AudioProcessor::splitAudioIntoChunks() {
-    ConfigManager& configManager = ConfigManager::getInstance();
-    fs::path ffmpegPath = configManager.getFFmpegPath();
+    fs::path ffmpegPath = m_configManager.getFFmpegPath();
 
     Utils::ensureDirectoryExists(m_chunksPath);
 
@@ -139,21 +138,20 @@ bool AudioProcessor::generateChunkFile(int index, const double startTime, const 
         return false;
     }
 
-    m_chunkPathCol.push_back(chunkPath);
+    m_chunkColPath.push_back(chunkPath);
     return true;
 }
 
 bool AudioProcessor::invokeDeepFilter(fs::path chunkPath) {
-    ConfigManager& configManager = ConfigManager::getInstance();
-    const fs::path deepFilterPath = configManager.getDeepFilterPath();
-    const fs::path deepFilterTarballPath = configManager.getDeepFilterTarballPath();
+    const fs::path deepFilterPath = m_configManager.getDeepFilterPath();
+    const fs::path deepFilterTarballPath = m_configManager.getDeepFilterTarballPath();
 
     // TODO: implement with DeepFilterCommandBuilder once base class is updated (#51)
     // `--compensate-delay` ensures the audio remains in sync after filtering
     CommandBuilder cmd;
     cmd.addArgument(deepFilterPath.string());
     cmd.addFlag("--compensate-delay");
-    cmd.addFlag("--output-dir", m_processedChunksDir.string());
+    cmd.addFlag("--output-dir", m_processedChunksPath.string());
     cmd.addArgument(chunkPath.string());
 
     if (!Utils::runCommand(cmd.build())) {
@@ -165,43 +163,28 @@ bool AudioProcessor::invokeDeepFilter(fs::path chunkPath) {
     return true;
 }
 
-bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath) {
-    // TODO: think about the method name
-
-    ConfigManager& configManager = ConfigManager::getInstance();
-    const fs::path deepFilterTarballPath = configManager.getDeepFilterTarballPath();
-
-    DFState* df_state = df_create(deepFilterTarballPath.c_str(), 100.0f, nullptr);
-    size_t frameLength = df_get_frame_length(df_state);
-
-    // Open the input file with SNDFILE
-    // TODO: extract into a utility
+bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath, DFState* df_state,
+                                         std::vector<float>& inputBuffer,
+                                         std::vector<float>& outputBuffer) {
     SF_INFO sfInfoIn;
     SNDFILE* inputFile = sf_open(chunkPath.c_str(), SFM_READ, &sfInfoIn);
     if (!inputFile) {
         std::cerr << "Error: Could not open input WAV file: " << chunkPath << std::endl;
-        df_free(df_state);
         return false;
     }
 
-    // Prepare output file with SNDFILE
-    // TODO: extract into a utility
-    SF_INFO sfInfoOut = sfInfoIn;
-    fs::path processedChunkPath = m_processedChunksDir / chunkPath.filename();
-    SNDFILE* outputFile = sf_open(processedChunkPath.c_str(), SFM_WRITE, &sfInfoOut);
+    // Prepare output file
+    fs::path processedChunkPath = m_processedChunksPath / chunkPath.filename();
+    SNDFILE* outputFile = sf_open(processedChunkPath.c_str(), SFM_WRITE, &sfInfoIn);
     if (!outputFile) {
         std::cerr << "Error: Could not open output WAV file: " << processedChunkPath << std::endl;
         sf_close(inputFile);
-        df_free(df_state);
         return false;
     }
 
-    std::vector<float> inputBuffer(frameLength);
-    std::vector<float> outputBuffer(frameLength);
-
-    // Process the audio as a stream
+    // Process frames
     sf_count_t numFrames;
-    while ((numFrames = sf_readf_float(inputFile, inputBuffer.data(), frameLength)) > 0) {
+    while ((numFrames = sf_readf_float(inputFile, inputBuffer.data(), inputBuffer.size())) > 0) {
         df_process_frame(df_state, inputBuffer.data(), outputBuffer.data());
         sf_writef_float(outputFile, outputBuffer.data(), numFrames);
     }
@@ -209,36 +192,60 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath) {
     sf_close(inputFile);
     sf_close(outputFile);
 
-    df_free(df_state);
-
     return true;
 }
 
 bool AudioProcessor::filterChunks() {
-    Utils::ensureDirectoryExists(m_processedChunksDir);
+    Utils::ensureDirectoryExists(m_processedChunksPath);
+
+    const auto deepFilterTarballPath = m_configManager.getDeepFilterTarballPath();
+
+    try {
+        m_filterAttenuationLimit = m_configManager.getFilterAttenuationLimit();
+    } catch (std::runtime_error& ex) {
+        std::cout << "Error while getting filter_attenuation_limit: " << ex.what() << std::endl;
+        return false;
+    }
 
     ThreadPool pool(m_numChunks);
+    std::vector<std::future<bool>> results;
 
-    std::vector<std::future<void>> results;
     for (int i = 0; i < m_numChunks; ++i) {
         results.emplace_back(pool.enqueue([&, i]() {
-            fs::path chunkPath = m_chunkPathCol[i];
+            // Per-thread DFState instance
+            DFState* df_state =
+                df_create(deepFilterTarballPath.c_str(), m_filterAttenuationLimit, nullptr);
+            if (!df_state) {
+                std::cerr << "Error: Failed to insantiate DFState in thread." << std::endl;
+                return false;
+            }
 
-            invokeDeepFilter(chunkPath);
-            // invokeDeepFilterFFI(chunkPath);  // RT API still under validation
+            size_t frameLength = df_get_frame_length(df_state);
+            std::vector<float> inputBuffer(frameLength);
+            std::vector<float> outputBuffer(frameLength);
+
+            bool success =
+                invokeDeepFilterFFI(m_chunkColPath[i], df_state, inputBuffer, outputBuffer);
+            df_free(df_state);
+            return success;
         }));
     }
 
-    // Block until all threads are done
+    // Wait for all threads to complete
+    bool allSuccess = true;
     for (auto& result : results) {
-        result.get();
+        allSuccess &= result.get();
     }
 
-    // Prepare paths for processed chunks
-    for (int i = 0; i < m_numChunks; ++i) {
-        fs::path chunkPath = m_chunkPathCol[i];
-        fs::path processedChunkPath = m_processedChunksDir / chunkPath.filename();
-        m_processedChunkCol.push_back(processedChunkPath);
+    if (!allSuccess) {
+        std::cerr << "Error: One or more chunks failed to process." << std::endl;
+        return false;
+    }
+
+    // Update processed chunk paths
+    for (const auto& chunkPath : m_chunkColPath) {
+        fs::path processedChunkPath = m_processedChunksPath / chunkPath.filename();
+        m_processedChunkColPath.push_back(processedChunkPath);
     }
 
     return true;
@@ -266,12 +273,12 @@ std::string AudioProcessor::buildFilterComplex() const {
     std::string filterComplex = "";
     int filterIndex = 0;
 
-    if (m_processedChunkCol.size() < 2) {
+    if (m_processedChunkColPath.size() < 2) {
         return filterComplex;  // Return empty string if not enough chunks
     }
 
     // TODO: extract this into an `applyCrossFade()` method.
-    for (int i = 0; i < static_cast<int>(m_processedChunkCol.size()) - 1; ++i) {
+    for (int i = 0; i < static_cast<int>(m_processedChunkColPath.size()) - 1; ++i) {
         if (i == 0) {
             // Generate a `crossfade` for the first chunk pair (0 and 1)
             filterComplex += "[" + std::to_string(i) + ":a][" + std::to_string(i + 1) +
@@ -293,18 +300,17 @@ std::string AudioProcessor::buildFilterComplex() const {
 }
 
 bool AudioProcessor::mergeChunks() {
-    ConfigManager& configManager = ConfigManager::getInstance();
-    fs::path ffmpegPath = configManager.getFFmpegPath();
+    fs::path ffmpegPath = m_configManager.getFFmpegPath();
 
     // Merge processed chunks with `crossfade`
     CommandBuilder cmd;
     cmd.addArgument(ffmpegPath.string());
     cmd.addFlag("-y");
-    for (const auto& chunkPath : m_processedChunkCol) {
+    for (const auto& chunkPath : m_processedChunkColPath) {
         cmd.addFlag("-i", chunkPath.string());
     }
 
-    if (static_cast<int>(m_processedChunkCol.size()) >= 2) {
+    if (static_cast<int>(m_processedChunkColPath.size()) >= 2) {
         cmd.addFlag("-filter_complex", buildFilterComplex());
         cmd.addFlag("-map", "[outa]");
     }

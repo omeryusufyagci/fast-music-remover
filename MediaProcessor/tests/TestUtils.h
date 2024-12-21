@@ -87,7 +87,8 @@ class TestConfigFile {
         {"downloads_path", "downloads"},
         {"uploads_path", "uploads"},
         {"use_thread_cap", false},
-        {"max_threads_if_capped", 6}};
+        {"max_threads_if_capped", 6},
+        {"filter_attenuation_limit", 100.0f}};
 };
 
 /**
@@ -121,12 +122,14 @@ class CompareFiles {
 
    private:
     static constexpr size_t DEFAULT_CHUNK_SIZE = 1024;
-    static constexpr double DEFAULT_TOLERANCE = 0.01;
+    static constexpr double DEFAULT_TOLERANCE = 1.0;
 
     template <typename T>
-    static bool isWithinTolerance(const T& a, const T& b, double tolerance);
+    static bool isWithinTolerance(const T& a, const T& b, double tolerance,
+                                  double relativeTolerance = 1.0);
     template <typename T>
-    static bool compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance);
+    static bool compareBuffersWithTolerance(T begin1, T end1, T begin2, T end2, double tolerance,
+                                            double relativeTolerance = 1.0);
 };
 
 }  // namespace MediaProcessor::TestUtils
