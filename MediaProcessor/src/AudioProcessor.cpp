@@ -167,7 +167,9 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath, DFState* df_state,
                                          std::vector<float>& inputBuffer,
                                          std::vector<float>& outputBuffer) {
     SF_INFO sfInfoIn;
-    SNDFILE* inputFile = sf_open(chunkPath.c_str(), SFM_READ, &sfInfoIn);
+    // First Convert to string
+    // On windows c_str converts to utf_16 but sf_open requires utf_8
+    SNDFILE* inputFile = sf_open(chunkPath.string().c_str(), SFM_READ, &sfInfoIn);
     if (!inputFile) {
         std::cerr << "Error: Could not open input WAV file: " << chunkPath << std::endl;
         return false;
@@ -175,7 +177,7 @@ bool AudioProcessor::invokeDeepFilterFFI(fs::path chunkPath, DFState* df_state,
 
     // Prepare output file
     fs::path processedChunkPath = m_processedChunksPath / chunkPath.filename();
-    SNDFILE* outputFile = sf_open(processedChunkPath.c_str(), SFM_WRITE, &sfInfoIn);
+    SNDFILE* outputFile = sf_open(processedChunkPath.string().c_str(), SFM_WRITE, &sfInfoIn);
     if (!outputFile) {
         std::cerr << "Error: Could not open output WAV file: " << processedChunkPath << std::endl;
         sf_close(inputFile);
@@ -214,7 +216,7 @@ bool AudioProcessor::filterChunks() {
         results.emplace_back(pool.enqueue([&, i]() {
             // Per-thread DFState instance
             DFState* df_state =
-                df_create(deepFilterTarballPath.c_str(), m_filterAttenuationLimit, nullptr);
+                df_create(deepFilterTarballPath.string().c_str(), m_filterAttenuationLimit, nullptr);
             if (!df_state) {
                 std::cerr << "Error: Failed to insantiate DFState in thread." << std::endl;
                 return false;

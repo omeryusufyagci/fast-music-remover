@@ -354,7 +354,7 @@ class DependencyHandler:
         return [f"brew install {self.package_name.get('Darwin', self.name)}"]
 
     def _get_install_commands_windows(self):
-        MSYS2.ensure_installed()
+        MSYS2.ensure_installed("Windows")
         return [f"pacman -S --needed --noconfirm {self.package_name.get('Windows', self.name)}"]
 
 
@@ -387,8 +387,8 @@ required_dependencies = [
         "Python Dependencies",
         check_cmd={"all": [check_python_dependecies_installed]},
         install_cmd={
-            "Windows": [f"{str(get_virutalenv_folder()/ "pip.exe")} install -r requirements.txt"],
-            "all": [f"{str(get_virutalenv_folder()/ "pip")} install -r requirements.txt"],
+            "Windows": [f"{str(get_virutalenv_folder()/ 'pip.exe')} install -r requirements.txt"],
+            "all": [f"{str(get_virutalenv_folder()/ 'pip')} install -r requirements.txt"],
         },
     ),
 ]
