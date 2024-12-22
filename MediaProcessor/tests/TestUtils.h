@@ -83,7 +83,7 @@ class TestConfigFile {
          (m_rootPath / "res/DeepFilterNet3_ll_onnx/tmp/export/enc.onnx")},
         {"deep_filter_decoder_path",
          (m_rootPath / "res/DeepFilterNet3_ll_onnx/tmp/export/df_dec.onnx")},
-        {"ffmpeg_path", "/usr/bin/ffmpeg"},
+        {"ffmpeg_path", "ffmpeg"},
         {"downloads_path", "downloads"},
         {"uploads_path", "uploads"},
         {"use_thread_cap", false},

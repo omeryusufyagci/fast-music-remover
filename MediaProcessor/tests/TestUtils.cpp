@@ -80,12 +80,12 @@ bool CompareFiles::compareFilesByteByByte(const fs::path& filePath1, const fs::p
 bool CompareFiles::compareAudioFiles(const fs::path& filePath1, const fs::path& filePath2,
                                      double tolerance, size_t chunkSize) {
     SF_INFO sfInfo1, sfInfo2;
-    SNDFILE* sndFile1 = sf_open(filePath1.c_str(), SFM_READ, &sfInfo1);
+    SNDFILE* sndFile1 = sf_open(filePath1.string().c_str(), SFM_READ, &sfInfo1);
     if (!sndFile1) {
         throw std::runtime_error("Failed to open file 1: " + filePath1.string());
     }
 
-    SNDFILE* sndFile2 = sf_open(filePath2.c_str(), SFM_READ, &sfInfo2);
+    SNDFILE* sndFile2 = sf_open(filePath2.string().c_str(), SFM_READ, &sfInfo2);
     if (!sndFile2) {
         sf_close(sndFile1);
         throw std::runtime_error("Failed to open file 2: " + filePath2.string());

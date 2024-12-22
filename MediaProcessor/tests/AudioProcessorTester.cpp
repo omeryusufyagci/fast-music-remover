@@ -24,6 +24,7 @@ class AudioProcessorTester : public ::testing::Test {
     }
 
     void SetUp() override {
+        testMediaPath.make_preferred();
         fs::path currentPath = fs::current_path();
 
         testVideoPath = testMediaPath / "test_video.mkv";
