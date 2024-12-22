@@ -12,9 +12,9 @@ import time
 import webbrowser
 from pathlib import Path
 
-CONFIG_FILE = os.path.join("config.json")
-venv_name = "virtual_env"  # For downloading python packages
-venv_dir = Path.cwd() / venv_name  # Generate the path for the virtual environment
+CONFIG_FILE = Path("config.json")
+VENV_NAME = "virtual_env"  # For downloading python packages
+VENV_DIR = Path.cwd() / VENV_NAME  # Generate the path for the virtual environment
 DEFAULT_CONFIG = {
     "version": 1,
     "formatters": {
@@ -53,6 +53,7 @@ def run_command(command, cwd=None):
 
     Args:
         command (str): The command to run.
+        cwd (str, optional): The working directory. Defaults to None.
 
     Raises:
         subprocess.CalledProcessError: If any command fails.
@@ -305,7 +306,7 @@ def install_msys2():
         logging.error(f"Error installing MSYS2: {e}", exc_info=True)
         sys.exit(1)
     finally:
-        if os.path.exists(installer_name):
+        if Path.exists(installer_name):
             os.remove(installer_name)
 
 
@@ -318,22 +319,22 @@ def check_MediaProcessor(system):
 
 
 def generate_virtualenv():
-    logging.info(f"Generating virtual environment at: {venv_dir}")
-    run_command(f"{sys.executable} -m venv {str(venv_dir)} --system-site-packages")
+    logging.info(f"Generating virtual environment at: {VENV_DIR}")
+    run_command(f"{sys.executable} -m venv {str(VENV_DIR)} --system-site-packages")
     logging.info("Successfully generated Virtual environment.")
 
 
 def install_python_dependencies(system):
     try:
-        if not venv_dir.exists():
+        if not VENV_DIR.exists():
             generate_virtualenv()
 
         logging.info("Installing Python dependencies...")
 
         if system == "Windows":
             # Check for both `Scripts` and `bin` folders.
-            pip_scripts_path = venv_dir / "Scripts" / "pip.exe"
-            pip_bin_path = venv_dir / "bin" / "pip.exe"
+            pip_scripts_path = VENV_DIR / "Scripts" / "pip.exe"
+            pip_bin_path = VENV_DIR / "bin" / "pip.exe"
 
             if not pip_scripts_path.exists() and not pip_bin_path.exists():
                 logging.error(f"pip not found. Searched paths: [{pip_scripts_path}] and [{pip_bin_path}]")
@@ -345,7 +346,7 @@ def install_python_dependencies(system):
                 pip_path = pip_scripts_path
 
         else:
-            pip_path = venv_dir / "bin" / "pip"
+            pip_path = VENV_DIR / "bin" / "pip"
             if not pip_path.exists():
                 logging.error(f"pip not found. Searched paths: [{pip_path}]")
                 sys.exit(1)
@@ -360,8 +361,8 @@ def install_python_dependencies(system):
 def build_cpp_dependencies():
     try:
         logging.info("Building MediaProcessor...")
-        build_dir = os.path.join("MediaProcessor", "build")
-        if not os.path.exists(build_dir):
+        build_dir = Path.join("MediaProcessor", "build")
+        if not Path.exists(build_dir):
             os.makedirs(build_dir)
 
         run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=build_dir)
@@ -403,13 +404,13 @@ def log_stream(stream, log_function):
 
 def launch_web_application(system):
     try:
-        if not venv_dir.exists():
+        if not VENV_DIR.exists():
             generate_virtualenv()
 
         if system == "Windows":
-            python_path = str(venv_dir / "Scripts" / "python.exe")
+            python_path = str(VENV_DIR / "Scripts" / "python.exe")
         else:
-            python_path = str(venv_dir / "bin" / "python")
+            python_path = str(VENV_DIR / "bin" / "python")
 
         # Start the backend
         app_process = subprocess.Popen(
@@ -453,6 +454,11 @@ def main():
     )
     parser.add_argument("--debug-file", action="store_true", help="Set the debug file.")
     args = parser.parse_args()
+
+    """
+    Initialise logging
+    check dependency
+    """
 
     system = platform.system()
     setup_logging(args.debug_level, args.debug_file)
