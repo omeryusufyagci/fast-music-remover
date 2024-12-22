@@ -215,8 +215,8 @@ bool AudioProcessor::filterChunks() {
     for (int i = 0; i < m_numChunks; ++i) {
         results.emplace_back(pool.enqueue([&, i]() {
             // Per-thread DFState instance
-            DFState* df_state =
-                df_create(deepFilterTarballPath.string().c_str(), m_filterAttenuationLimit, nullptr);
+            DFState* df_state = df_create(deepFilterTarballPath.string().c_str(),
+                                          m_filterAttenuationLimit, nullptr);
             if (!df_state) {
                 std::cerr << "Error: Failed to insantiate DFState in thread." << std::endl;
                 return false;
