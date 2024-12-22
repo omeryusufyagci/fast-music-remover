@@ -10,11 +10,13 @@ import sys
 import threading
 import time
 import webbrowser
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 CONFIG_FILE = Path("config.json")
 VENV_NAME = "virtual_env"  # For downloading python packages
 VENV_DIR = Path.cwd() / VENV_NAME  # Generate the path for the virtual environment
+MEDIAPROCESSOR_PATH = Path("MediaProcessor") / "build"
 DEFAULT_CONFIG = {
     "version": 1,
     "formatters": {
@@ -47,7 +49,7 @@ def setup_logging(log_level, log_file=False):
     logging.config.dictConfig(DEFAULT_CONFIG)
 
 
-def run_command(command, cwd=None):
+def run_command(command: str, cwd=None):
     """
     Executes a shell command.
 
@@ -76,6 +78,142 @@ def run_command(command, cwd=None):
         raise subprocess.CalledProcessError(process.returncode, command)
 
 
+def check_internet_connectivity(system: str) -> bool:
+    """
+    Check if the system has internet connectivity by pinging Google's public DNS server.
+    """
+    try:
+        if system == "Windows":
+            cmd = "ping -n 1 8.8.8.8"
+        else:
+            cmd = "ping -c 1 8.8.8.8"
+        logging.debug("Checking internet connectivity... ")
+        run_command(cmd)
+        logging.debug("Internet connectivity OK")
+        return True
+
+    except Exception as e:
+        logging.error("No internet connection detected.")
+        logging.debug(f"Error: {e}")
+        return False
+
+
+def install_msys2():
+    try:
+        installer_url = (
+            "https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe"
+        )
+        installer_name = "msys2-installer.exe"
+
+        msys2_root_path = "C:\\msys64"
+
+        logging.info("Downloading MSYS2 installer...")
+        logging.debug(f"Installer URL: {installer_url}")
+        run_command(f"curl -L -o {installer_name} {installer_url}")
+
+        logging.info("Running MSYS2 installer...")
+        logging.debug(f"Installing MSYS2 at {msys2_root_path}")
+        run_command(f"{installer_name} -y -oC:\\")
+
+        logging.info("Updating MSYS2 packages...")
+        run_command(f"{msys2_root_path}\\usr\\bin\\bash.exe -lc 'pacman -Syu --noconfirm'")
+
+        logging.info("Editing Environment Variables...")
+        logging.debug(
+            f"Adding {msys2_root_path}\\usr\\bin, {msys2_root_path}\\mingw64\\bin, {msys2_root_path}\\mingw32\\bin to PATH"
+        )
+        # Set it permanently for the current user
+        commands = f"""
+        $oldPath = [Environment]::GetEnvironmentVariable("Path", "User")
+        $newPath = "{msys2_root_path}\\usr\\bin;{msys2_root_path}\\mingw64\\bin;{msys2_root_path}\\mingw32\\bin;" + $oldPath
+        [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+        """
+        # Run the PowerShell commands
+        subprocess.check_call(["powershell", "-Command", commands])
+
+        # Add MSYS2 paths to the PATH environment variable for the current session
+        logging.debug(
+            f"Adding {msys2_root_path}\\usr\\bin, {msys2_root_path}\\mingw64\\bin, {msys2_root_path}\\mingw32\\bin to current enviornment."
+        )
+        current_path = os.environ.get("PATH", "")
+        new_path = (
+            f"{msys2_root_path}\\usr\\bin;{msys2_root_path}\\mingw64\\bin;{msys2_root_path}\\mingw32\\bin;"
+            + current_path
+        )
+        os.environ["PATH"] = new_path
+
+        logging.info("MSYS2 installed and updated successfully.")
+        logging.info("NOTE: Please restart your terminal before running this script again.")
+
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error installing MSYS2: {e}", exc_info=True)
+        sys.exit(1)
+    finally:
+        if Path(installer_name).exists():
+            os.remove(installer_name)
+
+
+def check_python_dependecies_installed():
+    """
+    check if the packages in the requirements.txt are installed
+    """
+    try:
+        requirements = open("requirements.txt", "r").readlines()
+        for req in requirements:
+            req = req.strip()
+            if not req or req.startswith("#"):  # Skip empty lines and comments
+                continue
+            operator = ">=" if ">=" in req else "=="
+
+            package_name, required_version = req.split(operator)
+            package_name = package_name.strip()
+            installed_version = version(package_name)
+
+            required_version = tuple(map(int, required_version.strip().split(".")))
+            installed_version = tuple(map(int, installed_version.strip().split(".")))
+
+            logging.debug(f"installed version of {package_name}: {installed_version}")
+            if (operator == ">=" and installed_version >= required_version) or (
+                operator == "==" and installed_version == required_version
+            ):
+                logging.debug(f"{package_name} is installed and meets the requirement.")
+            else:
+                logging.debug(
+                    f"Version mismatch for {package_name}: "
+                    f"installed {installed_version}, required {required_version}"
+                )
+                raise FileNotFoundError
+    except (PackageNotFoundError, FileNotFoundError):
+        logging.debug(f"{package_name} is not installed.")
+        raise FileNotFoundError
+    except Exception as e:
+        logging.error(f"Error processing requirement {req}: {e}")
+        sys.exit(1)
+
+
+def ensure_virtualenv_exists():
+    if VENV_DIR.exists():
+        logging.debug("Virtual environment already exists.")
+        return
+    logging.info(f"Generating virtual environment at: {VENV_DIR}")
+    run_command(f"{sys.executable} -m venv {str(VENV_DIR)} --system-site-packages")
+    logging.info("Successfully generated Virtual environment.")
+
+
+def get_virutalenv_folder() -> Path:
+    """
+    get the path of the virtual environment binaries folder
+    """
+    ensure_virtualenv_exists()
+    for folder in ["bin", "Scripts"]:
+        path = VENV_DIR / folder
+        if path.exists():
+            return path
+
+    logging.error("Could not locate virtual environment folders.")
+    sys.exit(1)
+
+
 class DependencyHandler:
     """
     Represents a dependency with methods for checking and installing it.
@@ -95,6 +233,8 @@ class DependencyHandler:
             for linux: package manager based on distro
             for macos: brew
             for windows: msys2
+
+        Note: If a function is provided for check_cmd ensure it raise FileNotFoundError if the dependency is not installed.
     """
 
     def __init__(self, name, package_name=None, check_cmd=None, install_cmd=None):
@@ -132,10 +272,19 @@ class DependencyHandler:
             "clearlinux": "sudo swupd bundle-add",
         }
 
-    def ensure_dependency_installed(self, system, install=True):
+    def ensure_installed(self, system):
         """
-        Checks if the dependency is installed. If not installs it if install arg is True.
+        Ensures the package is installed on the system.
         """
+        if self.check_installed(system):
+            return
+        self.install_dependency(system)
+
+    def check_installed(self, system) -> bool:
+        """
+        Checks if the dependency is installed.
+        """
+        logging.debug(f"Checking for {self.name} on {system}")
         commands = self._get_check_commands(system)
         try:
             for cmd in commands:
@@ -143,18 +292,15 @@ class DependencyHandler:
                     run_command(cmd)
                 else:
                     cmd()
-
+            return True
         except (FileNotFoundError, subprocess.CalledProcessError):
-            if not install:
-                logging.info(f"{self.name} is not installed.")
-                sys.exit(1)
-            self.install_dependency(system)
-
+            logging.debug(f"{self.name} not Found.")
+            return False
         except Exception as e:
             logging.error(f"While Checking Dependency: {e}", exc_info=True)
             sys.exit(1)
 
-    def install_dependency(self, system):
+    def install_dependency(self, system: str):
         """
         Installs the dependency for the specified operating system.
 
@@ -162,12 +308,15 @@ class DependencyHandler:
             system (str): The operating system type.
         """
         try:
+            check_internet_connectivity(system)
+            logging.debug(f"Installing {self.name} on {system}")
             commands = self._get_install_commands(system)
             for cmd in commands:
                 if type(cmd) == str:
                     run_command(cmd)
                 else:
                     cmd()
+            logging.debug(f"Successfully installed {self.name}")
         except Exception as e:
             logging.error(f"While Installing: {e}.", exc_info=True)
             sys.exit(1)
@@ -204,13 +353,16 @@ class DependencyHandler:
         return [f"brew install {self.package_name.get('Darwin', self.name)}"]
 
     def _get_install_commands_windows(self):
-        if not check_msys2_installed():
-            install_msys2()
+        MSYS2.ensure_installed()
         return [f"pacman -S --needed --noconfirm {self.package_name.get('Windows', self.name)}"]
 
 
+MSYS2 = DependencyHandler(
+    "MSYS2", check_cmd={"Windows": ["pacman --version"]}, install_cmd={"Windows": [install_msys2]}
+)
+
 # pkg-config should come before sndfie and nlohmann-json
-dependencies = [
+required_dependencies = [
     DependencyHandler("cmake", {"Windows": "mingw-w64-x86_64-cmake"}, {"all": ["cmake --version"]}),
     DependencyHandler(
         "g++",
@@ -230,144 +382,32 @@ dependencies = [
         {"Windows": "mingw-w64-x86_64-nlohmann-json", "Linux": "nlohmann-json3-dev"},
         {"all": ["pkg-config --exists nlohmann_json"]},
     ),
+    DependencyHandler(
+        "Python Dependencies",
+        check_cmd={"all": [check_python_dependecies_installed]},
+        install_cmd={
+            "Windows": [f"{str(get_virutalenv_folder()/ "pip.exe")} install -r requirements.txt"],
+            "all": [f"{str(get_virutalenv_folder()/ "pip")} install -r requirements.txt"],
+        },
+    ),
 ]
 
 
-def check_msys2_installed():
+def ensure_MediaProcessor_build(system, re_build=False):
+    """Ensure that the MediaProcessor is build. If rebuild is true, it will rebuild the MediaProcessor."""
+    if not MEDIAPROCESSOR_PATH.exists():
+        os.makedirs(MEDIAPROCESSOR_PATH)
+
+    MediaProcessor_binary_path = MEDIAPROCESSOR_PATH / (
+        "MediaProcessor.exe" if system == "Windows" else "MediaProcessor"
+    )
+    if MediaProcessor_binary_path.exists() and not re_build:
+        logging.debug(f"{str(MediaProcessor_binary_path)} exists. Skipping re-build.")
+        return
     try:
-        run_command("pacman --version")
-        return True
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        return False
-
-
-def check_internet_connectivity():
-    """For Windows check internet connectivity"""
-    try:
-        logging.debug("Checking internet connectivity... ")
-        # Ping Google's public DNS server
-        run_command("ping -n 1 8.8.8.8")
-        logging.debug("Internet connectivity OK")
-    except subprocess.CalledProcessError:
-        logging.error("No internet connection detected.")
-        sys.exit(1)
-
-
-def install_msys2():
-    try:
-        installer_url = (
-            "https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe"
-        )
-        installer_name = "msys2-installer.exe"
-
-        msys2_root_path = "C:\\msys64"
-
-        check_internet_connectivity()
-
-        logging.info("Downloading MSYS2 installer...")
-        logging.debug(f"Installer URL: {installer_url}")
-        run_command(f"curl -L -o {installer_name} {installer_url}")
-
-        logging.info("Running MSYS2 installer...")
-        logging.debug(f"Installing MSYS2 at {msys2_root_path}")
-        run_command(f"{installer_name} -y -oC:\\")
-
-        logging.info("Updating MSYS2 packages...")
-        run_command(f"{msys2_root_path}\\usr\\bin\\bash.exe -lc 'pacman -Syu --noconfirm'")
-
-        logging.info("Editing Environment Variables...")
-        logging.debug(
-            f"Adding {msys2_root_path}\\usr\\bin, {msys2_root_path}\\mingw64\\bin, {msys2_root_path}\\mingw32\\bin to PATH"
-        )
-        # Set it permanently for the current user
-        commands = f"""
-        $oldPath = [Environment]::GetEnvironmentVariable("Path", "User")
-        $newPath = "{msys2_root_path}\\usr\\bin;{msys2_root_path}\\mingw64\\bin;{msys2_root_path}\\mingw32\\bin;" + $oldPath
-        [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
-        """
-        # Run the PowerShell commands
-        subprocess.check_call(["powershell", "-Command", commands])
-
-        # Add MSYS2 paths to the PATH environment variable for the current session
-        logging.debug(
-            f"Addiing {msys2_root_path}\\usr\\bin, {msys2_root_path}\\mingw64\\bin, {msys2_root_path}\\mingw32\\bin to current enviornment."
-        )
-        current_path = os.environ.get("PATH", "")
-        new_path = (
-            f"{msys2_root_path}\\usr\\bin;{msys2_root_path}\\mingw64\\bin;{msys2_root_path}\\mingw32\\bin;"
-            + current_path
-        )
-        os.environ["PATH"] = new_path
-
-        logging.info("MSYS2 installed and updated successfully.")
-        logging.info("NOTE: Please restart your terminal before running this script again.")
-
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Error installing MSYS2: {e}", exc_info=True)
-        sys.exit(1)
-    finally:
-        if Path.exists(installer_name):
-            os.remove(installer_name)
-
-
-def check_MediaProcessor(system):
-    if system == "Windows":
-        MediaProcessor_path = Path("MediaProcessor") / "build" / "MediaProcessor.exe"
-    else:
-        MediaProcessor_path = Path("MediaProcessor") / "build" / "MediaProcessor"
-    return MediaProcessor_path.exists()
-
-
-def generate_virtualenv():
-    logging.info(f"Generating virtual environment at: {VENV_DIR}")
-    run_command(f"{sys.executable} -m venv {str(VENV_DIR)} --system-site-packages")
-    logging.info("Successfully generated Virtual environment.")
-
-
-def install_python_dependencies(system):
-    try:
-        if not VENV_DIR.exists():
-            generate_virtualenv()
-
-        logging.info("Installing Python dependencies...")
-
-        if system == "Windows":
-            # Check for both `Scripts` and `bin` folders.
-            pip_scripts_path = VENV_DIR / "Scripts" / "pip.exe"
-            pip_bin_path = VENV_DIR / "bin" / "pip.exe"
-
-            if not pip_scripts_path.exists() and not pip_bin_path.exists():
-                logging.error(f"pip not found. Searched paths: [{pip_scripts_path}] and [{pip_bin_path}]")
-                sys.exit(1)
-
-            if pip_bin_path.exists():
-                pip_path = pip_bin_path
-            else:
-                pip_path = pip_scripts_path
-
-        else:
-            pip_path = VENV_DIR / "bin" / "pip"
-            if not pip_path.exists():
-                logging.error(f"pip not found. Searched paths: [{pip_path}]")
-                sys.exit(1)
-
-        run_command(f"{str(pip_path)} install -r requirements.txt")
-        logging.info("Python dependencies installed.")
-    except Exception as e:
-        logging.error(f"Failed to install Python dependencies: {e}", exc_info=True)
-        sys.exit(1)
-
-
-def build_cpp_dependencies():
-    try:
-        logging.info("Building MediaProcessor...")
-        build_dir = Path.join("MediaProcessor", "build")
-        if not Path.exists(build_dir):
-            os.makedirs(build_dir)
-
-        run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=build_dir)
-        run_command("cmake --build . --config Release", cwd=build_dir)
-
+        logging.info("building MediaProcessor.")
+        run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=MEDIAPROCESSOR_PATH)
+        run_command("cmake --build . --config Release", cwd=MEDIAPROCESSOR_PATH)
         logging.info("MediaProcessor built successfully.")
     except Exception as e:
         logging.error(f"Failed to build MediaProcessor: {e}", exc_info=True)
@@ -380,6 +420,7 @@ def update_config(system):
             config = json.load(config_file)
 
         if system == "Windows":
+            logging.info("Updating config file.")
             for key, value in config.items():
                 if type(value) == str:
                     config[key] = value.replace("/", "\\")
@@ -404,13 +445,7 @@ def log_stream(stream, log_function):
 
 def launch_web_application(system):
     try:
-        if not VENV_DIR.exists():
-            generate_virtualenv()
-
-        if system == "Windows":
-            python_path = str(VENV_DIR / "Scripts" / "python.exe")
-        else:
-            python_path = str(VENV_DIR / "bin" / "python")
+        python_path = get_virutalenv_folder() / ("python.exe" if system == "Windows" else "python")
 
         # Start the backend
         app_process = subprocess.Popen(
@@ -455,24 +490,14 @@ def main():
     parser.add_argument("--debug-file", action="store_true", help="Set the debug file.")
     args = parser.parse_args()
 
-    """
-    Initialise logging
-    check dependency
-    """
-
     system = platform.system()
     setup_logging(args.debug_level, args.debug_file)
     logging.info("Starting setup...")
 
-    for dependency in dependencies:
-        dependency.ensure_dependency_installed(system, args.install_dependencies)
+    for dependency in required_dependencies:
+        dependency.ensure_installed(system)
 
-    if args.install_dependencies:
-        install_python_dependencies(system)
-
-    if args.rebuild or not check_MediaProcessor(system):
-        build_cpp_dependencies()
-
+    ensure_MediaProcessor_build(system, args.rebuild)
     update_config(system)
 
     if args.app == "web":
