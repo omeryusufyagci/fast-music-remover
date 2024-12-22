@@ -12,6 +12,9 @@ __pycache__/
 # C extensions
 *.so
 
+# runtime config
+runtime_config.json
+
 # Distribution / packaging
 .Python
 build/

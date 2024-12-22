@@ -14,6 +14,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 CONFIG_FILE = Path("config.json")
+RUNTIME_CONFIG_FILE = Path("runtime_config.json")
 VENV_NAME = "virtual_env"  # For downloading python packages
 VENV_DIR = Path.cwd() / VENV_NAME  # Generate the path for the virtual environment
 MEDIAPROCESSOR_PATH = Path("MediaProcessor") / "build"
@@ -414,7 +415,10 @@ def ensure_MediaProcessor_build(system, re_build=False):
         sys.exit(1)
 
 
-def update_config(system):
+def ensure_runtime_config(system):
+    """
+    make a new runtime_config file with Platform independent settings.
+    """
     try:
         with open(CONFIG_FILE, "r") as config_file:
             config = json.load(config_file)
@@ -425,7 +429,7 @@ def update_config(system):
                 if type(value) == str:
                     config[key] = value.replace("/", "\\")
 
-        with open(CONFIG_FILE, "w") as config_file:
+        with open(RUNTIME_CONFIG_FILE, "w") as config_file:
             json.dump(config, config_file, indent=4)
 
     except FileNotFoundError:
@@ -498,7 +502,7 @@ def main():
         dependency.ensure_installed(system)
 
     ensure_MediaProcessor_build(system, args.rebuild)
-    update_config(system)
+    ensure_runtime_config(system)
 
     if args.app == "web":
         launch_web_application(system)
