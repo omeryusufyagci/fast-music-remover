@@ -12,94 +12,149 @@ import time
 import webbrowser
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+from typing import Optional
 
-CONFIG_FILE = Path("config.json")
-RUNTIME_CONFIG_FILE = Path("runtime_config.json")
-VENV_NAME = "virtual_env"  # For downloading python packages
-VENV_DIR = Path.cwd() / VENV_NAME  # Generate the path for the virtual environment
 MEDIAPROCESSOR_PATH = Path("MediaProcessor") / "build"
-DEFAULT_CONFIG = {
-    "version": 1,
-    "formatters": {
-        "detailed": {"format": "%(asctime)s [%(levelname)s] [%(funcName)s(), %(lineno)d]: %(message)s"},
-        "simple": {"format": "[%(levelname)s] %(message)s"},
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
-            "stream": "ext://sys.stdout",
+LOG_LOCK = threading.Lock()
+
+
+class Config:
+    """
+    Manages Config files and logging Configuration.
+    """
+
+    CONFIG_FILE_PATH = Path("config.json")
+    RUNTIME_CONFIG_FILE_PATH = Path("runtime_config.json")
+    DEFAULT_LOGGING_CONFIG = {
+        "version": 1,
+        "formatters": {
+            "detailed": {"format": "%(asctime)s [%(levelname)s] [%(funcName)s(), %(lineno)d]: %(message)s"},
+            "simple": {"format": "[%(levelname)s] %(message)s"},
         },
-    },
-    "root": {"level": "ERROR", "handlers": ["console"]},
-}
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "simple",
+                "stream": "ext://sys.stdout",
+            },
+        },
+        "root": {"level": "ERROR", "handlers": ["console"]},
+    }
+
+    def __init__(self, system: str, log_level: str, log_file: bool = False) -> None:
+        self.setup_runtime_config(system)
+        self.setup_logging(log_level, log_file)
+
+    def setup_runtime_config(self, system: str):
+        try:
+            with open(Config.CONFIG_FILE_PATH, "r") as config_file:
+                config = json.load(config_file)
+
+            if system == "Windows":
+                logging.info("Updating config file.")
+                for key, value in config.items():
+                    if type(value) == str:
+                        config[key] = value.replace("/", "\\")
+
+            with open(Config.RUNTIME_CONFIG_FILE_PATH, "w") as config_file:
+                json.dump(config, config_file, indent=4)
+
+        except FileNotFoundError:
+            logging.error(f"{Config.CONFIG_FILE_PATH} not found. Please create a default config.json file.")
+            sys.exit(1)
+        except Exception as e:
+            logging.error(f"Failed to update config: {e}", exc_info=True)
+            sys.exit(1)
+
+    def setup_logging(self, log_level: str, log_file=False):
+        Config.DEFAULT_LOGGING_CONFIG["root"]["level"] = log_level
+        if log_file:
+            Config.DEFAULT_LOGGING_CONFIG["handlers"]["file"] = {
+                "class": "logging.handlers.RotatingFileHandler",
+                "formatter": "detailed",
+                "filename": f"logfile_{time.strftime('%Y%m%d_%H%M%S')}.log",
+                "maxBytes": 1024 * 1024 * 5,  # 5MB
+                "backupCount": 3,
+            }
+            Config.DEFAULT_LOGGING_CONFIG["root"]["handlers"].append("file")
+
+        logging.config.dictConfig(Config.DEFAULT_LOGGING_CONFIG)
 
 
-def setup_logging(log_level, log_file=False):
-    DEFAULT_CONFIG["root"]["level"] = log_level
-    if log_file:
-        DEFAULT_CONFIG["handlers"]["file"] = {
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "detailed",
-            "filename": f"logfile_{time.strftime('%Y%m%d_%H%M%S')}.log",
-            "maxBytes": 1024 * 1024 * 5,  # 5MB
-            "backupCount": 3,
-        }
-        DEFAULT_CONFIG["root"]["handlers"].append("file")
+class Utils:
+    VENV_NAME = "virtual_env"  # For downloading python packages
+    VENV_DIR_PATH = Path.cwd() / VENV_NAME  # Generate the path for the virtual environment
 
-    logging.config.dictConfig(DEFAULT_CONFIG)
+    @staticmethod
+    def run_command(command: str, cwd: Optional[Path] = None):
+        """
+        Executes a shell command.
 
+        Args:
+            command (str): The command to run.
+            cwd (str, optional): The working directory. Defaults to None.
 
-def run_command(command: str, cwd=None):
-    """
-    Executes a shell command.
+        Raises:
+            subprocess.CalledProcessError: If any command fails.
+        """
+        logging.debug(f"Executing command: {command}")
+        process = subprocess.Popen(
+            command.split(),
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        stdout, stderr = process.communicate()  # wait for process to terminate
+        if stdout:
+            logging.debug(f"Command output: {stdout}")
+        if stderr:
+            logging.error(f"Command error: {stderr}")
 
-    Args:
-        command (str): The command to run.
-        cwd (str, optional): The working directory. Defaults to None.
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(process.returncode, command)
 
-    Raises:
-        subprocess.CalledProcessError: If any command fails.
-    """
-    logging.debug(f"Executing command: {command}")
-    process = subprocess.Popen(
-        command.split(),
-        cwd=cwd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    stdout, stderr = process.communicate()  # wait for process to terminate
-    if stdout:
-        logging.debug(f"Command output: {stdout}")
-    if stderr:
-        logging.error(f"Command error: {stderr}")
+    @staticmethod
+    def check_internet_connectivity(system) -> bool:
+        try:
+            cmd = "ping -n 1 8.8.8.8" if system == "Windows" else "ping -c 1 8.8.8.8"
+            Utils.run_command(cmd)
+            logging.debug("Internet connectivity OK")
+            return True
+        except Exception as e:
+            logging.error("No internet connection detected.")
+            logging.debug(f"Error: {e}")
+            return False
 
-    if process.returncode != 0:
-        raise subprocess.CalledProcessError(process.returncode, command)
+    @staticmethod
+    def ensure_virtualenv_exists():
+        if Utils.VENV_DIR_PATH.exists():
+            logging.debug("Virtual environment already exists.")
+            return
+        logging.info(f"Generating virtual environment at: {Utils.VENV_DIR_PATH}")
+        Utils.run_command(f"{sys.executable} -m venv {str(Utils.VENV_DIR_PATH)} --system-site-packages")
+        logging.info("Successfully generated Virtual environment.")
 
+    @staticmethod
+    def get_virtualenv_folder() -> Path:
+        """
+        get the path of the virtual environment binaries folder
+        """
+        Utils.ensure_virtualenv_exists()
+        for folder in ["bin", "Scripts"]:
+            path = Utils.VENV_DIR_PATH / folder
+            logging.debug(f"Searching VENV Path: {path}")
+            if path.exists():
+                return path
 
-def check_internet_connectivity(system: str) -> bool:
-    """
-    Check if the system has internet connectivity by pinging Google's public DNS server.
-    """
-    try:
-        if system == "Windows":
-            cmd = "ping -n 1 8.8.8.8"
-        else:
-            cmd = "ping -c 1 8.8.8.8"
-        logging.debug("Checking internet connectivity... ")
-        run_command(cmd)
-        logging.debug("Internet connectivity OK")
-        return True
-
-    except Exception as e:
-        logging.error("No internet connection detected.")
-        logging.debug(f"Error: {e}")
-        return False
+        logging.error("Could not locate virtual environment folders.")
+        sys.exit(1)
 
 
 def install_msys2():
+    """
+    Installs MSYS2 and Update Path enviornment variable for windows platform
+    """
     try:
         installer_url = (
             "https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe"
@@ -110,14 +165,14 @@ def install_msys2():
 
         logging.info("Downloading MSYS2 installer...")
         logging.debug(f"Installer URL: {installer_url}")
-        run_command(f"curl -L -o {installer_name} {installer_url}")
+        Utils.run_command(f"curl -L -o {installer_name} {installer_url}")
 
         logging.info("Running MSYS2 installer...")
         logging.debug(f"Installing MSYS2 at {msys2_root_path}")
-        run_command(f"{installer_name} -y -oC:\\")
+        Utils.run_command(f"{installer_name} -y -oC:\\")
 
         logging.info("Updating MSYS2 packages...")
-        run_command(f"{msys2_root_path}\\usr\\bin\\bash.exe -lc 'pacman -Syu --noconfirm'")
+        Utils.run_command(f"{msys2_root_path}\\usr\\bin\\bash.exe -lc 'pacman -Syu --noconfirm'")
 
         logging.info("Editing Environment Variables...")
         logging.debug(
@@ -157,6 +212,9 @@ def install_msys2():
 def check_python_dependecies_installed():
     """
     check if the packages in the requirements.txt are installed
+
+    Note:
+        Currenly Supports `==` and `>=` operators only in the requirements.txt.
     """
     try:
         requirements = open("requirements.txt", "r").readlines()
@@ -192,29 +250,6 @@ def check_python_dependecies_installed():
         sys.exit(1)
 
 
-def ensure_virtualenv_exists():
-    if VENV_DIR.exists():
-        logging.debug("Virtual environment already exists.")
-        return
-    logging.info(f"Generating virtual environment at: {VENV_DIR}")
-    run_command(f"{sys.executable} -m venv {str(VENV_DIR)} --system-site-packages")
-    logging.info("Successfully generated Virtual environment.")
-
-
-def get_virutalenv_folder() -> Path:
-    """
-    get the path of the virtual environment binaries folder
-    """
-    ensure_virtualenv_exists()
-    for folder in ["bin", "Scripts"]:
-        path = VENV_DIR / folder
-        if path.exists():
-            return path
-
-    logging.error("Could not locate virtual environment folders.")
-    sys.exit(1)
-
-
 class DependencyHandler:
     """
     Represents a dependency with methods for checking and installing it.
@@ -235,7 +270,8 @@ class DependencyHandler:
             for macos: brew
             for windows: msys2
 
-        Note: If a function is provided for check_cmd ensure it raise FileNotFoundError if the dependency is not installed.
+    Note:
+        If a function is provided for check_cmd ensure it raise FileNotFoundError if the dependency is not installed.
     """
 
     def __init__(self, name, package_name=None, check_cmd=None, install_cmd=None):
@@ -290,7 +326,7 @@ class DependencyHandler:
         try:
             for cmd in commands:
                 if type(cmd) == str:
-                    run_command(cmd)
+                    Utils.run_command(cmd)
                 else:
                     cmd()
             return True
@@ -308,13 +344,15 @@ class DependencyHandler:
         Args:
             system (str): The operating system type.
         """
+        if not Utils.check_internet_connectivity(system):
+            logging.error("Please Connect to a Internet Connection.")
+            sys.exit(1)
         try:
-            check_internet_connectivity(system)
             logging.debug(f"Installing {self.name} on {system}")
             commands = self._get_install_commands(system)
             for cmd in commands:
                 if type(cmd) == str:
-                    run_command(cmd)
+                    Utils.run_command(cmd)
                 else:
                     cmd()
             logging.debug(f"Successfully installed {self.name}")
@@ -362,36 +400,13 @@ MSYS2 = DependencyHandler(
     "MSYS2", check_cmd={"Windows": ["pacman --version"]}, install_cmd={"Windows": [install_msys2]}
 )
 
-# pkg-config should come before sndfie and nlohmann-json
-required_dependencies = [
-    DependencyHandler("cmake", {"Windows": "mingw-w64-x86_64-cmake"}, {"all": ["cmake --version"]}),
-    DependencyHandler(
-        "g++",
-        {"Windows": "mingw-w64-x86_64-gcc", "Darwin": "gcc"},
-        {"all": ["g++ --version"]},
-        {"Windows": ["pacman -S --needed --noconfirm base-devel mingw-w64-x86_64-toolchain"]},
-    ),
-    DependencyHandler("pkg-config"),
-    DependencyHandler("ffmpeg", {"Windows": "mingw-w64-x86_64-ffmpeg"}, {"all": ["ffmpeg -version"]}),
-    DependencyHandler(
-        "libsndfile",
-        {"Windows": "mingw-w64-x86_64-libsndfile", "Linux": "libsndfile1-dev"},
-        {"all": ["pkg-config --exists sndfile"]},
-    ),
-    DependencyHandler(
-        "nlohmann-json",
-        {"Windows": "mingw-w64-x86_64-nlohmann-json", "Linux": "nlohmann-json3-dev"},
-        {"all": ["pkg-config --exists nlohmann_json"]},
-    ),
-    DependencyHandler(
-        "Python Dependencies",
-        check_cmd={"all": [check_python_dependecies_installed]},
-        install_cmd={
-            "Windows": [f"{str(get_virutalenv_folder()/ 'pip.exe')} install -r requirements.txt"],
-            "all": [f"{str(get_virutalenv_folder()/ 'pip')} install -r requirements.txt"],
-        },
-    ),
-]
+
+def log_stream(stream, log_function):
+    """Logs output from a stream."""
+    for line in iter(stream.readline, ""):
+        with LOG_LOCK:
+            log_function(line.strip())
+    stream.close()
 
 
 def ensure_MediaProcessor_build(system, re_build=False):
@@ -407,107 +422,122 @@ def ensure_MediaProcessor_build(system, re_build=False):
         return
     try:
         logging.info("building MediaProcessor.")
-        run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=MEDIAPROCESSOR_PATH)
-        run_command("cmake --build . --config Release", cwd=MEDIAPROCESSOR_PATH)
+        Utils.run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=MEDIAPROCESSOR_PATH)
+        Utils.run_command("cmake --build . --config Release", cwd=MEDIAPROCESSOR_PATH)
         logging.info("MediaProcessor built successfully.")
     except Exception as e:
         logging.error(f"Failed to build MediaProcessor: {e}", exc_info=True)
         sys.exit(1)
 
 
-def ensure_runtime_config(system):
-    """
-    make a new runtime_config file with Platform independent settings.
-    """
-    try:
-        with open(CONFIG_FILE, "r") as config_file:
-            config = json.load(config_file)
+class WebApplication:
+    def __init__(self, system: str, log_level: str, log_file: bool = False):
+        self.required_dependencies = [
+            DependencyHandler("cmake", {"Windows": "mingw-w64-x86_64-cmake"}, {"all": ["cmake --version"]}),
+            DependencyHandler(
+                "g++",
+                {"Windows": "mingw-w64-x86_64-gcc", "Darwin": "gcc"},
+                {"all": ["g++ --version"]},
+                {"Windows": ["pacman -S --needed --noconfirm base-devel mingw-w64-x86_64-toolchain"]},
+            ),
+            DependencyHandler("pkg-config"),
+            DependencyHandler("ffmpeg", {"Windows": "mingw-w64-x86_64-ffmpeg"}, {"all": ["ffmpeg -version"]}),
+            DependencyHandler(
+                "libsndfile",
+                {"Windows": "mingw-w64-x86_64-libsndfile", "Linux": "libsndfile1-dev"},
+                {"all": ["pkg-config --exists sndfile"]},
+            ),
+            DependencyHandler(
+                "nlohmann-json",
+                {"Windows": "mingw-w64-x86_64-nlohmann-json", "Linux": "nlohmann-json3-dev"},
+                {"all": ["pkg-config --exists nlohmann_json"]},
+            ),
+            DependencyHandler(
+                "Python Dependencies",
+                check_cmd={"all": [check_python_dependecies_installed]},
+                install_cmd={
+                    "Windows": [f"{str(Utils.get_virtualenv_folder()/ 'pip.exe')} install -r requirements.txt"],
+                    "all": [f"{str(Utils.get_virtualenv_folder()/ 'pip')} install -r requirements.txt"],
+                },
+            ),
+        ]
+        self.system = system
+        self.URL = "http://127.0.0.1:8080"
+        self.tries = 5
+        self.timeout = 0.5
+        self.setup(log_level, log_file)
 
-        if system == "Windows":
-            logging.info("Updating config file.")
-            for key, value in config.items():
-                if type(value) == str:
-                    config[key] = value.replace("/", "\\")
+    def setup(self, log_level: str, log_file: bool):
+        """
+        Installs the required dependencies and Setup Configuration for the web application.
+        """
+        self.config = Config(self.system, log_level, log_file)
+        for dependency in self.required_dependencies:
+            dependency.ensure_installed(self.system)
 
-        with open(RUNTIME_CONFIG_FILE, "w") as config_file:
-            json.dump(config, config_file, indent=4)
+    def run(self):
+        try:
+            python_path = Utils.get_virtualenv_folder() / ("python.exe" if self.system == "Windows" else "python")
 
-    except FileNotFoundError:
-        logging.error(f"{CONFIG_FILE} not found. Please create a default config.json file.")
-        sys.exit(1)
-    except Exception as e:
-        logging.error(f"Failed to update config: {e}", exc_info=True)
-        sys.exit(1)
+            # Start the backend
+            app_process = subprocess.Popen(
+                [python_path, "app.py"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            atexit.register(app_process.terminate)
 
+            # Threads to handle stdout and stderr asynchronously
+            threading.Thread(target=log_stream, args=(app_process.stdout, logging.debug), daemon=True).start()
+            threading.Thread(target=log_stream, args=(app_process.stderr, logging.debug), daemon=True).start()
 
-def log_stream(stream, log_function):
-    """Logs output from a stream."""
-    for line in iter(stream.readline, ""):
-        log_function(line.strip())
-    stream.close()
+            # Give the process some time to initialize
+            time.sleep(0.5)
 
+            # Check if the process is still running
+            if app_process.poll() is not None:
+                error_output = app_process.stderr.read()
+                logging.error(f"Error starting the backend: {error_output}")
+                sys.exit(1)
 
-def launch_web_application(system):
-    try:
-        python_path = get_virutalenv_folder() / ("python.exe" if system == "Windows" else "python")
+            webbrowser.open("http://127.0.0.1:8080")
 
-        # Start the backend
-        app_process = subprocess.Popen(
-            [python_path, "app.py"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        atexit.register(app_process.terminate)
+            logging.info("Web application running. Press Enter to stop.")
+            input()  # Block until the user presses Enter
 
-        # Threads to handle stdout and stderr asynchronously
-        threading.Thread(target=log_stream, args=(app_process.stdout, logging.debug), daemon=True).start()
-        threading.Thread(target=log_stream, args=(app_process.stderr, logging.debug), daemon=True).start()
-
-        # Give the process some time to initialize
-        time.sleep(0.5)
-
-        # Check if the process is still running
-        if app_process.poll() is not None:
-            error_output = app_process.stderr.read()
-            logging.error(f"Error starting the backend: {error_output}")
+        except Exception as e:
+            logging.error(f"An error occurred: {e}", exc_info=True)
             sys.exit(1)
 
-        webbrowser.open("http://127.0.0.1:8080")
 
-        logging.info("Web application running. Press Enter to stop.")
-        input()  # Block until the user presses Enter
-
-    except Exception as e:
-        logging.error(f"An error occurred: {e}", exc_info=True)
-        sys.exit(1)
+Applications = {
+    "web": WebApplication,
+}
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Setup for MediaProcessor Application")
-    parser.add_argument("--app", choices=["web", "none"], default="web", help="Specify launch mode")
-    parser.add_argument("--install-dependencies", action="store_true", default=True, help="Install dependencies.")
+    parser = argparse.ArgumentParser(description="Setup for MediaProcessor Application.")
+    parser.add_argument("--app", choices=["web", "none"], default="web", help="Specify launch mode (default=web).")
+    parser.add_argument("--install-only", action="store_true", default=False, help="Install dependencies Only.")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild MediaProcessor")
     parser.add_argument(
-        "--debug-level", choices=["DEBUG", "INFO", "ERROR"], default="INFO", help="Set the debug output level."
+        "--log-level", choices=["DEBUG", "INFO", "ERROR"], default="INFO", help="Set the logging level (default=INFO)."
     )
-    parser.add_argument("--debug-file", action="store_true", help="Set the debug file.")
+    parser.add_argument("--log-file", action="store_true", help="Outputs log in a log file.")
     args = parser.parse_args()
 
     system = platform.system()
-    setup_logging(args.debug_level, args.debug_file)
-    logging.info("Starting setup...")
+    if args.app == "none":
+        print("Please specify how you would like to launch the application, like --app=web. Exiting.")
+        sys.exit(0)
 
-    for dependency in required_dependencies:
-        dependency.ensure_installed(system)
-
+    app = Applications[args.app](system, args.log_level, args.log_file)
     ensure_MediaProcessor_build(system, args.rebuild)
-    ensure_runtime_config(system)
+    if args.install_only:
+        sys.exit(0)
 
-    if args.app == "web":
-        launch_web_application(system)
-    else:
-        logging.info("Please specify how you would like to launch the application, like --app=web.")
+    app.run()
 
 
 if __name__ == "__main__":
