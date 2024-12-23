@@ -78,7 +78,7 @@ MediaType Engine::getMediaType() const {
     if (result.find("video") != std::string_view::npos) {
         // Check if the video is real video stream, not static image which is treated as video
         const std::string command = 
-            "ffprobe -v error -show_entries stream=code7c_name "
+            "ffprobe -v error -show_entries stream=codec_name "
             "-of default=noprint_wrappers=1:nokey=1 \"" + 
             m_mediaPath.string() + "\"";
 
