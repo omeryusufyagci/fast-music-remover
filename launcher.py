@@ -463,7 +463,6 @@ class WebApplication:
         ]
         self.system = system
         self.URL = "http://127.0.0.1:8080"
-        self.tries = 5
         self.timeout = 0.5
         self.setup(log_level, log_file)
 
@@ -493,7 +492,7 @@ class WebApplication:
             threading.Thread(target=log_stream, args=(app_process.stderr, logging.debug), daemon=True).start()
 
             # Give the process some time to initialize
-            time.sleep(0.5)
+            time.sleep(self.timeout)
 
             # Check if the process is still running
             if app_process.poll() is not None:
@@ -501,7 +500,7 @@ class WebApplication:
                 logging.error(f"Error starting the backend: {error_output}")
                 sys.exit(1)
 
-            webbrowser.open("http://127.0.0.1:8080")
+            webbrowser.open(self.URL)
 
             logging.info("Web application running. Press Enter to stop.")
             input()  # Block until the user presses Enter
