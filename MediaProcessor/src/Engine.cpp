@@ -76,6 +76,22 @@ MediaType Engine::getMediaType() const {
 
     std::string_view result = *output;
     if (result.find("video") != std::string_view::npos) {
+        // Check if the video is real video stream, not static image which is treated as video
+        const std::string command = 
+            "ffprobe -v error -show_entries stream=code7c_name "
+            "-of default=noprint_wrappers=1:nokey=1 \"" + 
+            m_mediaPath.string() + "\"";
+
+        std::optional<std::string> output = Utils::runCommand(command, true);
+        if (!output || output->empty()) {
+            throw std::runtime_error("Failed to detect codec name.");
+        }
+
+        std::string_view result = *output;
+        if (result.find("mjpeg") != std::string_view::npos) {
+            return MediaType::Audio;
+        }
+
         return MediaType::Video;
     } else if (result.find("audio") != std::string_view::npos) {
         return MediaType::Audio;
