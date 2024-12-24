@@ -159,7 +159,7 @@ def install_msys2():
     """
     try:
         installer_url = (
-            "https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe"
+            "https://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20241208.sfx.exe"
         )
         installer_name = "msys2-installer.exe"
 
