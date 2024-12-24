@@ -188,6 +188,7 @@ def install_msys2():
         """
         # Run the PowerShell commands
         subprocess.check_call(["powershell", "-Command", commands])
+        logging.info("Added MSYS2 to PATH environment variable Permanently for current user.")
 
         # Add MSYS2 paths to the PATH environment variable for the current session
         logging.debug(
