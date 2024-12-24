@@ -65,9 +65,10 @@ bool Engine::processVideo() {
 
 MediaType Engine::getMediaType() const {
     const std::string command =
-        "ffprobe -loglevel error -show_entries stream=codec_type "
-        "-of default=noprint_wrappers=1:nokey=1 \"" +
-        m_mediaPath.string() + "\"";
+        "ffprobe -loglevel error -show_entries stream=codec_type,avg_frame_rate "
+        "-of default=noprint_wrappers=1:nokey=1 \"" + 
+        m_mediaPath.string() + 
+        "\" | awk 'BEGIN {last=\"\"} /audio/ {print; last=\"audio\"} /video/ {print; last=\"video\"} /^[0-9]+\\/[0-9]+$/ && last==\"video\" {print}'";
 
     std::optional<std::string> output = Utils::runCommand(command, true);
     if (!output || output->empty()) {
@@ -76,23 +77,8 @@ MediaType Engine::getMediaType() const {
 
     std::string_view result = *output;
     if (result.find("video") != std::string_view::npos) {
-        // Check if the video is real video stream, not static image which is treated as video
-        const std::string command = 
-            "ffprobe -v error -show_entries stream=codec_name "
-            "-of default=noprint_wrappers=1:nokey=1 \"" + 
-            m_mediaPath.string() + "\"";
-
-        std::optional<std::string> output = Utils::runCommand(command, true);
-        if (!output || output->empty()) {
-            throw std::runtime_error("Failed to detect codec name.");
-        }
-
-        std::string_view result = *output;
-        if (result.find("mjpeg") != std::string_view::npos) {
-            return MediaType::Audio;
-        }
-
-        return MediaType::Video;
+        // check if the video stream avg_frame_rate is 0/0, which is actually a static image
+        return (result.find("0/0") != std::string_view::npos) ? MediaType::Audio : MediaType::Video;
     } else if (result.find("audio") != std::string_view::npos) {
         return MediaType::Audio;
     } else {
