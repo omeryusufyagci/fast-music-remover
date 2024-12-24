@@ -18,7 +18,7 @@ MEDIAPROCESSOR_PATH = Path("MediaProcessor") / "build"
 LOG_LOCK = threading.Lock()
 
 
-class Config:
+class ConfigManager:
     """
     Manages Config files and logging Configuration.
     """
@@ -45,40 +45,42 @@ class Config:
         self.setup_runtime_config(system)
         self.setup_logging(log_level, log_file)
 
+    def update_config_for_windows(self, configuration):
+        for key, value in configuration.items():
+            if type(value) == str:
+                configuration[key] = value.replace("/", "\\")  # change / to \ for windows path compatibility
+
     def setup_runtime_config(self, system: str):
         try:
-            with open(Config.CONFIG_FILE_PATH, "r") as config_file:
+            with open(ConfigManager.CONFIG_FILE_PATH, "r") as config_file:
                 config = json.load(config_file)
 
             if system == "Windows":
-                logging.info("Updating config file.")
-                for key, value in config.items():
-                    if type(value) == str:
-                        config[key] = value.replace("/", "\\")
+                self.update_config_for_windows(config)
 
-            with open(Config.RUNTIME_CONFIG_FILE_PATH, "w") as config_file:
+            with open(ConfigManager.RUNTIME_CONFIG_FILE_PATH, "w") as config_file:
                 json.dump(config, config_file, indent=4)
 
         except FileNotFoundError:
-            logging.error(f"{Config.CONFIG_FILE_PATH} not found. Please create a default config.json file.")
+            logging.error(f"{ConfigManager.CONFIG_FILE_PATH} not found. Please create a default config.json file.")
             sys.exit(1)
         except Exception as e:
             logging.error(f"Failed to update config: {e}", exc_info=True)
             sys.exit(1)
 
     def setup_logging(self, log_level: str, log_file=False):
-        Config.DEFAULT_LOGGING_CONFIG["root"]["level"] = log_level
+        ConfigManager.DEFAULT_LOGGING_CONFIG["root"]["level"] = log_level
         if log_file:
-            Config.DEFAULT_LOGGING_CONFIG["handlers"]["file"] = {
+            ConfigManager.DEFAULT_LOGGING_CONFIG["handlers"]["file"] = {
                 "class": "logging.handlers.RotatingFileHandler",
                 "formatter": "detailed",
                 "filename": f"logfile_{time.strftime('%Y%m%d_%H%M%S')}.log",
                 "maxBytes": 1024 * 1024 * 5,  # 5MB
                 "backupCount": 3,
             }
-            Config.DEFAULT_LOGGING_CONFIG["root"]["handlers"].append("file")
+            ConfigManager.DEFAULT_LOGGING_CONFIG["root"]["handlers"].append("file")
 
-        logging.config.dictConfig(Config.DEFAULT_LOGGING_CONFIG)
+        logging.config.dictConfig(ConfigManager.DEFAULT_LOGGING_CONFIG)
 
 
 class Utils:
@@ -127,7 +129,7 @@ class Utils:
             return False
 
     @staticmethod
-    def ensure_virtualenv_exists():
+    def ensure_venv_exists():
         if Utils.VENV_DIR_PATH.exists():
             logging.debug("Virtual environment already exists.")
             return
@@ -136,13 +138,13 @@ class Utils:
         logging.info("Successfully generated Virtual environment.")
 
     @staticmethod
-    def get_virtualenv_folder() -> Path:
+    def get_venv_binaries_directory() -> Path:
         """
-        get the path of the virtual environment binaries folder
+        get the path of the virtual environment binaries directory
         """
-        Utils.ensure_virtualenv_exists()
-        for folder in ["bin", "Scripts"]:
-            path = Utils.VENV_DIR_PATH / folder
+        Utils.ensure_venv_exists()
+        for directory_name in ["bin", "Scripts"]:
+            path = Utils.VENV_DIR_PATH / directory_name
             logging.debug(f"Searching VENV Path: {path}")
             if path.exists():
                 return path
@@ -176,7 +178,7 @@ def install_msys2():
 
         logging.info("Editing Environment Variables...")
         logging.debug(
-            f"Adding {msys2_root_path}\\usr\\bin, {msys2_root_path}\\mingw64\\bin, {msys2_root_path}\\mingw32\\bin to PATH"
+            f"Adding {msys2_root_path}\\usr\\bin, {msys2_root_path}\\mingw64\\bin, {msys2_root_path}\\mingw32\\bin to PATH for current user."
         )
         # Set it permanently for the current user
         commands = f"""
@@ -209,7 +211,7 @@ def install_msys2():
             os.remove(installer_name)
 
 
-def check_python_dependecies_installed():
+def validate_python_dependencies():
     """
     check if the packages in the requirements.txt are installed
 
@@ -409,7 +411,7 @@ def log_stream(stream, log_function):
     stream.close()
 
 
-def ensure_MediaProcessor_build(system, re_build=False):
+def build_processing_engine(system, re_build=False):
     """Ensure that the MediaProcessor is build. If rebuild is true, it will rebuild the MediaProcessor."""
     if not MEDIAPROCESSOR_PATH.exists():
         os.makedirs(MEDIAPROCESSOR_PATH)
@@ -432,7 +434,7 @@ def ensure_MediaProcessor_build(system, re_build=False):
 
 class WebApplication:
     def __init__(self, system: str, log_level: str, log_file: bool = False):
-        self.required_dependencies = [
+        self.dependencies = [
             DependencyHandler("cmake", {"Windows": "mingw-w64-x86_64-cmake"}, {"all": ["cmake --version"]}),
             DependencyHandler(
                 "g++",
@@ -454,10 +456,10 @@ class WebApplication:
             ),
             DependencyHandler(
                 "Python Dependencies",
-                check_cmd={"all": [check_python_dependecies_installed]},
+                check_cmd={"all": [validate_python_dependencies]},
                 install_cmd={
-                    "Windows": [f"{str(Utils.get_virtualenv_folder()/ 'pip.exe')} install -r requirements.txt"],
-                    "all": [f"{str(Utils.get_virtualenv_folder()/ 'pip')} install -r requirements.txt"],
+                    "Windows": [f"{str(Utils.get_venv_binaries_directory()/ 'pip.exe')} install -r requirements.txt"],
+                    "all": [f"{str(Utils.get_venv_binaries_directory()/ 'pip')} install -r requirements.txt"],
                 },
             ),
         ]
@@ -468,15 +470,15 @@ class WebApplication:
 
     def setup(self, log_level: str, log_file: bool):
         """
-        Installs the required dependencies and Setup Configuration for the web application.
+        Installs the dependencies and Setup Configuration for the web application.
         """
-        self.config = Config(self.system, log_level, log_file)
-        for dependency in self.required_dependencies:
+        self.config = ConfigManager(self.system, log_level, log_file)
+        for dependency in self.dependencies:
             dependency.ensure_installed(self.system)
 
     def run(self):
         try:
-            python_path = Utils.get_virtualenv_folder() / ("python.exe" if self.system == "Windows" else "python")
+            python_path = Utils.get_venv_binaries_directory() / ("python.exe" if self.system == "Windows" else "python")
 
             # Start the backend
             app_process = subprocess.Popen(
@@ -518,7 +520,7 @@ Applications = {
 def main():
     parser = argparse.ArgumentParser(description="Setup for MediaProcessor Application.")
     parser.add_argument("--app", choices=["web", "none"], default="web", help="Specify launch mode (default=web).")
-    parser.add_argument("--install-only", action="store_true", default=False, help="Install dependencies Only.")
+    parser.add_argument("--install-only", action="store_true", default=False, help="Install dependencies only.")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild MediaProcessor")
     parser.add_argument(
         "--log-level", choices=["DEBUG", "INFO", "ERROR"], default="INFO", help="Set the logging level (default=INFO)."
@@ -532,7 +534,7 @@ def main():
         sys.exit(0)
 
     app = Applications[args.app](system, args.log_level, args.log_file)
-    ensure_MediaProcessor_build(system, args.rebuild)
+    build_processing_engine(system, args.rebuild)
     if args.install_only:
         sys.exit(0)
 
