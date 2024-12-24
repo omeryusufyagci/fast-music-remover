@@ -465,7 +465,8 @@ class WebApplication:
             ),
         ]
         self.system = system
-        self.URL = "http://127.0.0.1:8080"
+        self.DEAFULT_URL = "http://127.0.0.1"
+        self.DEAFULT_PORT = 8080
         self.timeout = 0.5
         self.setup(log_level, log_file)
 
@@ -477,7 +478,7 @@ class WebApplication:
         for dependency in self.dependencies:
             dependency.ensure_installed(self.system)
 
-    def run(self):
+    def run(self, port:Optional[int] = None):
         try:
             python_path = Utils.get_venv_binaries_directory() / ("python.exe" if self.system == "Windows" else "python")
 
@@ -503,7 +504,9 @@ class WebApplication:
                 logging.error(f"Error starting the backend: {error_output}")
                 sys.exit(1)
 
-            webbrowser.open(self.URL)
+            url = f"{self.DEAFULT_URL}:{port if port else self.DEAFULT_PORT}"
+            logging.debug(f"Web application running on {url}.")
+            webbrowser.open(url)
 
             logging.info("Web application running. Press Enter to stop.")
             input()  # Block until the user presses Enter
