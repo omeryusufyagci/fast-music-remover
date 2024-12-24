@@ -14,7 +14,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Optional
 
-MEDIAPROCESSOR_PATH = Path("MediaProcessor") / "build"
+PROCESSING_ENGINE_PATH = Path("MediaProcessor") / "build"
 LOG_LOCK = threading.Lock()
 
 
@@ -414,10 +414,10 @@ def log_stream(stream, log_function):
 
 def build_processing_engine(system, re_build=False):
     """Ensure that the MediaProcessor is build. If rebuild is true, it will rebuild the MediaProcessor."""
-    if not MEDIAPROCESSOR_PATH.exists():
-        os.makedirs(MEDIAPROCESSOR_PATH)
+    if not PROCESSING_ENGINE_PATH.exists():
+        os.makedirs(PROCESSING_ENGINE_PATH)
 
-    MediaProcessor_binary_path = MEDIAPROCESSOR_PATH / (
+    MediaProcessor_binary_path = PROCESSING_ENGINE_PATH / (
         "MediaProcessor.exe" if system == "Windows" else "MediaProcessor"
     )
     if MediaProcessor_binary_path.exists() and not re_build:
@@ -425,8 +425,8 @@ def build_processing_engine(system, re_build=False):
         return
     try:
         logging.info("building MediaProcessor.")
-        Utils.run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=MEDIAPROCESSOR_PATH)
-        Utils.run_command("cmake --build . --config Release", cwd=MEDIAPROCESSOR_PATH)
+        Utils.run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=PROCESSING_ENGINE_PATH)
+        Utils.run_command("cmake --build . --config Release", cwd=PROCESSING_ENGINE_PATH)
         logging.info("MediaProcessor built successfully.")
     except Exception as e:
         logging.error(f"Failed to build MediaProcessor: {e}", exc_info=True)
@@ -478,7 +478,7 @@ class WebApplication:
         for dependency in self.dependencies:
             dependency.ensure_installed(self.system)
 
-    def run(self, port:Optional[int] = None):
+    def run(self, port: Optional[int] = None):
         try:
             python_path = Utils.get_venv_binaries_directory() / ("python.exe" if self.system == "Windows" else "python")
 
