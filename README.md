@@ -4,6 +4,8 @@
 
 # Fast Music Remover
 
+### *Take control of the media you consume every day with **Fast Music Remover***!
+
 </div>
 
 <div align="center">
@@ -11,17 +13,18 @@
   [![GitHub license](https://img.shields.io/github/license/omeryusufyagci/fast-music-remover)](https://github.com/omeryusufyagci/fast-music-remover/blob/main/LICENSE)
   [![GitHub issues](https://img.shields.io/github/issues/omeryusufyagci/fast-music-remover?color=yellow)](https://github.com/omeryusufyagci/fast-music-remover/issues)
   [![Tests](https://img.shields.io/github/actions/workflow/status/omeryusufyagci/fast-music-remover/build_test_and_format_core.yml?label=Linux&logo=linux&style=flat-square&color=success)](https://github.com/omeryusufyagci/fast-music-remover/actions/workflows/build_test_and_format_core.yml)
+  [![Docker Image](https://img.shields.io/badge/Docker-latest-blue?logo=docker)](https://ghcr.io/omeryusufyagci/fast-music-remover:latest)
   [![Discord](https://img.shields.io/discord/1291805536911622265?label=&logo=discord&logoColor=white&color=7289DA&style=flat-square)](https://discord.gg/xje3PQTEYp)
-  [![GitHub stars](https://img.shields.io/github/stars/omeryusufyagci/fast-music-remover?style=social)](https://github.com/omeryusufyagci/fast-music-remover/stargazers)
-  [![GitHub forks](https://img.shields.io/github/forks/omeryusufyagci/fast-music-remover?style=social)](https://github.com/omeryusufyagci/fast-music-remover/network/members)
 
 </div>
 
-`Fast Music Remover` is a lightweight tool designed to remove music, sound effects and noise from internet media. Processing takes about 8% of the original source length -that's under 5 seconds for a minute-long video! 
+We consume, willingly or not, large amounts of media everyday, and that includes content that is emposed on us. `Fast Music Remover` gives you **the choice to opt-out** of them without missing out on the core content.
 
-Support for realtime processing is currently in the works, and there are many other features and improvements we're working on in parallel. If this sounds interesting to you, consider [contributing](CONTRIBUTING.md)!
+We're building a feature rich media processor that is efficient, modular and cross platform. It's being built for you! That means clean APIs for programmers, [containerized on GHCR](https://github.com/omeryusufyagci/fast-music-remover/pkgs/container/fast-music-remover) for remote users, with a Web UI providing seamless access to anyone interested!
 
-The primary goal of the project is to enhance the audio tracks of typical mainstream media, such as lecture recordings, field reports and interviews. To see `Fast Music Remover` in action, take a look at our demo video below!
+Today, we support background music filtering and noise removal to enhance audio quality. In the near future, we plan to expand our capabilities by adding support for more ML models and DSP modules, as well as introducing realtime processing to empower you with the tools to take control of the media you consume.
+
+If this resonates with you, consider [contributing](CONTRIBUTING.md)!
 
 ## UI & Demo Video
 
@@ -42,39 +45,24 @@ https://github.com/user-attachments/assets/e46c161b-0178-4213-b468-245e9f829d5e
 > The [original interview video](https://www.youtube.com/watch?v=aujFci9AuXE) is by Fisher College of Business, licensed under a [Creative Commons Attribution license (reuse allowed)](https://support.google.com/youtube/answer/2797468?hl=en).
 
 
-## Background
-
-This project started as an experiment with a `demucs`-based Python tool. While this was powerful in isolating individual audio components, the processing performance was limited. Although effective, `demucs` was a bit overqualified for the job; great for instrument separation but not ideal for the streamlined, low-latency filtering we’re aiming for here. If you're curious to see where it all began, you can still check out that initial version [here](https://github.com/omeryusufyagci/music-remover).
-
-## Motivation and Use Cases
-
-`Fast Music Remover` was built to tackle shared pain points and offer a completely free, open solution for enhancing audio in everyday media. Here’s where it shines:
-
-* **Interview Editing**: Extract clear voice tracks for interviews and field reports, cutting through ambient noise without losing speech clarity.
-* **Education & Lectures**: Strip away background noise to improve the sound quality of lecture recordings.
-* **Streaming & Social Media**: Prepare your media for posting by removing background music or effects to avoid copyright issues.
-* **Home Recording Enthusiasts**: Clean up home recordings, isolating specific tracks and eliminating unwanted noise for a polished final product.
-* **Regular Media Consumers**: Enjoy your favorite podcast or video without the extra sound effects, keeping the focus on what matters.
-
 ## Roadmap
 
 Our immediate priority is to provide a stable first release with cross-platform support for Linux, macOS, and Windows. We’re focused on getting this early version out as soon as possible, and your feedback will help shape the direction of the project.
 
-Following the first release, we plan to introduce a separate, unstable release with some features in alpha stage, such as realtime support.
+In parallel, we're developing cross-platform tooling to simplify manual setup for enthusiasts and contributors. The first release will feature a project launcher to manage dependency installation, project configuration, and starting the web application, handling all [prerequisites](#prerequisites) locally for you. This will be offered in addition to our [stable image on GHCR](#using-the-pre-built-image).
+
+Following the first release, we plan to introduce a separate, unstable release with some features in alpha stage, such as realtime processing. At this stage, we'll also experiment with new ML models to expand the capabilities of our processing engine. Let us know if you have any requests!
 
 ## Contributing
 
-We have a wide array of interesting technical challenges spanning multiple domains. Take part and join us in building a free an open tool that addresses practical needs! 
+We have a wide array of interesting technical challenges spanning multiple domains. Take part in building a free and open tool that directly addresses real-world challenges!
 
-Check out the [contributing guidelines](CONTRIBUTING.md) for details on how to get started.
-
-## Benchmarks
-
-The processed audio quality shows no audible degradation so far. A formal benchmarking process for performance and quality is planned. If you're interested in contributing to the benchmarking process, you can open an issue, reach out via the [discussions](https://github.com/omeryusufyagci/fast-music-remover/discussions) or [discord](https://discord.gg/xje3PQTEYp).
+Check out our [contributing guidelines](CONTRIBUTING.md) for details on how to get started.
 
 ## Prerequisites
 
-> **Quick Tip:** If you're just looking to test `Fast Music Remover`, you can skip these prerequisites and jump straight to the [Docker Quick Start](#option-1-quick-start-with-docker) below!
+> [!TIP]
+> If you're just looking to test `Fast Music Remover`, you can skip these prerequisites and jump straight to the [Docker Quick Start](#option-1-quick-start-with-docker) below!
 
 To get started with `Fast Music Remover`, ensure that you have the following software installed on your system. These dependencies are necessary for running the backend server, compiling the C++ processor, and handling media files.
 
@@ -153,22 +141,24 @@ To get started with `Fast Music Remover`, ensure that you have the following sof
 
 </details>
 
-> **Note**: Ensure all the above dependencies are installed before proceeding with the setup.
+> [!IMPORTANT]
+> Ensure all the above dependencies are installed before proceeding with the setup.
 
 ## Getting Started
 
-To get started with `Fast Music Remover`, you have two main options: running it directly via the provided Dockerfile or installing all the necessary dependencies manually.
+To get started with `Fast Music Remover`, you have two options: running it directly via the provided Docker image or installing all the necessary dependencies manually.
 
 ### Option 1: Quick Start with Docker
 
-Ensure Docker is installed by running:
-```sh
-docker --version
-```
+> [!IMPORTANT]
+> Ensure Docker is installed by running:
+> ```sh
+> docker --version
+> ```
 
-If Docker is installed, you have two ways to quickly try `Fast Music Remover`:
+With Docker, you have two options to quickly try `Fast Music Remover`:
 
-#### **Using the Pre-Built Image**:
+#### 1. **Using the Pre-Built Image**:
 Pull the prebuilt image from the registry:
 
 ```sh
@@ -179,23 +169,24 @@ Run the container:
 docker run -p 8080:8080 ghcr.io/omeryusufyagci/fast-music-remover:latest
 ```
 
-#### **Building the Image Locally**:
+#### 2. **Building the Image Locally**:
 
 ```sh
 docker-compose up --build
 ```
-> **Note**: You may need `sudo` to run this command, depending on how your system is setup.
+> [!NOTE]
+> You may need `sudo` to run this command, depending on how your system is setup.
 
 Once the container is running, open `http://localhost:8080` on your browser, and you can test it right away by submitting a URL or uploading a file from your local machine.
 
 #### What this Docker Setup Includes:
 Whether you use the prebuilt image or build it locally, the containerized setup includes:
 
-* A Flask backend to manage requests.
-* The MediaProcessor (C++ binary).
-* A minimalistic frontend for submitting and testing media -audio or video, both supported!
+* A [Flask backend](https://github.com/omeryusufyagci/fast-music-remover/blob/main/app.py) to manage requests.
+* The [MediaProcessor](https://github.com/omeryusufyagci/fast-music-remover/tree/main/MediaProcessor) (C++ binary).
+* A [minimalistic frontend](https://github.com/omeryusufyagci/fast-music-remover/blob/main/templates/index.html) for submitting and testing media, i.e. audio or video, both supported!
 
-Once processing is complete, the frontend will provide a playback of the processed media.
+Once processing is finished, the frontend will provide a playback of the processed media.
 
 ### Option 2: Manual Installation
 
@@ -211,7 +202,7 @@ Install the Python dependencies with:
 ```sh
 pip install -r requirements.txt
 ```
-#### Step 3: Compile the Media Processor (C++)
+#### Step 3: Compile the Media Processor
 
 1. Navigate to the `MediaProcessor` directory:
 ```sh
@@ -224,20 +215,22 @@ cd MediaProcessor
 mkdir build
 cd build
 ```
-3. Run CMake and compile
+3. Run CMake and compile (release build by default)
 ```sh
 cmake ..
 make
 ```
-> **Note**: If you encounter errors here, double-check that all prerequisites are installed.
+> [!NOTE]
+> If you encounter errors here, double-check that all prerequisites are installed.
 
 #### Step 4: Start the Backend Server
 
-After setting up the dependencies and compiling the C++ project, go back to the project root and start the backend server:
+After setting up the dependencies and compiling the C++ project, **navigate back to the project root** and start the backend server:
 ```sh
 python3 app.py 
 ```
-> **Note**: The server should indicate it is running on http://127.0.0.1:8080. Visit this address in your browser and submit a URL to begin.
+> [!TIP]
+> The server should be accessible at http://127.0.0.1:8080. Open this address in a web browser to get started.
 
 ## License
 
