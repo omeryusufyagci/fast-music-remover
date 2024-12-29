@@ -138,9 +138,9 @@ class Utils:
         logging.info("Successfully generated Virtual environment.")
 
     @staticmethod
-    def get_venv_binaries_directory() -> Path:
+    def get_venv_binaries_path() -> Path:
         """
-        get the path of the virtual environment binaries directory
+        get the path of the virtual environment binaries path
         """
         Utils.ensure_venv_exists()
         for directory_name in ["bin", "Scripts"]:
@@ -158,9 +158,7 @@ def install_msys2():
     Installs MSYS2 and Update Path enviornment variable for windows platform
     """
     try:
-        installer_url = (
-            "https://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20241208.sfx.exe"
-        )
+        installer_url = "https://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20241208.sfx.exe"
         installer_name = "msys2-installer.exe"
 
         msys2_root_path = "C:\\msys64"
@@ -459,8 +457,8 @@ class WebApplication:
                 "Python Dependencies",
                 check_cmd={"all": [validate_python_dependencies]},
                 install_cmd={
-                    "Windows": [f"{str(Utils.get_venv_binaries_directory()/ 'pip.exe')} install -r requirements.txt"],
-                    "all": [f"{str(Utils.get_venv_binaries_directory()/ 'pip')} install -r requirements.txt"],
+                    "Windows": [f"{str(Utils.get_venv_binaries_path()/ 'pip.exe')} install -r requirements.txt"],
+                    "all": [f"{str(Utils.get_venv_binaries_path()/ 'pip')} install -r requirements.txt"],
                 },
             ),
         ]
@@ -480,7 +478,7 @@ class WebApplication:
 
     def run(self, port: Optional[int] = None):
         try:
-            python_path = Utils.get_venv_binaries_directory() / ("python.exe" if self.system == "Windows" else "python")
+            python_path = Utils.get_venv_binaries_path() / ("python.exe" if self.system == "Windows" else "python")
 
             # Start the backend
             app_process = subprocess.Popen(
