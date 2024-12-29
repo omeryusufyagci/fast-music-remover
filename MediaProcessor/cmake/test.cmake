@@ -75,3 +75,8 @@ add_test_executable(CommandBuilderTester
     ${CMAKE_SOURCE_DIR}/src/Utils.cpp
 )
 
+add_test_executable(FFmpegControllerTester
+    ${CMAKE_SOURCE_DIR}/tests/FFmpegControllerTester.cpp
+    ${CMAKE_SOURCE_DIR}/src/FFmpegController.cpp
+    ${CMAKE_SOURCE_DIR}/src/Utils.cpp
+)

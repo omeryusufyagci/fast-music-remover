@@ -11,6 +11,8 @@ add_executable(MediaProcessor
     ${CMAKE_SOURCE_DIR}/src/HardwareUtils.cpp
     ${CMAKE_SOURCE_DIR}/src/FFmpegConfigManager.cpp
     ${CMAKE_SOURCE_DIR}/src/DeepFilterCommandBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/src/FFmpegCommandBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/src/FFmpegController.cpp
 )
 
 # Link DeepFilter wrt platform
