@@ -146,6 +146,31 @@ std::string enumToString(const T& value, const std::unordered_map<T, std::string
     return (it != valueMap.end()) ? it->second : "unknown";
 }
 
+std::vector<int> parseFrameRate(const std::string& frameRate) {
+    std::vector<int> result;
+    result.reserve(2);
+    
+    std::istringstream stream(frameRate);
+    std::string token;
+
+    while(std::getline(stream, token, '/')) {
+        try {
+            result.push_back(std::stoi(token));
+        } catch (const std::invalid_argument&) {
+            throw std::runtime_error("Invalid avg_frame_rate value: " + frameRate);
+        } catch (const std::out_of_range&) {
+            throw std::runtime_error("Out-of-range value in avg_frame_rate: " + frameRate);
+        }
+    }
+
+    // Ensure the result contains exactly 2 elements (numerator and denominator)
+    if (result.size() != 2) {
+        throw std::runtime_error("avg_frame_rate does not have two components: " + frameRate);
+    }
+
+    return result;
+} 
+
 // Explicit instantiations ensure the compiler generates the template for a type
 template std::string enumToString<AudioCodec>(
     const AudioCodec& codec, const std::unordered_map<AudioCodec, std::string>& codecMap);

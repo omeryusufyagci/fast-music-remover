@@ -1,6 +1,7 @@
 #include "Engine.h"
 
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 #include "AudioProcessor.h"
 #include "ConfigManager.h"
@@ -65,25 +66,36 @@ bool Engine::processVideo() {
 
 MediaType Engine::getMediaType() const {
     const std::string command =
-        "ffprobe -loglevel error -show_entries stream=codec_type,avg_frame_rate "
-        "-of default=noprint_wrappers=1:nokey=1 \"" + 
-        m_mediaPath.string() + 
-        "\" | awk 'BEGIN {last=\"\"} /audio/ {print; last=\"audio\"} /video/ {print; last=\"video\"} /^[0-9]+\\/[0-9]+$/ && last==\"video\" {print}'";
+        "ffprobe -loglevel error -show_entries stream -of json \"" + m_mediaPath.string() + "\"";
 
     std::optional<std::string> output = Utils::runCommand(command, true);
     if (!output || output->empty()) {
         throw std::runtime_error("Failed to detect media type.");
     }
 
-    std::string_view result = *output;
-    if (result.find("video") != std::string_view::npos) {
-        // check if the video stream avg_frame_rate is 0/0, which is actually a static image
-        return (result.find("0/0") != std::string_view::npos) ? MediaType::Audio : MediaType::Video;
-    } else if (result.find("audio") != std::string_view::npos) {
-        return MediaType::Audio;
-    } else {
-        throw std::runtime_error("Unsupported media type detected.");
+    nlohmann::json streamData = nlohmann::json::parse(*output);
+
+    int videoStreamCount{0}, audioStreamCount{0};
+    for (const auto& stream : streamData["streams"]) {
+        if (stream["codec_type"] == "video") {
+            ++videoStreamCount;
+
+            if (videoStreamCount > 1) {
+                return MediaType::Video;
+            }
+
+            std::vector<int> frameRate = Utils::parseFrameRate(stream["avg_frame_rate"]);
+            if (frameRate[0] != 0 || frameRate[1] != 0) {
+                return MediaType::Video;
+            }
+        } else if (stream["codec_type"] == "audio") {
+            ++audioStreamCount;
+        } else {
+            throw std::runtime_error("Unsupported media type detected.");
+        }
     }
+
+    return audioStreamCount ? MediaType::Audio : MediaType::Unsupported;
 }
 
 }  // namespace MediaProcessor

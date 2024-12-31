@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -111,6 +112,13 @@ bool isWithinRange(T value, T lowerBound, T upperBound) {
  */
 template <typename T>
 std::string enumToString(const T& value, const std::unordered_map<T, std::string>& valueMap);
+
+/**
+ * @brief Parses the given frame rate(from string) and returns the frame rate in vector<int>
+ * 
+ * @return vector<int> of size 2, which contains frame rate.
+ */
+std::vector<int> parseFrameRate(const std::string& frameRate);
 
 }  // namespace MediaProcessor::Utils
 
