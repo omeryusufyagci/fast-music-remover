@@ -51,6 +51,7 @@ class ConfigManager:
                 configuration[key] = value.replace("/", "\\")  # change / to \ for windows path compatibility
 
     def setup_runtime_config(self, system: str):
+        logging.debug(f"Setting up runtime config for {system}")
         try:
             with open(ConfigManager.CONFIG_FILE_PATH, "r") as config_file:
                 config = json.load(config_file)
@@ -62,7 +63,9 @@ class ConfigManager:
                 json.dump(config, config_file, indent=4)
 
         except FileNotFoundError:
-            logging.error(f"{ConfigManager.CONFIG_FILE_PATH} not found. Please create a default config.json file.")
+            logging.error(
+                f"{ConfigManager.CONFIG_FILE_PATH} not found. Please check a config file exists in project root."
+            )
             sys.exit(1)
         except Exception as e:
             logging.error(f"Failed to update config: {e}", exc_info=True)
@@ -131,7 +134,7 @@ class Utils:
     @staticmethod
     def ensure_venv_exists():
         if Utils.VENV_DIR_PATH.exists():
-            logging.debug("Virtual environment already exists.")
+            logging.debug(f"Virtual environment already exists at {Utils.VENV_DIR_PATH}.")
             return
         logging.info(f"Generating virtual environment at: {Utils.VENV_DIR_PATH}")
         Utils.run_command(f"{sys.executable} -m venv {str(Utils.VENV_DIR_PATH)} --system-site-packages")
@@ -214,6 +217,9 @@ def validate_python_dependencies():
     """
     check if the packages in the requirements.txt are installed
 
+    Raises:
+        FileNotFoundError : if the requirements are not installed.
+
     Note:
         Currenly Supports `==` and `>=` operators only in the requirements.txt.
     """
@@ -232,7 +238,7 @@ def validate_python_dependencies():
             required_version = tuple(map(int, required_version.strip().split(".")))
             installed_version = tuple(map(int, installed_version.strip().split(".")))
 
-            logging.debug(f"installed version of {package_name}: {installed_version}")
+            logging.debug(f"Installed version of {package_name}: {installed_version}")
             if (operator == ">=" and installed_version >= required_version) or (
                 operator == "==" and installed_version == required_version
             ):
@@ -240,7 +246,7 @@ def validate_python_dependencies():
             else:
                 logging.debug(
                     f"Version mismatch for {package_name}: "
-                    f"installed {installed_version}, required {required_version}"
+                    f"installed {installed_version}, required {required_version}, operator {operator}"
                 )
                 raise FileNotFoundError
     except (PackageNotFoundError, FileNotFoundError):
@@ -422,10 +428,10 @@ def build_processing_engine(system, re_build=False):
         logging.debug(f"{str(MediaProcessor_binary_path)} exists. Skipping re-build.")
         return
     try:
-        logging.info("building MediaProcessor.")
+        logging.info("building Processing Engine.")
         Utils.run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=PROCESSING_ENGINE_PATH)
         Utils.run_command("cmake --build . --config Release", cwd=PROCESSING_ENGINE_PATH)
-        logging.info("MediaProcessor built successfully.")
+        logging.info("Processing Engine built successfully.")
     except Exception as e:
         logging.error(f"Failed to build MediaProcessor: {e}", exc_info=True)
         sys.exit(1)
@@ -481,6 +487,7 @@ class WebApplication:
             python_path = Utils.get_venv_binaries_path() / ("python.exe" if self.system == "Windows" else "python")
 
             # Start the backend
+            logging.debug("Starting backend")
             app_process = subprocess.Popen(
                 [python_path, "app.py"],
                 stdout=subprocess.PIPE,
@@ -532,7 +539,7 @@ def main():
 
     system = platform.system()
     if args.app == "none":
-        print("Please specify how you would like to launch the application, like --app=web. Exiting.")
+        print("Please specify a launch option, e.g. `--app=web`. Start with `--help` to see all options.")
         sys.exit(0)
 
     app = Applications[args.app](system, args.log_level, args.log_file)
