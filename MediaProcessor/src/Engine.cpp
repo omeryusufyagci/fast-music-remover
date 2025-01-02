@@ -81,8 +81,6 @@ MediaType Engine::getMediaType() const {
             return MediaType::Video;
         } else if (hasValidAudioStream(stream)) {
             hasAudioStream = true;
-        } else {
-            throw std::runtime_error("Unsupported media type detected.");
         }
     }
 
