@@ -10,9 +10,7 @@
 namespace MediaProcessor {
 
 Engine::Engine(const std::filesystem::path& mediaPath)
-    : m_mediaPath(std::filesystem::absolute(mediaPath)),
-      hasAudioStream(false),
-      videoStreamCount(0) {}
+    : m_mediaPath(std::filesystem::absolute(mediaPath)) {}
 
 bool Engine::processMedia() {
     ConfigManager& configManager = ConfigManager::getInstance();
@@ -76,32 +74,35 @@ MediaType Engine::getMediaType() const {
 
     nlohmann::json streamData = nlohmann::json::parse(*output);
 
+    bool containsAudioStream;
     for (const auto& stream : streamData["streams"]) {
-        if (hasValidVideoStream(stream)) {
+        if (isActualVideoStream(stream)) {
             return MediaType::Video;
-        } else if (hasValidAudioStream(stream)) {
-            hasAudioStream = true;
+        } 
+        if (hasValidAudioStream(stream)) {
+            containsAudioStream = true;
         }
     }
 
-    // If we haven't returned for Video and have found a valid audio stream
-    if (hasAudioStream) {
+    if (containsAudioStream) {
         return MediaType::Audio;
     }
 
-    // otherwise
     return MediaType::Unsupported;
 }
 
-bool Engine::hasValidVideoStream(const nlohmann::json& stream) const {
-    if (stream["codec_type"] == "video") {
-        ++videoStreamCount;
-
-        if (videoStreamCount > 1 || !hasZeroFrameRate(stream["avg_frame_rate"])) {
-            return true;
-        }
+bool Engine::isActualVideoStream(const nlohmann::json& stream) const {
+    if (stream["codec_type"] != "video") {
+        return false;
     }
-    return false;
+    if(!stream.contains("avg_frame_rate")) {
+        return false;
+    }
+    if (hasZeroFrameRate(stream["avg_frame_rate"])) {
+        return false;
+    }
+
+    return true;
 }
 
 bool Engine::hasValidAudioStream(const nlohmann::json& stream) const {
