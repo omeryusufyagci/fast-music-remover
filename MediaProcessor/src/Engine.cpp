@@ -65,23 +65,52 @@ bool Engine::processVideo() {
 
 MediaType Engine::getMediaType() const {
     const std::string command =
-        "ffprobe -loglevel error -show_entries stream=codec_type "
-        "-of default=noprint_wrappers=1:nokey=1 \"" +
-        m_mediaPath.string() + "\"";
+        "ffprobe -loglevel error -show_entries stream -of json \"" + m_mediaPath.string() + "\"";
 
     std::optional<std::string> output = Utils::runCommand(command, true);
     if (!output || output->empty()) {
         throw std::runtime_error("Failed to detect media type.");
     }
 
-    std::string_view result = *output;
-    if (result.find("video") != std::string_view::npos) {
-        return MediaType::Video;
-    } else if (result.find("audio") != std::string_view::npos) {
-        return MediaType::Audio;
-    } else {
-        throw std::runtime_error("Unsupported media type detected.");
+    nlohmann::json streamData = nlohmann::json::parse(*output);
+
+    bool containsAudioStream;
+    for (const auto& stream : streamData["streams"]) {
+        if (hasValidVideoStream(stream)) {
+            return MediaType::Video;
+        } 
+        if (hasValidAudioStream(stream)) {
+            containsAudioStream = true;
+        }
     }
+
+    if (containsAudioStream) {
+        return MediaType::Audio;
+    }
+
+    return MediaType::Unsupported;
+}
+
+bool Engine::hasValidVideoStream(const nlohmann::json& stream) const {
+    if (stream["codec_type"] != "video") {
+        return false;
+    }
+    if(!stream.contains("avg_frame_rate")) {
+        return false;
+    }
+    if (hasZeroFrameRate(stream["avg_frame_rate"])) {
+        return false;
+    }
+
+    return true;
+}
+
+bool Engine::hasValidAudioStream(const nlohmann::json& stream) const {
+    return (stream["codec_type"] == "audio");
+}
+
+bool Engine::hasZeroFrameRate(const std::string& frameRate) const {
+    return (frameRate == "0/0");
 }
 
 }  // namespace MediaProcessor

@@ -2,6 +2,7 @@
 #define ENGINE_H
 
 #include <filesystem>
+#include <nlohmann/json.hpp>
 
 namespace MediaProcessor {
 
@@ -49,6 +50,33 @@ class Engine {
      * @throws std::runtime_error if detection fails.
      */
     MediaType getMediaType() const;
+
+    /**
+     * @brief Checks if the provided stream is valid video stream and not static media (i.e. cover image)
+     * 
+     * @param stream json data of stream
+     *
+     * @return True if the stream is valid video stream. False otherwise.
+     */
+    bool hasValidVideoStream(const nlohmann::json& stream) const;
+
+    /**
+     * @brief Checks if the provided stream is valid audio stream
+     * 
+     * @param stream json data of stream
+     *
+     * @return True if the stream is valid. False otherwise.
+     */
+    bool hasValidAudioStream(const nlohmann::json& stream) const;
+
+    /**
+     * @brief Checks if the stream's avg_frame_rate is 0/0
+     * 
+     * @param frameRate the avg_frame_rate field from stream
+     *
+     * @return True if avg_frame_rate equals to 0/0. False otherwise.
+     */
+    bool hasZeroFrameRate(const std::string& frameRate) const;
 };
 
 }  // namespace MediaProcessor
