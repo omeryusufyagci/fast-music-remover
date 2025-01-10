@@ -76,7 +76,7 @@ MediaType Engine::getMediaType() const {
 
     bool containsAudioStream;
     for (const auto& stream : streamData["streams"]) {
-        if (isActualVideoStream(stream)) {
+        if (hasValidVideoStream(stream)) {
             return MediaType::Video;
         } 
         if (hasValidAudioStream(stream)) {
@@ -91,7 +91,7 @@ MediaType Engine::getMediaType() const {
     return MediaType::Unsupported;
 }
 
-bool Engine::isActualVideoStream(const nlohmann::json& stream) const {
+bool Engine::hasValidVideoStream(const nlohmann::json& stream) const {
     if (stream["codec_type"] != "video") {
         return false;
     }
