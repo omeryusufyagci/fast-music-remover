@@ -65,23 +65,60 @@ bool Engine::processVideo() {
 
 MediaType Engine::getMediaType() const {
     const std::string command =
-        "ffprobe -loglevel error -show_entries stream=codec_type "
-        "-of default=noprint_wrappers=1:nokey=1 \"" +
-        m_mediaPath.string() + "\"";
+        "ffprobe -loglevel error -show_entries stream -of json \"" + m_mediaPath.string() + "\"";
 
     std::optional<std::string> output = Utils::runCommand(command, true);
     if (!output || output->empty()) {
         throw std::runtime_error("Failed to detect media type.");
     }
 
-    std::string_view result = *output;
-    if (result.find("video") != std::string_view::npos) {
+    nlohmann::json streamData = nlohmann::json::parse(*output);
+
+    if (hasValidVideoStream(streamData)) {
         return MediaType::Video;
-    } else if (result.find("audio") != std::string_view::npos) {
+    } 
+    
+    if (hasValidAudioStream(streamData)) {
         return MediaType::Audio;
-    } else {
-        throw std::runtime_error("Unsupported media type detected.");
     }
+    return MediaType::Unsupported;
+}
+
+bool Engine::hasValidVideoStream(const nlohmann::json& streamData) const {
+    for (const auto& stream : streamData["streams"]) {
+        if(isValidVideoStream(stream)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Engine::isValidVideoStream(const nlohmann::json& stream) const {
+    if (stream["codec_type"] != "video") {
+        return false;
+    }
+    if(!stream.contains("avg_frame_rate")) {
+        return false;
+    }
+
+    if (hasZeroFrameRate(stream["avg_frame_rate"])) {
+        return false;
+    }
+
+    return true;
+}
+
+bool Engine::hasValidAudioStream(const nlohmann::json& streamData) const {
+    for (const auto& stream : streamData["streams"]) {
+        if (stream["codec_type"] == "audio") {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Engine::hasZeroFrameRate(const std::string& frameRate) const {
+    return (frameRate == "0/0");
 }
 
 }  // namespace MediaProcessor
