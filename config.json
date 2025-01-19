@@ -3,7 +3,7 @@
     "deep_filter_tarball_path": "MediaProcessor/res/DeepFilterNet3_ll_onnx.tar.gz",
     "deep_filter_encoder_path": "MediaProcessor/res/DeepFilterNet3_ll_onnx/tmp/export/enc.onnx",
     "deep_filter_decoder_path": "MediaProcessor/res/DeepFilterNet3_ll_onnx/tmp/export/df_dec.onnx",
-    "ffmpeg_path": "/usr/bin/ffmpeg",
+    "ffmpeg_path": "ffmpeg",
     "downloads_path": "downloads",
     "uploads_path": "uploads",
     "use_thread_cap": false,

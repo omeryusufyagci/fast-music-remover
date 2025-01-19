@@ -14,7 +14,7 @@ Engine::Engine(const std::filesystem::path& mediaPath)
 
 bool Engine::processMedia() {
     ConfigManager& configManager = ConfigManager::getInstance();
-    if (!configManager.loadConfig("config.json")) {
+    if (!configManager.loadConfig("runtime_config.json")) {
         std::cerr << "Error: Could not load configuration." << std::endl;
         return false;
     }

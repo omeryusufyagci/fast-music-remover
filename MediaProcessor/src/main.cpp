@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
      * It supports both audio and video files, adapting the workflow based on the file type.
      *
      * Workflow:
-     *   1. Load configuration from "config.json".
+     *   1. Load configuration from "runtime_config.json".
      *   2. Determine if the input file is audio or video.
      *   3. For audio files:
      *      - Directly process audio to isolate vocals.

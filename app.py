@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import subprocess
+from sys import exit
 from urllib.parse import urlparse
 
 import yt_dlp
@@ -27,8 +28,12 @@ Workflow:
 app = Flask(__name__)
 
 # Load config and set paths
-with open("config.json") as config_file:
-    config = json.load(config_file)
+try:
+    with open("runtime_config.json") as config_file:
+        config = json.load(config_file)
+except FileNotFoundError:
+    print("Please run launcher.py.")
+    exit(1)
 
 # Define base paths using absolute references
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
