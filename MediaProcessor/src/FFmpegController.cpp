@@ -24,8 +24,6 @@ bool FFmpegController::extractAudio() {
 }
 
 std::vector<fs::path> FFmpegController::splitMedia(int numChunks, double overlapDuration) {
-    Utils::ensureDirectoryExists(m_ffmpegConfig.getOutputFilePath());
-
     std::vector<double> chunkStartTimes;
     std::vector<double> chunkDurations;
     std::vector<fs::path> chunkPathCol;
