@@ -30,13 +30,54 @@ app = Flask(__name__)
 with open("config.json") as config_file:
     config = json.load(config_file)
 
+
+def detect_ffmpeg_path():
+    """Auto-detect FFmpeg path by checking common locations and PATH."""
+    # First, try the path from config if it exists and is valid
+    config_path = config.get("ffmpeg_path")
+    if config_path and os.path.isfile(config_path) and os.access(config_path, os.X_OK):
+        return os.path.abspath(config_path)
+
+    # Common FFmpeg installation paths by platform
+    common_paths = [
+        "/usr/bin/ffmpeg",              # Linux/Unix default
+        "/usr/local/bin/ffmpeg",        # Common alternative
+        "/opt/homebrew/bin/ffmpeg",     # macOS (Apple Silicon)
+        "/usr/local/opt/ffmpeg/bin/ffmpeg",  # macOS (Intel Homebrew)
+    ]
+
+    for path in common_paths:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            logging.info(f"FFmpeg found at: {path}")
+            return path
+
+    # Fall back to using 'which' command to find ffmpeg in PATH
+    try:
+        result = subprocess.run(["which", "ffmpeg"], capture_output=True, text=True, check=True)
+        ffmpeg_path = result.stdout.strip()
+        if ffmpeg_path and os.path.isfile(ffmpeg_path):
+            logging.info(f"FFmpeg found via PATH: {ffmpeg_path}")
+            return ffmpeg_path
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+
+    # If nothing works, raise an error
+    raise FileNotFoundError(
+        "FFmpeg not found. Please install FFmpeg or set the correct path in config.json.\n"
+        "Installation instructions:\n"
+        "  - macOS: brew install ffmpeg\n"
+        "  - Ubuntu/Debian: sudo apt install ffmpeg\n"
+        "  - Windows: Download from https://ffmpeg.org/download.html"
+    )
+
+
 # Define base paths using absolute references
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DOWNLOADS_PATH = os.path.abspath(config["downloads_path"])
 UPLOADS_PATH = os.path.abspath(config.get("uploads_path", os.path.join(BASE_DIR, "uploads")))
 
 DEEPFILTERNET_PATH = os.path.abspath(config["deep_filter_path"])
-FFMPEG_PATH = os.path.abspath(config["ffmpeg_path"])
+FFMPEG_PATH = detect_ffmpeg_path()
 
 os.environ["DEEPFILTERNET_PATH"] = DEEPFILTERNET_PATH
 app.config["UPLOAD_FOLDER"] = UPLOADS_PATH

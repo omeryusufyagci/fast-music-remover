@@ -89,11 +89,8 @@ To get started with `Fast Music Remover`, ensure that you have the following sof
     brew install ffmpeg
     ```
 
-    After installing FFmpeg, ensure the correct path is set in the `config.json` file. By default, it is set to `/usr/bin/ffmpeg`. If you are using macOS and installed FFmpeg via Homebrew, update the path in `config.json` to:
-
-    ```json
-    "ffmpeg_path": "/opt/homebrew/bin/ffmpeg"
-    ```
+    > [!NOTE]
+    > FFmpeg path is **automatically detected** on startup. The application checks common installation locations and your system PATH. Manual configuration in `config.json` is only needed if FFmpeg is installed in a non-standard location.
 
   **CMake**:
   - **On Ubuntu/Debian**: 
